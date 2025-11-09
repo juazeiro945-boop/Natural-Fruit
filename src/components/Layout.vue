@@ -9,7 +9,7 @@
             <div>
               <h1 class="text-2xl font-bold logo-text">
                 <span class="text-natural-green">Natural</span> 
-                <span class="text-natural-orange">fruit</span>
+                <span class="text-white">fruit</span>
               </h1>
               <p class="text-primary-100 text-xs font-medium">Gestão de Produção</p>
             </div>
@@ -111,6 +111,8 @@ const menuItems = computed(() => {
     { path: '/producao', name: 'Produção', icon: '🏭' },
     { path: '/vendas', name: 'Vendas', icon: '💰' },
     { path: '/clientes', name: 'Clientes', icon: '👥' },
+    { path: '/perdas', name: 'Perdas', icon: '📉' },
+    { path: '/trocas', name: 'Trocas', icon: '🔄' },
     { path: '/relatorios', name: 'Relatórios', icon: '📈' },
     { path: '/configuracoes', name: 'Configurações', icon: '⚙️' }
   ]
@@ -124,9 +126,9 @@ const menuItems = computed(() => {
 
 const bottomMenuItems = computed(() => [
   { path: '/', name: 'Início', icon: '📊' },
-  { path: '/materia-prima', name: 'Matéria', icon: '📦' },
   { path: '/producao', name: 'Produção', icon: '🏭' },
-  { path: '/vendas', name: 'Vendas', icon: '💰' }
+  { path: '/vendas', name: 'Vendas', icon: '💰' },
+  { path: '/perdas', name: 'Perdas', icon: '📉' }
 ])
 
 const handleLogout = async () => {
@@ -144,12 +146,7 @@ const handleLogout = async () => {
 }
 
 .text-natural-green {
-  color: #E8F5E9;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.text-natural-orange {
-  color: #FFB74D;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  color: #4CAF50;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 </style>
