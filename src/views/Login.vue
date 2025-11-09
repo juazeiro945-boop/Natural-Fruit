@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center p-4">
-    <div class="flex max-w-6xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+  <div class="min-h-screen bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center p-4 overflow-hidden">
+    <div class="flex max-w-6xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden" style="max-height: 95vh;">
       
       <!-- Lado Esquerdo - Formulário de Login -->
-      <div class="w-full lg:w-1/2 p-8 lg:p-12">
+      <div class="w-full lg:w-1/2 p-8 lg:p-12 overflow-y-auto">
         <div class="max-w-md mx-auto">
           <!-- Logo em cima do formulário -->
           <div class="text-center mb-8">
@@ -86,14 +86,6 @@
               </a>
             </div>
           </form>
-
-          <div class="mt-6 pt-6 border-t border-gray-200 text-center text-sm text-gray-600">
-            <p class="mb-2">Credenciais padrão para teste:</p>
-            <div class="bg-gray-50 rounded-lg p-3 font-mono text-xs">
-              <p class="text-gray-700">admin@naturalfruit.com</p>
-              <p class="text-gray-700">admin123</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -213,4 +205,23 @@ const handleLogin = async () => {
 <style scoped>
 /* Garantir que as fontes sejam carregadas */
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+
+/* Remove scrollbar se necessário */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff8f00;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e65100;
+}
 </style>
