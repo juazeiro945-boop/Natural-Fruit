@@ -44,6 +44,18 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
+    path: '/perdas',
+    name: 'Perdas',
+    component: () => import('../views/Perdas.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/trocas',
+    name: 'Trocas',
+    component: () => import('../views/Trocas.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/relatorios',
     name: 'Relatorios',
     component: () => import('../views/Relatorios.vue'),
