@@ -27,7 +27,15 @@
         </div>
 
         <!-- Filtros Adicionais para Vendas e Pagamento -->
-        <div v-if="filters.type === 'sales' || filters.type === 'payment'" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
+        <div v-if="filters.type === 'sales' || filters.type === 'payment'" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+          <div>
+            <label class="label">Tipo de Venda</label>
+            <select v-model="filters.saleType" class="input-field">
+              <option value="all">Todos</option>
+              <option value="wholesale">🏭 Atacado</option>
+              <option value="retail">🛒 Varejo</option>
+            </select>
+          </div>
           <div>
             <label class="label">Forma de Pagamento</label>
             <select v-model="filters.paymentMethod" class="input-field">
@@ -59,8 +67,11 @@
           <div>
             <h3 class="text-lg font-bold">Resultado - {{ reportData.length }} registro(s)</h3>
             <p class="text-sm text-gray-600 mt-1">
-              <span v-if="filters.paymentMethod !== 'all'">
-                Filtrado por: {{ getPaymentMethodName(filters.paymentMethod) }}
+              <span v-if="filters.saleType !== 'all'">
+                Tipo: {{ getSaleTypeName(filters.saleType) }}
+              </span>
+              <span v-if="filters.paymentMethod !== 'all'" :class="filters.saleType !== 'all' ? 'ml-2' : ''">
+                {{ filters.saleType !== 'all' ? '|' : '' }} Pagamento: {{ getPaymentMethodName(filters.paymentMethod) }}
               </span>
               <span v-if="filters.paymentStatus !== 'all'" class="ml-2">
                 | Status: {{ filters.paymentStatus === 'paid' ? 'Pago' : 'Pendente' }}
@@ -86,6 +97,9 @@
               <tr v-for="(row, index) in reportData" :key="index" class="border-t hover:bg-gray-50">
                 <td v-for="col in columns" :key="col" class="px-4 py-3 text-sm">
                   <span v-if="col === 'Status'" :class="getStatusClass(row[col])">
+                    {{ formatValue(row[col], col) }}
+                  </span>
+                  <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])">
                     {{ formatValue(row[col], col) }}
                   </span>
                   <span v-else>
@@ -119,6 +133,14 @@
             <div v-if="(filters.type === 'sales' || filters.type === 'payment') && summary.totalPending > 0">
               <p class="text-gray-600">Total Pendente</p>
               <p class="font-bold text-lg text-red-600">{{ formatCurrency(summary.totalPending) }}</p>
+            </div>
+            <div v-if="filters.type === 'sales' && summary.wholesaleTotal > 0">
+              <p class="text-gray-600">🏭 Total Atacado</p>
+              <p class="font-bold text-lg text-blue-600">{{ formatCurrency(summary.wholesaleTotal) }}</p>
+            </div>
+            <div v-if="filters.type === 'sales' && summary.retailTotal > 0">
+              <p class="text-gray-600">🛒 Total Varejo</p>
+              <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.retailTotal) }}</p>
             </div>
             <div v-if="filters.type === 'production'">
               <p class="text-gray-600">Total Produzido</p>
@@ -173,6 +195,7 @@ const filters = ref({
   startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   endDate: new Date().toISOString().split('T')[0],
   type: 'sales',
+  saleType: 'all',
   paymentMethod: 'all',
   paymentStatus: 'all'
 })
@@ -184,6 +207,7 @@ const loading = ref(false)
 const hasGenerated = ref(false)
 
 const resetFilters = () => {
+  filters.value.saleType = 'all'
   filters.value.paymentMethod = 'all'
   filters.value.paymentStatus = 'all'
 }
@@ -219,6 +243,16 @@ const getStatusClass = (status) => {
   return ''
 }
 
+const getSaleTypeBadgeClass = (type) => {
+  if (type && type.includes('Atacado')) {
+    return 'px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold'
+  }
+  if (type && type.includes('Varejo')) {
+    return 'px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold'
+  }
+  return ''
+}
+
 const getPaymentMethodName = (method) => {
   const names = {
     cash: '💵 Dinheiro',
@@ -227,6 +261,15 @@ const getPaymentMethodName = (method) => {
     all: 'Todas'
   }
   return names[method] || method
+}
+
+const getSaleTypeName = (type) => {
+  const names = {
+    wholesale: '🏭 Atacado',
+    retail: '🛒 Varejo',
+    all: 'Todos'
+  }
+  return names[type] || type
 }
 
 const generateReport = async () => {
@@ -260,6 +303,7 @@ const generateSalesReport = async () => {
     .select(`
       id,
       date,
+      sale_type,
       quantity,
       total,
       payment_method,
@@ -269,6 +313,11 @@ const generateSalesReport = async () => {
     `)
     .gte('date', filters.value.startDate)
     .lte('date', filters.value.endDate)
+
+  // Aplicar filtro de tipo de venda
+  if (filters.value.saleType !== 'all') {
+    query = query.eq('sale_type', filters.value.saleType)
+  }
 
   // Aplicar filtro de forma de pagamento
   if (filters.value.paymentMethod !== 'all') {
@@ -288,6 +337,7 @@ const generateSalesReport = async () => {
 
   reportData.value = data.map(d => ({
     'Data': new Date(d.date).toLocaleDateString('pt-BR'),
+    'Tipo': d.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo',
     'Cliente': d.clients?.name || 'N/A',
     'Produto': d.products?.name || 'N/A',
     'Quantidade': d.quantity,
@@ -296,16 +346,20 @@ const generateSalesReport = async () => {
     'Status': d.paid ? '✓ Pago' : '⏳ Pendente'
   }))
   
-  columns.value = ['Data', 'Cliente', 'Produto', 'Quantidade', 'Total (R$)', 'Pagamento', 'Status']
+  columns.value = ['Data', 'Tipo', 'Cliente', 'Produto', 'Quantidade', 'Total (R$)', 'Pagamento', 'Status']
   
   const totalSales = data.reduce((sum, d) => sum + (d.total || 0), 0)
   const totalPaid = data.filter(d => d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
   const totalPending = data.filter(d => !d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
+  const wholesaleTotal = data.filter(d => d.sale_type === 'wholesale').reduce((sum, d) => sum + (d.total || 0), 0)
+  const retailTotal = data.filter(d => d.sale_type === 'retail').reduce((sum, d) => sum + (d.total || 0), 0)
   
   summary.value = { 
     totalSales,
     totalPaid,
     totalPending,
+    wholesaleTotal,
+    retailTotal,
     avgTicket: data.length > 0 ? totalSales / data.length : 0
   }
 }
@@ -453,6 +507,7 @@ const generatePaymentReport = async () => {
     .from('sales')
     .select(`
       date,
+      sale_type,
       total,
       payment_method,
       paid,
@@ -460,6 +515,11 @@ const generatePaymentReport = async () => {
     `)
     .gte('date', filters.value.startDate)
     .lte('date', filters.value.endDate)
+
+  // Aplicar filtro de tipo de venda
+  if (filters.value.saleType !== 'all') {
+    query = query.eq('sale_type', filters.value.saleType)
+  }
 
   // Aplicar filtro de forma de pagamento
   if (filters.value.paymentMethod !== 'all') {
@@ -479,13 +539,14 @@ const generatePaymentReport = async () => {
 
   reportData.value = data.map(d => ({
     'Data': new Date(d.date).toLocaleDateString('pt-BR'),
+    'Tipo': d.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo',
     'Cliente': d.clients?.name || 'N/A',
     'Forma de Pagamento': d.payment_method === 'cash' ? '💵 Dinheiro' : d.payment_method === 'pix' ? '📱 PIX' : d.payment_method === 'boleto' ? '📄 Boleto' : 'N/A',
     'Valor (R$)': d.total,
     'Status': d.paid ? '✓ Recebido' : '⏳ Pendente'
   }))
 
-  columns.value = ['Data', 'Cliente', 'Forma de Pagamento', 'Valor (R$)', 'Status']
+  columns.value = ['Data', 'Tipo', 'Cliente', 'Forma de Pagamento', 'Valor (R$)', 'Status']
   
   const totalReceived = data.filter(d => d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
   const totalPending = data.filter(d => !d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
@@ -509,15 +570,18 @@ const exportPDF = () => {
   doc.text(`Tipo: ${getTipeName()}`, 14, 30)
   doc.text(`Período: ${new Date(filters.value.startDate).toLocaleDateString('pt-BR')} até ${new Date(filters.value.endDate).toLocaleDateString('pt-BR')}`, 14, 36)
   
+  if (filters.value.saleType !== 'all') {
+    doc.text(`Tipo de Venda: ${getSaleTypeName(filters.value.saleType)}`, 14, 42)
+  }
   if (filters.value.paymentMethod !== 'all') {
-    doc.text(`Forma de Pagamento: ${getPaymentMethodName(filters.value.paymentMethod)}`, 14, 42)
+    doc.text(`Forma de Pagamento: ${getPaymentMethodName(filters.value.paymentMethod)}`, 14, 48)
   }
   if (filters.value.paymentStatus !== 'all') {
-    doc.text(`Status: ${filters.value.paymentStatus === 'paid' ? 'Pago' : 'Pendente'}`, 14, 48)
+    doc.text(`Status: ${filters.value.paymentStatus === 'paid' ? 'Pago' : 'Pendente'}`, 14, 54)
   }
   
-  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 54)
-  doc.text(`Total de registros: ${reportData.value.length}`, 14, 60)
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 60)
+  doc.text(`Total de registros: ${reportData.value.length}`, 14, 66)
   
   doc.autoTable({
     head: [columns.value],
@@ -528,7 +592,7 @@ const exportPDF = () => {
       }
       return value
     })),
-    startY: 68,
+    startY: 74,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [255, 140, 0] }
   })
