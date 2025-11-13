@@ -20,9 +20,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/materia-prima',
-    name: 'MateriaPrima',
-    component: () => import('../views/MateriaPrima.vue'),
+    path: '/estoque',
+    name: 'Estoque',
+    component: () => import('../views/Estoque.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -84,10 +84,8 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
   try {
-    // Verificar autenticação
     await authStore.checkAuth()
     
-    // Se houver erro de sessão, redirecionar para login
     if (authStore.sessionError && to.path !== '/login') {
       authStore.forceLogout()
       return next('/login')
@@ -108,7 +106,6 @@ router.beforeEach(async (to, from, next) => {
     next()
   } catch (error) {
     console.error('Erro no router guard:', error)
-    // Em caso de erro, forçar logout e ir para login
     authStore.forceLogout()
     if (to.path !== '/login') {
       next('/login')
