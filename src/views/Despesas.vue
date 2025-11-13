@@ -401,7 +401,10 @@ const loadExpenses = async () => {
   try {
     const [year, month] = selectedMonth.value.split('-')
     const startDate = `${year}-${month}-01`
-    const endDate = `${year}-${month}-31`
+    
+    // Calcular o último dia do mês corretamente
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
 
     let query = supabase
       .from('expenses')
