@@ -5,10 +5,10 @@
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <img src="/natural-fruit-logo-192.jpg" alt="Natural Fruit" class="w-12 h-12 rounded-xl shadow-lg border-2 border-white">
+            <img src="/natural-fruit-logo-192.jpg" alt="Natural Fruit" class="w-16 h-16 rounded-xl shadow-lg border-2 border-white">
             <div>
               <h1 class="text-2xl font-bold logo-text">
-                <span class="text-natural-white">Natural</span> 
+                <span class="text-white">Natural</span> 
                 <span class="text-white">fruit</span>
               </h1>
               <p class="text-primary-100 text-xs font-medium">Gestão de Produção</p>
@@ -111,7 +111,7 @@ const menuItems = computed(() => {
     { path: '/producao', name: 'Produção', icon: '🏭' },
     { path: '/vendas', name: 'Vendas', icon: '💰' },
     { path: '/clientes', name: 'Clientes', icon: '👥' },
-    { path: '/despesas', name: 'Despesas', icon: '💸' }, // ✨ NOVO - ADICIONADO
+    { path: '/despesas', name: 'Despesas', icon: '💸' },
     { path: '/perdas', name: 'Perdas', icon: '📉' },
     { path: '/trocas', name: 'Trocas', icon: '🔄' },
     { path: '/relatorios', name: 'Relatórios', icon: '📈' },
@@ -129,7 +129,7 @@ const bottomMenuItems = computed(() => [
   { path: '/', name: 'Início', icon: '📊' },
   { path: '/producao', name: 'Produção', icon: '🏭' },
   { path: '/vendas', name: 'Vendas', icon: '💰' },
-  { path: '/despesas', name: 'Despesas', icon: '💸' } // ✨ NOVO - ADICIONADO
+  { path: '/despesas', name: 'Despesas', icon: '💸' }
 ])
 
 const handleLogout = async () => {
