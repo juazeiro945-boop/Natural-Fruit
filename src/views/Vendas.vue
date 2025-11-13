@@ -14,10 +14,18 @@
 
       <!-- Filtros Responsivos -->
       <div class="card">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
           <div>
             <label class="label text-sm">Data</label>
             <input v-model="filters.date" type="date" class="input-field text-base" @change="loadSales" />
+          </div>
+          <div>
+            <label class="label text-sm">Tipo de Venda</label>
+            <select v-model="filters.saleType" class="input-field text-base" @change="loadSales">
+              <option value="">Todos</option>
+              <option value="wholesale">🏭 Atacado</option>
+              <option value="retail">🛒 Varejo</option>
+            </select>
           </div>
           <div>
             <label class="label text-sm">Forma de Pagamento</label>
@@ -45,6 +53,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Data</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tipo</th>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Cliente</th>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Produto</th>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Qtd</th>
@@ -57,6 +66,11 @@
           <tbody>
             <tr v-for="sale in sales" :key="sale.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 text-sm whitespace-nowrap">{{ formatDate(sale.date) }}</td>
+              <td class="px-4 py-3 text-sm">
+                <span :class="getSaleTypeBadge(sale.sale_type)">
+                  {{ getSaleTypeLabel(sale.sale_type) }}
+                </span>
+              </td>
               <td class="px-4 py-3 text-sm">{{ sale.clients?.name }}</td>
               <td class="px-4 py-3 text-sm">{{ sale.products?.name }}</td>
               <td class="px-4 py-3 text-sm">{{ sale.quantity }}</td>
@@ -100,7 +114,12 @@
         <div v-for="sale in sales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
-              <p class="text-xs text-gray-500">{{ formatDate(sale.date) }}</p>
+              <div class="flex items-center space-x-2 mb-1">
+                <p class="text-xs text-gray-500">{{ formatDate(sale.date) }}</p>
+                <span :class="getSaleTypeBadge(sale.sale_type)" class="text-xs">
+                  {{ getSaleTypeLabel(sale.sale_type) }}
+                </span>
+              </div>
               <h3 class="font-semibold text-gray-900 text-base truncate">{{ sale.clients?.name }}</h3>
             </div>
             <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
@@ -166,6 +185,34 @@
               <label class="label">Data *</label>
               <input v-model="form.date" type="date" required class="input-field text-base" />
             </div>
+
+            <!-- TIPO DE VENDA - NOVO -->
+            <div>
+              <label class="label">Tipo de Venda *</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  @click="form.sale_type = 'wholesale'"
+                  :class="form.sale_type === 'wholesale' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300'"
+                  class="p-4 rounded-lg border-2 transition-all hover:border-blue-400 flex flex-col items-center space-y-2"
+                >
+                  <span class="text-3xl">🏭</span>
+                  <span class="font-semibold text-sm">Atacado</span>
+                  <span class="text-xs opacity-80">Grandes volumes</span>
+                </button>
+                <button
+                  type="button"
+                  @click="form.sale_type = 'retail'"
+                  :class="form.sale_type === 'retail' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'"
+                  class="p-4 rounded-lg border-2 transition-all hover:border-green-400 flex flex-col items-center space-y-2"
+                >
+                  <span class="text-3xl">🛒</span>
+                  <span class="font-semibold text-sm">Varejo</span>
+                  <span class="text-xs opacity-80">Venda direta</span>
+                </button>
+              </div>
+            </div>
+
             <div>
               <label class="label">Cliente *</label>
               <select v-model="form.client_id" required class="input-field text-base">
@@ -269,12 +316,14 @@ const lastSaleData = ref(null)
 
 const filters = ref({
   date: new Date().toISOString().split('T')[0],
+  saleType: '',
   payment: '',
   status: ''
 })
 
 const form = ref({
   date: new Date().toISOString().split('T')[0],
+  sale_type: 'retail', // NOVO - padrão é varejo
   client_id: '',
   product_id: '',
   quantity: 1,
@@ -311,6 +360,23 @@ const getPaymentBadge = (method) => {
   return `${badges[method]} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
 }
 
+// NOVO - Funções para tipo de venda
+const getSaleTypeLabel = (type) => {
+  const labels = { 
+    wholesale: '🏭 Atacado', 
+    retail: '🛒 Varejo' 
+  }
+  return labels[type] || type
+}
+
+const getSaleTypeBadge = (type) => {
+  const badges = {
+    wholesale: 'bg-blue-100 text-blue-700',
+    retail: 'bg-green-100 text-green-700'
+  }
+  return `${badges[type]} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
+}
+
 const updatePrice = () => {
   const product = products.value.find(p => p.id === form.value.product_id)
   if (product) {
@@ -331,6 +397,7 @@ const loadSales = async () => {
       .order('date', { ascending: false })
     
     if (filters.value.date) query = query.eq('date', filters.value.date)
+    if (filters.value.saleType) query = query.eq('sale_type', filters.value.saleType)
     if (filters.value.payment) query = query.eq('payment_method', filters.value.payment)
     if (filters.value.status === 'paid') query = query.eq('paid', true)
     if (filters.value.status === 'pending') query = query.eq('paid', false)
@@ -408,6 +475,11 @@ const generateReceipt = (sale) => {
   doc.text('RECIBO DE VENDA', 210 - 15, 15, { align: 'right' })
   doc.setFontSize(12)
   doc.text(receiptNumber, 210 - 15, 22, { align: 'right' })
+  
+  // NOVO - Tipo de venda no recibo
+  doc.setFontSize(10)
+  const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
+  doc.text(saleTypeText, 210 - 15, 28, { align: 'right' })
   
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
@@ -546,6 +618,7 @@ const closeModal = () => {
   showModal.value = false
   form.value = {
     date: new Date().toISOString().split('T')[0],
+    sale_type: 'retail',
     client_id: '',
     product_id: '',
     quantity: 1,
