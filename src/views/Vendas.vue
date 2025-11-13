@@ -1,7 +1,6 @@
 <template>
   <Layout>
     <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
-      <!-- Header Responsivo -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas</h2>
         <button @click="showModal = true" class="w-full md:w-auto btn-primary">
@@ -12,7 +11,6 @@
         </button>
       </div>
 
-      <!-- Filtros Responsivos -->
       <div class="card">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
           <div>
@@ -47,7 +45,6 @@
         </div>
       </div>
 
-      <!-- Visualização Desktop - Tabela -->
       <div class="hidden md:block card overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -67,18 +64,14 @@
             <tr v-for="sale in sales" :key="sale.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 text-sm whitespace-nowrap">{{ formatDate(sale.date) }}</td>
               <td class="px-4 py-3 text-sm">
-                <span :class="getSaleTypeBadge(sale.sale_type)">
-                  {{ getSaleTypeLabel(sale.sale_type) }}
-                </span>
+                <span :class="getSaleTypeBadge(sale.sale_type)">{{ getSaleTypeLabel(sale.sale_type) }}</span>
               </td>
               <td class="px-4 py-3 text-sm">{{ sale.clients?.name }}</td>
               <td class="px-4 py-3 text-sm">{{ sale.products?.name }}</td>
               <td class="px-4 py-3 text-sm">{{ sale.quantity }}</td>
               <td class="px-4 py-3 text-sm font-semibold">{{ formatCurrency(sale.total) }}</td>
               <td class="px-4 py-3 text-sm">
-                <span :class="getPaymentBadge(sale.payment_method)">
-                  {{ getPaymentLabel(sale.payment_method) }}
-                </span>
+                <span :class="getPaymentBadge(sale.payment_method)">{{ getPaymentLabel(sale.payment_method) }}</span>
               </td>
               <td class="px-4 py-3 text-sm">
                 <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
@@ -87,13 +80,13 @@
               </td>
               <td class="px-4 py-3 text-sm">
                 <div class="flex items-center space-x-2">
-                  <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" :title="sale.paid ? 'Marcar como pendente' : 'Marcar como pago'">
+                  <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                     <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
                   </button>
-                  <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
+                  <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors">
                     <span class="text-lg">📄</span>
                   </button>
-                  <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Venda">
+                  <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors">
                     <span class="text-lg">🗑️</span>
                   </button>
                 </div>
@@ -101,7 +94,6 @@
             </tr>
           </tbody>
         </table>
-
         <div v-if="sales.length === 0" class="text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,16 +104,13 @@
         </div>
       </div>
 
-      <!-- Visualização Mobile - Cards -->
       <div class="md:hidden space-y-3">
         <div v-for="sale in sales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
               <div class="flex items-center space-x-2 mb-1">
                 <p class="text-xs text-gray-500">{{ formatDate(sale.date) }}</p>
-                <span :class="getSaleTypeBadge(sale.sale_type)" class="text-xs">
-                  {{ getSaleTypeLabel(sale.sale_type) }}
-                </span>
+                <span :class="getSaleTypeBadge(sale.sale_type)" class="text-xs">{{ getSaleTypeLabel(sale.sale_type) }}</span>
               </div>
               <h3 class="font-semibold text-gray-900 text-base truncate">{{ sale.clients?.name }}</h3>
             </div>
@@ -137,7 +126,6 @@
               </button>
             </div>
           </div>
-
           <div class="space-y-2 text-sm">
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Produto:</span>
@@ -152,17 +140,13 @@
               <span class="font-semibold text-lg text-gray-900">{{ formatCurrency(sale.total) }}</span>
             </div>
           </div>
-
           <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t">
-            <span :class="getPaymentBadge(sale.payment_method)">
-              {{ getPaymentLabel(sale.payment_method) }}
-            </span>
+            <span :class="getPaymentBadge(sale.payment_method)">{{ getPaymentLabel(sale.payment_method) }}</span>
             <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
               {{ sale.paid ? 'Pago' : 'Pendente' }}
             </span>
           </div>
         </div>
-
         <div v-if="sales.length === 0" class="card text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +158,6 @@
         </div>
       </div>
 
-      <!-- Modal de Nova Venda - Responsivo -->
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50">
         <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-md max-h-screen md:max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
@@ -185,56 +168,38 @@
               </svg>
             </button>
           </div>
-
           <form @submit.prevent="saveSale" class="p-4 md:p-6 space-y-4">
             <div>
               <label class="label">Data *</label>
               <input v-model="form.date" type="date" required class="input-field text-base" />
             </div>
-
-            <!-- TIPO DE VENDA - NOVO -->
             <div>
               <label class="label">Tipo de Venda *</label>
               <div class="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  @click="form.sale_type = 'wholesale'"
-                  :class="form.sale_type === 'wholesale' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300'"
-                  class="p-4 rounded-lg border-2 transition-all hover:border-blue-400 flex flex-col items-center space-y-2"
-                >
+                <button type="button" @click="form.sale_type = 'wholesale'" :class="form.sale_type === 'wholesale' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300'" class="p-4 rounded-lg border-2 transition-all hover:border-blue-400 flex flex-col items-center space-y-2">
                   <span class="text-3xl">🏭</span>
                   <span class="font-semibold text-sm">Atacado</span>
                   <span class="text-xs opacity-80">Grandes volumes</span>
                 </button>
-                <button
-                  type="button"
-                  @click="form.sale_type = 'retail'"
-                  :class="form.sale_type === 'retail' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'"
-                  class="p-4 rounded-lg border-2 transition-all hover:border-green-400 flex flex-col items-center space-y-2"
-                >
+                <button type="button" @click="form.sale_type = 'retail'" :class="form.sale_type === 'retail' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'" class="p-4 rounded-lg border-2 transition-all hover:border-green-400 flex flex-col items-center space-y-2">
                   <span class="text-3xl">🛒</span>
                   <span class="font-semibold text-sm">Varejo</span>
                   <span class="text-xs opacity-80">Venda direta</span>
                 </button>
               </div>
             </div>
-
             <div>
               <label class="label">Cliente *</label>
               <select v-model="form.client_id" required class="input-field text-base">
                 <option value="">Selecione um cliente</option>
-                <option v-for="client in clients" :key="client.id" :value="client.id">
-                  {{ client.name }}
-                </option>
+                <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
               </select>
             </div>
             <div>
               <label class="label">Produto *</label>
               <select v-model="form.product_id" required class="input-field text-base" @change="updatePrice">
                 <option value="">Selecione um produto</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
-                  {{ product.name }} - {{ formatCurrency(product.price) }}
-                </option>
+                <option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }} - {{ formatCurrency(product.price) }}</option>
               </select>
             </div>
             <div>
@@ -266,18 +231,13 @@
               <textarea v-model="form.notes" class="input-field text-base" rows="3" placeholder="Informações adicionais..."></textarea>
             </div>
             <div class="flex flex-col md:flex-row gap-3 pt-4">
-              <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1">
-                Cancelar
-              </button>
-              <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2">
-                {{ loading ? 'Salvando...' : 'Salvar Venda' }}
-              </button>
+              <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1">Cancelar</button>
+              <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2">{{ loading ? 'Salvando...' : 'Salvar Venda' }}</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- Modal de Confirmação de Recibo - Responsivo -->
       <div v-if="showReceiptConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 animate-fade-in">
           <div class="text-center mb-6">
@@ -296,9 +256,7 @@
               </svg>
               Gerar Recibo
             </button>
-            <button @click="closeReceiptConfirm" class="btn-outline">
-              Agora Não
-            </button>
+            <button @click="closeReceiptConfirm" class="btn-outline">Agora Não</button>
           </div>
         </div>
       </div>
@@ -329,7 +287,7 @@ const filters = ref({
 
 const form = ref({
   date: new Date().toISOString().split('T')[0],
-  sale_type: 'retail', // NOVO - padrão é varejo
+  sale_type: 'retail',
   client_id: '',
   product_id: '',
   quantity: 1,
@@ -366,12 +324,8 @@ const getPaymentBadge = (method) => {
   return `${badges[method]} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
 }
 
-// NOVO - Funções para tipo de venda
 const getSaleTypeLabel = (type) => {
-  const labels = { 
-    wholesale: '🏭 Atacado', 
-    retail: '🛒 Varejo' 
-  }
+  const labels = { wholesale: '🏭 Atacado', retail: '🛒 Varejo' }
   return labels[type] || type
 }
 
@@ -397,17 +351,12 @@ const calculateTotal = () => {
 
 const loadSales = async () => {
   try {
-    let query = supabase
-      .from('sales')
-      .select(`*, clients(name, phone, email, address), products(name, description)`)
-      .order('date', { ascending: false })
-    
+    let query = supabase.from('sales').select(`*, clients(name, phone, email, address), products(name, description)`).order('date', { ascending: false })
     if (filters.value.date) query = query.eq('date', filters.value.date)
     if (filters.value.saleType) query = query.eq('sale_type', filters.value.saleType)
     if (filters.value.payment) query = query.eq('payment_method', filters.value.payment)
     if (filters.value.status === 'paid') query = query.eq('paid', true)
     if (filters.value.status === 'pending') query = query.eq('paid', false)
-    
     const { data, error } = await query
     if (error) throw error
     sales.value = data || []
@@ -429,17 +378,10 @@ const loadProducts = async () => {
 const saveSale = async () => {
   loading.value = true
   try {
-    const { data, error } = await supabase.from('sales').insert([form.value]).select(`
-      *,
-      clients(name, phone, email, address),
-      products(name, description)
-    `)
-    
+    const { data, error } = await supabase.from('sales').insert([form.value]).select(`*, clients(name, phone, email, address), products(name, description)`)
     if (error) throw error
-    
     await loadSales()
     closeModal()
-    
     if (data && data[0]) {
       lastSaleData.value = data[0]
       showReceiptConfirm.value = true
@@ -457,18 +399,10 @@ const togglePaidStatus = async (sale) => {
 }
 
 const deleteSale = async (id) => {
-  if (!confirm('Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.')) {
-    return
-  }
-
+  if (!confirm('Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.')) return
   try {
-    const { error } = await supabase
-      .from('sales')
-      .delete()
-      .eq('id', id)
-
+    const { error } = await supabase.from('sales').delete().eq('id', id)
     if (error) throw error
-
     await loadSales()
     alert('Venda excluída com sucesso!')
   } catch (error) {
@@ -477,9 +411,8 @@ const deleteSale = async (id) => {
   }
 }
 
-const generateReceipt = (sale) => {
+const generateReceipt = async (sale) => {
   const doc = new jsPDF()
-  
   const primaryColor = [255, 140, 0]
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
@@ -487,81 +420,38 @@ const generateReceipt = (sale) => {
   doc.setFillColor(...primaryColor)
   doc.rect(0, 0, 210, 35, 'F')
   
+  try {
+    const img = new Image()
+    img.src = '/logo.png'
+    await new Promise((resolve, reject) => {
+      img.onload = resolve
+      img.onerror = reject
+    })
+    doc.addImage(img, 'PNG', 15, 8, 20, 20)
+  } catch (error) {
+    console.error('Erro ao carregar logo:', error)
+  }
+  
   doc.setTextColor(255, 255, 255)
-  doc.setFontSize(24)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text('Natural Fruit', 15, 15)
-  
-  doc.setFontSize(10)
+  doc.text('Natural Fruit - Processamento de Frutas', 40, 13)
+  doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.text('Gestão de Produção', 15, 22)
+  doc.text('Juazeiro, Bahia, Brasil', 40, 19)
+  doc.text('Telefone: (74) 99999-9999', 40, 24)
   
-  doc.setFontSize(16)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(sale.id).slice(-8).toUpperCase()}`
-  doc.text('RECIBO DE VENDA', 210 - 15, 15, { align: 'right' })
-  doc.setFontSize(12)
-  doc.text(receiptNumber, 210 - 15, 22, { align: 'right' })
-  
-  // NOVO - Tipo de venda no recibo
+  doc.text(receiptNumber, 210 - 15, 15, { align: 'right' })
   doc.setFontSize(10)
   const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
-  doc.text(saleTypeText, 210 - 15, 28, { align: 'right' })
+  doc.text(saleTypeText, 210 - 15, 22, { align: 'right' })
   
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
   doc.line(15, 40, 195, 40)
-  
-  doc.setTextColor(...darkGray)
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'bold')
-  doc.text('DADOS DA EMPRESA', 15, 50)
-  
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text('Natural Fruit - Processamento de Frutas', 15, 57)
-  doc.text('Juazeiro, Bahia, Brasil', 15, 62)
-  doc.text('Telefone: (74) 99999-9999', 15, 67)
-  
-  doc.setFont('helvetica', 'bold')
-  doc.text('DATA DA VENDA', 210 - 15, 50, { align: 'right' })
-  doc.setFont('helvetica', 'normal')
-  doc.text(formatDate(sale.date), 210 - 15, 57, { align: 'right' })
-  doc.text(formatDateTime(sale.created_at || sale.date), 210 - 15, 62, { align: 'right' })
-  
-  doc.setFillColor(245, 245, 245)
-  doc.rect(15, 75, 180, 35, 'F')
-  
-  doc.setTextColor(...darkGray)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DADOS DO CLIENTE', 20, 83)
-  
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 90)
-  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 95)
-  if (sale.clients?.email) {
-    doc.text(`Email: ${sale.clients.email}`, 20, 100)
-  }
-  if (sale.clients?.address) {
-    doc.text(`Endereço: ${sale.clients.address}`, 20, 105)
-  }
-  
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DETALHES DA VENDA', 15, 125)
-  
-  doc.setFillColor(...primaryColor)
-  doc.rect(15, 130, 180, 10, 'F')
-  
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.text('PRODUTO', 20, 136)
-  doc.text('QTD', 120, 136)
-  doc.text('VALOR UNIT.', 145, 136)
-  doc.text('TOTAL', 175, 136, { align: 'right' })
   
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
@@ -575,17 +465,14 @@ const generateReceipt = (sale) => {
   doc.line(15, 150, 195, 150)
   
   const yTotal = 160
-  
   doc.setFont('helvetica', 'normal')
   doc.text('Subtotal:', 145, yTotal)
   doc.text(formatCurrency(sale.total), 190, yTotal, { align: 'right' })
-  
   doc.text('Descontos:', 145, yTotal + 6)
   doc.text(formatCurrency(0), 190, yTotal + 6, { align: 'right' })
   
   doc.setFillColor(...primaryColor)
   doc.rect(140, yTotal + 12, 55, 12, 'F')
-  
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
@@ -596,7 +483,6 @@ const generateReceipt = (sale) => {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('FORMA DE PAGAMENTO', 15, yTotal + 30)
-  
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.text(`Método: ${getPaymentLabel(sale.payment_method)}`, 15, yTotal + 37)
@@ -606,7 +492,6 @@ const generateReceipt = (sale) => {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
     doc.text('OBSERVAÇÕES', 15, yTotal + 55)
-    
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     const splitNotes = doc.splitTextToSize(sale.notes, 180)
@@ -617,7 +502,6 @@ const generateReceipt = (sale) => {
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
   doc.line(15, footerY, 195, footerY)
-  
   doc.setTextColor(...lightGray)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'italic')
@@ -680,3 +564,42 @@ onMounted(() => {
   }
 }
 </style>
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('RECIBO DE VENDA', 105, 50, { align: 'center' })
+  
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DATA DA VENDA', 15, 60)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(formatDate(sale.date), 15, 67)
+  doc.text(formatDateTime(sale.created_at || sale.date), 15, 72)
+  
+  doc.setFillColor(245, 245, 245)
+  doc.rect(15, 80, 180, 35, 'F')
+  doc.setTextColor(...darkGray)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DADOS DO CLIENTE', 20, 88)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 95)
+  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 100)
+  if (sale.clients?.email) doc.text(`Email: ${sale.clients.email}`, 20, 105)
+  if (sale.clients?.address) doc.text(`Endereço: ${sale.clients.address}`, 20, 110)
+  
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DETALHES DA VENDA', 15, 125)
+  doc.setFillColor(...primaryColor)
+  doc.rect(15, 130, 180, 10, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.text('PRODUTO', 20, 136)
+  doc.text('QTD', 120, 136)
+  doc.text('VALOR UNIT.', 145, 136)
+  doc.text('TOTAL', 175, 136, { align: 'right' })
+  
+  doc.setTextColor(...darkGray)
