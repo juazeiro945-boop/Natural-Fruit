@@ -93,6 +93,9 @@
                   <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
+                  <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Venda">
+                    <span class="text-lg">🗑️</span>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -128,6 +131,9 @@
               </button>
               <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">📄</span>
+              </button>
+              <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
+                <span class="text-2xl">🗑️</span>
               </button>
             </div>
           </div>
@@ -448,6 +454,27 @@ const saveSale = async () => {
 const togglePaidStatus = async (sale) => {
   await supabase.from('sales').update({ paid: !sale.paid }).eq('id', sale.id)
   await loadSales()
+}
+
+const deleteSale = async (id) => {
+  if (!confirm('Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.')) {
+    return
+  }
+
+  try {
+    const { error } = await supabase
+      .from('sales')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    await loadSales()
+    alert('Venda excluída com sucesso!')
+  } catch (error) {
+    console.error('Erro ao excluir venda:', error)
+    alert('Erro ao excluir venda: ' + error.message)
+  }
 }
 
 const generateReceipt = (sale) => {
