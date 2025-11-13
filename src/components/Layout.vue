@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
-            <img src="/logo-192.jpg" alt="Natural Fruit" class="w-16 h-16 rounded-xl shadow-lg border-2 border-white">
+            <img src="/natural-fruit-logo-192.jpg" alt="Natural Fruit" class="w-16 h-16 rounded-xl shadow-lg border-2 border-white">
             <div>
               <h1 class="text-2xl font-bold logo-text">
                 <span class="text-white">Natural</span> 
