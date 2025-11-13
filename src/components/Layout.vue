@@ -8,7 +8,7 @@
             <img src="/natural-fruit-logo-192.jpg" alt="Natural Fruit" class="w-12 h-12 rounded-xl shadow-lg border-2 border-white">
             <div>
               <h1 class="text-2xl font-bold logo-text">
-                <span class="text-natural-green">Natural</span> 
+                <span class="text-natural-white">Natural</span> 
                 <span class="text-white">fruit</span>
               </h1>
               <p class="text-primary-100 text-xs font-medium">Gestão de Produção</p>
