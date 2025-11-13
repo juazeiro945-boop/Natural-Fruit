@@ -601,5 +601,4 @@ onMounted(() => {
   doc.text('QTD', 120, 136)
   doc.text('VALOR UNIT.', 145, 136)
   doc.text('TOTAL', 175, 136, { align: 'right' })
-  
   doc.setTextColor(...darkGray)
