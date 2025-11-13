@@ -111,6 +111,7 @@ const menuItems = computed(() => {
     { path: '/producao', name: 'Produção', icon: '🏭' },
     { path: '/vendas', name: 'Vendas', icon: '💰' },
     { path: '/clientes', name: 'Clientes', icon: '👥' },
+    { path: '/despesas', name: 'Despesas', icon: '💸' }, // ✨ NOVO - ADICIONADO
     { path: '/perdas', name: 'Perdas', icon: '📉' },
     { path: '/trocas', name: 'Trocas', icon: '🔄' },
     { path: '/relatorios', name: 'Relatórios', icon: '📈' },
@@ -128,7 +129,7 @@ const bottomMenuItems = computed(() => [
   { path: '/', name: 'Início', icon: '📊' },
   { path: '/producao', name: 'Produção', icon: '🏭' },
   { path: '/vendas', name: 'Vendas', icon: '💰' },
-  { path: '/perdas', name: 'Perdas', icon: '📉' }
+  { path: '/despesas', name: 'Despesas', icon: '💸' } // ✨ NOVO - ADICIONADO
 ])
 
 const handleLogout = async () => {
