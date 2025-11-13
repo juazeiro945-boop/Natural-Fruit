@@ -82,16 +82,39 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  await authStore.checkAuth()
-
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
-  } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    next('/')
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
-    next('/')
-  } else {
+  
+  try {
+    // Verificar autenticação
+    await authStore.checkAuth()
+    
+    // Se houver erro de sessão, redirecionar para login
+    if (authStore.sessionError && to.path !== '/login') {
+      authStore.forceLogout()
+      return next('/login')
+    }
+    
+    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+      return next('/login')
+    }
+    
+    if (to.meta.requiresAdmin && !authStore.isAdmin) {
+      return next('/')
+    }
+    
+    if (to.path === '/login' && authStore.isAuthenticated) {
+      return next('/')
+    }
+    
     next()
+  } catch (error) {
+    console.error('Erro no router guard:', error)
+    // Em caso de erro, forçar logout e ir para login
+    authStore.forceLogout()
+    if (to.path !== '/login') {
+      next('/login')
+    } else {
+      next()
+    }
   }
 })
 
