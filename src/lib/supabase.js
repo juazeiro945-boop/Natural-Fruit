@@ -13,6 +13,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Listener global para erros de autenticação
 supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event)
+  
   // Se o token expirou ou falhou ao renovar
   if (event === 'TOKEN_REFRESHED' && !session) {
     console.error('Falha ao renovar token, fazendo logout...')
@@ -42,28 +44,18 @@ async function handleAuthError() {
   }
 }
 
-// Interceptar erros de API do Supabase
-const originalFrom = supabase.from.bind(supabase)
-supabase.from = function(...args) {
-  const query = originalFrom(...args)
-  const originalThen = query.then.bind(query)
-  
-  query.then = function(onFulfilled, onRejected) {
-    return originalThen(
-      (result) => {
-        // Se houver erro de autenticação
-        if (result.error && result.error.message && 
-            (result.error.message.includes('JWT') || 
-             result.error.message.includes('token') ||
-             result.error.message.includes('refresh'))) {
-          handleAuthError()
-          return result
-        }
-        return onFulfilled ? onFulfilled(result) : result
-      },
-      onRejected
-    )
-  }
-  
-  return query
+// Adicionar tratamento global de erros para o Supabase
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.message) {
+      const message = event.reason.message.toLowerCase()
+      if (message.includes('jwt') || 
+          message.includes('refresh token') || 
+          message.includes('invalid token')) {
+        console.error('Erro de autenticação detectado:', event.reason.message)
+        handleAuthError()
+        event.preventDefault()
+      }
+    }
+  })
 }
