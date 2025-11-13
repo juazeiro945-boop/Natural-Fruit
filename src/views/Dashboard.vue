@@ -17,7 +17,7 @@
             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <select v-model="period" @change="handlePeriodChange" class="border-0 focus:ring-0 text-sm font-medium text-gray-700 bg-transparent">
+            <select v-model="period" @change="loadAllData" class="border-0 focus:ring-0 text-sm font-medium text-gray-700 bg-transparent">
               <option value="today">Hoje</option>
               <option value="yesterday">Ontem</option>
               <option value="week">Esta Semana</option>
@@ -44,7 +44,6 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="space-y-6">
-        <!-- Skeleton para Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div v-for="n in 4" :key="n" class="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
             <div class="flex space-x-4">
@@ -52,24 +51,6 @@
               <div class="flex-1 space-y-3">
                 <div class="h-4 bg-gray-300 rounded w-3/4"></div>
                 <div class="h-6 bg-gray-300 rounded w-1/2"></div>
-                <div class="h-3 bg-gray-200 rounded w-full"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Skeleton para Gráficos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div v-for="n in 2" :key="n" class="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
-            <div class="h-6 bg-gray-300 rounded w-1/3 mb-4"></div>
-            <div class="space-y-4">
-              <div v-for="n in 3" :key="n" class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gray-300 rounded-lg"></div>
-                <div class="flex-1 space-y-2">
-                  <div class="h-4 bg-gray-300 rounded w-1/2"></div>
-                  <div class="h-3 bg-gray-200 rounded w-3/4"></div>
-                </div>
-                <div class="h-6 bg-gray-300 rounded w-16"></div>
               </div>
             </div>
           </div>
@@ -104,8 +85,8 @@
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-3">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-blue-700 font-medium">Eficiência</span>
-                <span :class="metrics.efficiency >= 90 ? 'text-green-600' : metrics.efficiency >= 80 ? 'text-orange-600' : 'text-red-600'">
-                  {{ metrics.efficiency }}%
+                <span :class="efficiency >= 90 ? 'text-green-600' : efficiency >= 80 ? 'text-orange-600' : 'text-red-600'">
+                  {{ efficiency }}%
                 </span>
               </div>
             </div>
@@ -121,30 +102,21 @@
                   </svg>
                 </div>
                 <div class="text-right">
-                  <div :class="[
-                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-                    salesTrend >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  ]">
-                    <svg v-if="salesTrend >= 0" class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                    <svg v-else class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                    {{ Math.abs(salesTrend) }}%
+                  <div class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    {{ stats.totalSalesCount }} vendas
                   </div>
                 </div>
               </div>
               <div>
                 <p class="text-gray-500 text-sm font-medium mb-1">Total Vendido</p>
                 <p class="text-3xl font-bold text-gray-900 mb-1">{{ formatCurrency(stats.totalSales) }}</p>
-                <p class="text-xs text-gray-400">{{ stats.totalSalesCount }} vendas</p>
+                <p class="text-xs text-gray-400">receita {{ periodLabel.toLowerCase() }}</p>
               </div>
             </div>
             <div class="bg-gradient-to-r from-green-50 to-green-100 px-6 py-3">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-green-700 font-medium">Ticket Médio</span>
-                <span class="text-green-600">{{ formatCurrency(metrics.avgProductValue) }}</span>
+                <span class="text-green-600">{{ formatCurrency(ticketMedio) }}</span>
               </div>
             </div>
           </div>
@@ -223,17 +195,10 @@
                   <h3 class="text-lg font-bold text-gray-900">Formas de Pagamento</h3>
                   <p class="text-sm text-gray-500 mt-0.5">Distribuição de receitas</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                  <button @click="exportPaymentReport" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar relatório">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                  </button>
-                  <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                    </svg>
-                  </div>
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
                 </div>
               </div>
             </div>
@@ -246,7 +211,9 @@
                 <div class="flex items-center justify-between mb-2">
                   <div class="flex items-center space-x-3">
                     <div :class="payment.iconClass" class="w-10 h-10 rounded-lg flex items-center justify-center shadow-md">
-                      <component :is="payment.icon" class="w-5 h-5 text-white" />
+                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="payment.iconPath"/>
+                      </svg>
                     </div>
                     <div>
                       <p class="font-semibold text-gray-900">{{ payment.name }}</p>
@@ -320,7 +287,6 @@
                 </div>
               </div>
               
-              <!-- Empty State Melhorado -->
               <div v-if="stats.topProducts.length === 0" class="text-center py-12">
                 <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -329,12 +295,6 @@
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma venda {{ periodLabel.toLowerCase() }}</h3>
                 <p class="text-gray-500 text-sm mb-4">As vendas {{ periodLabel.toLowerCase() }} aparecerão aqui</p>
-                <button @click="$router.push('/vendas')" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                  </svg>
-                  Registrar Primeira Venda
-                </button>
               </div>
             </div>
           </div>
@@ -404,28 +364,6 @@
               </tbody>
             </table>
           </div>
-          <div class="bg-gradient-to-r from-red-50 to-orange-50 px-6 py-4 border-t border-red-100">
-            <div class="flex items-center justify-between">
-              <p class="text-sm text-gray-700">
-                <span class="font-semibold text-red-600">{{ stats.pendingSales.length }}</span> pagamento(s) totalizando 
-                <span class="font-semibold text-red-600">{{ formatCurrency(stats.salesByPayment.pending) }}</span>
-              </p>
-              <div class="flex items-center space-x-3">
-                <button @click="exportPendingReport" class="inline-flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-300 transition-colors">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                  Exportar
-                </button>
-                <button @click="notifyClients" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                  </svg>
-                  Notificar clientes
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Métricas Avançadas -->
@@ -443,13 +381,13 @@
               </div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-gray-900 mb-2">{{ metrics.efficiency }}%</div>
+              <div class="text-3xl font-bold text-gray-900 mb-2">{{ efficiency }}%</div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div :class="[
                   'h-2 rounded-full transition-all duration-500',
-                  metrics.efficiency >= 90 ? 'bg-green-500' : 
-                  metrics.efficiency >= 80 ? 'bg-orange-500' : 'bg-red-500'
-                ]" :style="`width: ${metrics.efficiency}%`"></div>
+                  efficiency >= 90 ? 'bg-green-500' : 
+                  efficiency >= 80 ? 'bg-orange-500' : 'bg-red-500'
+                ]" :style="`width: ${efficiency}%`"></div>
               </div>
             </div>
           </div>
@@ -467,7 +405,7 @@
               </div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-gray-900">{{ formatCurrency(metrics.avgProductValue) }}</div>
+              <div class="text-3xl font-bold text-gray-900">{{ formatCurrency(ticketMedio) }}</div>
               <p class="text-sm text-gray-500 mt-1">por transação</p>
             </div>
           </div>
@@ -485,7 +423,7 @@
               </div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-gray-900">{{ metrics.uniqueClients }}</div>
+              <div class="text-3xl font-bold text-gray-900">{{ uniqueClients }}</div>
               <p class="text-sm text-gray-500 mt-1">clientes diferentes</p>
             </div>
           </div>
@@ -493,7 +431,7 @@
       </div>
 
       <!-- Notificação de Erro -->
-      <div v-if="error" class="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg max-w-sm animate-fade-in">
+      <div v-if="error" class="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg max-w-sm animate-fade-in z-50">
         <div class="flex items-center space-x-3">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -518,7 +456,6 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
-import { debounce } from 'lodash-es'
 
 const authStore = useAuthStore()
 const currentTime = ref('')
@@ -527,10 +464,7 @@ const loading = ref(true)
 const error = ref('')
 const period = ref('today')
 let timeInterval = null
-let realtimeSubscription = null
-
-// Cache para otimização
-const cachedData = ref(null)
+let realtimeChannel = null
 
 const stats = ref({
   totalProduced: 0,
@@ -552,14 +486,7 @@ const stats = ref({
   pendingSales: []
 })
 
-const metrics = ref({
-  efficiency: 0,
-  avgProductValue: 0,
-  uniqueClients: 0,
-  salesTrend: 0
-})
-
-// Computed properties
+// Computed
 const periodLabel = computed(() => {
   const labels = {
     today: 'Hoje',
@@ -570,20 +497,35 @@ const periodLabel = computed(() => {
   return labels[period.value] || 'Hoje'
 })
 
-const salesTrend = computed(() => metrics.value.salesTrend)
+const efficiency = computed(() => {
+  if (stats.value.totalProduced === 0) return 0
+  return Math.round(((stats.value.totalProduced - stats.value.totalLoss) / stats.value.totalProduced) * 100)
+})
+
+const ticketMedio = computed(() => {
+  if (stats.value.totalSalesCount === 0) return 0
+  return stats.value.totalSales / stats.value.totalSalesCount
+})
+
+const uniqueClients = computed(() => {
+  const clientIds = new Set()
+  stats.value.pendingSales.forEach(sale => {
+    if (sale.client_id) clientIds.add(sale.client_id)
+  })
+  return clientIds.size
+})
 
 const paymentMethods = computed(() => {
   const totalPaid = stats.value.salesByPayment.cash + stats.value.salesByPayment.pix + stats.value.salesByPayment.boleto
-  const totalSales = totalPaid + stats.value.salesByPayment.pending
   
-  return [
+  const methods = [
     {
       type: 'cash',
       name: 'Dinheiro',
       description: 'Pagamento em espécie',
       value: stats.value.salesByPayment.cash,
       percentage: totalPaid > 0 ? ((stats.value.salesByPayment.cash / totalPaid) * 100).toFixed(1) : 0,
-      icon: 'CashIcon',
+      iconPath: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z',
       iconClass: 'bg-gradient-to-br from-green-500 to-green-600',
       percentageClass: 'text-green-600',
       barClass: 'bg-gradient-to-r from-green-500 to-green-600'
@@ -594,7 +536,7 @@ const paymentMethods = computed(() => {
       description: 'Transferência instantânea',
       value: stats.value.salesByPayment.pix,
       percentage: totalPaid > 0 ? ((stats.value.salesByPayment.pix / totalPaid) * 100).toFixed(1) : 0,
-      icon: 'PixIcon',
+      iconPath: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
       iconClass: 'bg-gradient-to-br from-purple-500 to-purple-600',
       percentageClass: 'text-purple-600',
       barClass: 'bg-gradient-to-r from-purple-500 to-purple-600'
@@ -605,7 +547,7 @@ const paymentMethods = computed(() => {
       description: 'Pagamento bancário',
       value: stats.value.salesByPayment.boleto,
       percentage: totalPaid > 0 ? ((stats.value.salesByPayment.boleto / totalPaid) * 100).toFixed(1) : 0,
-      icon: 'BoletoIcon',
+      iconPath: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
       iconClass: 'bg-gradient-to-br from-blue-500 to-blue-600',
       percentageClass: 'text-blue-600',
       barClass: 'bg-gradient-to-r from-blue-500 to-blue-600'
@@ -616,40 +558,17 @@ const paymentMethods = computed(() => {
       description: 'Pagamento pendente',
       value: stats.value.salesByPayment.pending,
       percentage: 0,
-      icon: 'PendingIcon',
+      iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
       iconClass: 'bg-gradient-to-br from-red-500 to-red-600',
       percentageClass: 'text-red-600',
       barClass: 'bg-gradient-to-r from-red-500 to-red-600 animate-pulse'
     }
   ]
+  
+  return methods
 })
 
-// Icon components
-const CashIcon = {
-  template: `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-  </svg>`
-}
-
-const PixIcon = {
-  template: `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-  </svg>`
-}
-
-const BoletoIcon = {
-  template: `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-  </svg>`
-}
-
-const PendingIcon = {
-  template: `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-  </svg>`
-}
-
-// Date and time handling
+// Utilidades
 const updateDateTime = () => {
   const now = new Date()
   currentTime.value = now.toLocaleTimeString('pt-BR', { 
@@ -663,7 +582,6 @@ const updateDateTime = () => {
   })
 }
 
-// Utility functions
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -722,249 +640,182 @@ const getDateRange = () => {
   }
 }
 
-// Data loading with error handling and caching
-const loadData = debounce(async () => {
+// Carregar dados do Supabase
+const loadAllData = async () => {
   loading.value = true
   error.value = ''
   
-  const dateRange = getDateRange()
-  const cacheKey = `${period.value}-${JSON.stringify(dateRange)}`
-  
-  // Check cache
-  if (cachedData.value?.key === cacheKey && 
-      cachedData.value?.timestamp > Date.now() - 5 * 60 * 1000) {
-    stats.value = cachedData.value.stats
-    metrics.value = cachedData.value.metrics
-    loading.value = false
-    return
-  }
-
   try {
-    await Promise.all([
+    const dateRange = getDateRange()
+    
+    // Buscar tudo em paralelo
+    const [productionResult, salesResult] = await Promise.all([
       loadProductionData(dateRange),
-      loadSalesData(dateRange),
-      loadMetrics(dateRange)
+      loadSalesData(dateRange)
     ])
-
-    // Update cache
-    cachedData.value = {
-      key: cacheKey,
-      timestamp: Date.now(),
-      stats: { ...stats.value },
-      metrics: { ...metrics.value }
-    }
-
+    
+    if (!productionResult.success) throw new Error(productionResult.error)
+    if (!salesResult.success) throw new Error(salesResult.error)
+    
   } catch (err) {
     console.error('Erro ao carregar dados:', err)
     error.value = err.message || 'Erro ao carregar dados do dashboard'
   } finally {
     loading.value = false
   }
-}, 300)
+}
 
 const loadProductionData = async (dateRange) => {
-  let query = supabase.from('production').select('*')
-  
-  if (typeof dateRange === 'object') {
-    query = query.gte('date', dateRange.start).lte('date', dateRange.end)
-  } else {
-    query = query.eq('date', dateRange)
-  }
+  try {
+    let query = supabase.from('production').select('*')
+    
+    if (typeof dateRange === 'object') {
+      query = query.gte('date', dateRange.start).lte('date', dateRange.end)
+    } else {
+      query = query.eq('date', dateRange)
+    }
 
-  const { data: production, error: productionError } = await query
+    const { data, error } = await query
 
-  if (productionError) throw productionError
+    if (error) return { success: false, error: error.message }
 
-  if (production) {
-    const totalProduced = production.reduce((sum, p) => sum + (p.quantity || 0), 0)
-    const totalLoss = production.reduce((sum, p) => sum + (p.loss || 0), 0)
-    const totalExchange = production.reduce((sum, p) => sum + (p.exchange || 0), 0)
-    const totalLossValue = production.reduce((sum, p) => sum + (p.loss_value || 0), 0)
-    const totalExchangeValue = production.reduce((sum, p) => sum + (p.exchange_value || 0), 0)
+    if (data) {
+      const totalProduced = data.reduce((sum, p) => sum + (p.quantity || 0), 0)
+      const totalLoss = data.reduce((sum, p) => sum + (p.loss || 0), 0)
+      const totalExchange = data.reduce((sum, p) => sum + (p.exchange || 0), 0)
+      const totalLossValue = data.reduce((sum, p) => sum + (p.loss_value || 0), 0)
+      const totalExchangeValue = data.reduce((sum, p) => sum + (p.exchange_value || 0), 0)
 
-    stats.value.totalProduced = totalProduced
-    stats.value.totalLoss = totalLoss
-    stats.value.totalExchange = totalExchange
-    stats.value.lossValue = totalLossValue
-    stats.value.exchangeValue = totalExchangeValue
-    stats.value.lossPercentage = totalProduced > 0 ? ((totalLoss / totalProduced) * 100).toFixed(1) : 0
-    stats.value.exchangePercentage = totalProduced > 0 ? ((totalExchange / totalProduced) * 100).toFixed(1) : 0
+      stats.value.totalProduced = totalProduced
+      stats.value.totalLoss = totalLoss
+      stats.value.totalExchange = totalExchange
+      stats.value.lossValue = totalLossValue
+      stats.value.exchangeValue = totalExchangeValue
+      stats.value.lossPercentage = totalProduced > 0 ? ((totalLoss / totalProduced) * 100).toFixed(1) : 0
+      stats.value.exchangePercentage = totalProduced > 0 ? ((totalExchange / totalProduced) * 100).toFixed(1) : 0
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('Erro ao carregar produção:', err)
+    return { success: false, error: err.message }
   }
 }
 
 const loadSalesData = async (dateRange) => {
-  let query = supabase
-    .from('sales')
-    .select(`
-      *,
-      clients (name),
-      products (name)
-    `)
-  
-  if (typeof dateRange === 'object') {
-    query = query.gte('date', dateRange.start).lte('date', dateRange.end)
-  } else {
-    query = query.eq('date', dateRange)
-  }
-
-  const { data: sales, error: salesError } = await query
-
-  if (salesError) throw salesError
-
-  if (sales) {
-    stats.value.totalSales = sales.reduce((sum, s) => sum + (s.total || 0), 0)
-    stats.value.totalSalesCount = sales.length
+  try {
+    let query = supabase
+      .from('sales')
+      .select(`
+        *,
+        clients (id, name),
+        products (id, name)
+      `)
     
-    const paidSales = sales.filter(s => s.paid)
-    stats.value.salesByPayment = {
-      cash: paidSales.filter(s => s.payment_method === 'cash').reduce((sum, s) => sum + s.total, 0),
-      pix: paidSales.filter(s => s.payment_method === 'pix').reduce((sum, s) => sum + s.total, 0),
-      boleto: paidSales.filter(s => s.payment_method === 'boleto').reduce((sum, s) => sum + s.total, 0),
-      pending: sales.filter(s => !s.paid).reduce((sum, s) => sum + s.total, 0)
+    if (typeof dateRange === 'object') {
+      query = query.gte('date', dateRange.start).lte('date', dateRange.end)
+    } else {
+      query = query.eq('date', dateRange)
     }
 
-    stats.value.pendingSales = sales
-      .filter(s => !s.paid)
-      .map(s => ({
-        ...s,
-        client_name: s.clients?.name || 'Cliente não identificado',
-        product_name: s.products?.name || 'Produto não especificado'
-      }))
+    const { data, error } = await query
 
-    // Top products
-    const productMap = {}
-    sales.forEach(item => {
-      const id = item.product_id
-      if (!productMap[id]) {
-        productMap[id] = {
-          id,
-          name: item.products?.name || 'Produto',
-          quantity: 0,
-          total: 0
+    if (error) return { success: false, error: error.message }
+
+    if (data) {
+      stats.value.totalSales = data.reduce((sum, s) => sum + (s.total || 0), 0)
+      stats.value.totalSalesCount = data.length
+      
+      const paidSales = data.filter(s => s.paid)
+      stats.value.salesByPayment = {
+        cash: paidSales.filter(s => s.payment_method === 'cash').reduce((sum, s) => sum + (s.total || 0), 0),
+        pix: paidSales.filter(s => s.payment_method === 'pix').reduce((sum, s) => sum + (s.total || 0), 0),
+        boleto: paidSales.filter(s => s.payment_method === 'boleto').reduce((sum, s) => sum + (s.total || 0), 0),
+        pending: data.filter(s => !s.paid).reduce((sum, s) => sum + (s.total || 0), 0)
+      }
+
+      stats.value.pendingSales = data
+        .filter(s => !s.paid)
+        .map(s => ({
+          ...s,
+          client_id: s.client_id,
+          client_name: s.clients?.name || 'Cliente não identificado',
+          product_name: s.products?.name || 'Produto não especificado'
+        }))
+
+      // Top produtos
+      const productMap = {}
+      data.forEach(item => {
+        const id = item.product_id
+        if (!productMap[id]) {
+          productMap[id] = {
+            id,
+            name: item.products?.name || 'Produto',
+            quantity: 0,
+            total: 0
+          }
         }
-      }
-      productMap[id].quantity += item.quantity || 0
-      productMap[id].total += item.total || 0
-    })
+        productMap[id].quantity += item.quantity || 0
+        productMap[id].total += item.total || 0
+      })
 
-    stats.value.topProducts = Object.values(productMap)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
+      stats.value.topProducts = Object.values(productMap)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5)
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('Erro ao carregar vendas:', err)
+    return { success: false, error: err.message }
   }
 }
 
-const loadMetrics = async (dateRange) => {
-  // Calculate efficiency
-  if (stats.value.totalProduced > 0) {
-    metrics.value.efficiency = ((stats.value.totalProduced - stats.value.totalLoss) / stats.value.totalProduced * 100).toFixed(1)
-  }
-
-  // Calculate average product value
-  if (stats.value.totalSalesCount > 0) {
-    metrics.value.avgProductValue = stats.value.totalSales / stats.value.totalSalesCount
-  }
-
-  // Calculate unique clients (you'll need to implement this based on your data)
-  metrics.value.uniqueClients = await calculateUniqueClients(dateRange)
-
-  // Calculate sales trend (simplified - you might want to compare with previous period)
-  metrics.value.salesTrend = await calculateSalesTrend(dateRange)
-}
-
-const calculateUniqueClients = async (dateRange) => {
-  // Implement based on your client data structure
-  return Math.floor(Math.random() * 20) + 5 // Placeholder
-}
-
-const calculateSalesTrend = async (dateRange) => {
-  // Implement comparison with previous period
-  return 12.5 // Placeholder - 12.5% growth
-}
-
-// Real-time updates
-const setupRealtimeSubscription = () => {
-  realtimeSubscription = supabase
-    .channel('dashboard-changes')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'sales' },
-      () => {
-        // Invalidate cache and reload
-        cachedData.value = null
-        loadData()
-      }
-    )
-    .on('postgres_changes',
+// Setup Real-time
+const setupRealtime = () => {
+  realtimeChannel = supabase
+    .channel('dashboard-realtime')
+    .on(
+      'postgres_changes',
       { event: '*', schema: 'public', table: 'production' },
-      () => {
-        cachedData.value = null
-        loadData()
+      (payload) => {
+        console.log('Produção atualizada:', payload)
+        loadAllData()
       }
     )
-    .subscribe()
-}
-
-// Export functions
-const exportPaymentReport = () => {
-  const data = {
-    period: periodLabel.value,
-    date: new Date().toLocaleDateString('pt-BR'),
-    paymentMethods: paymentMethods.value,
-    totalSales: stats.value.totalSales
-  }
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `relatorio-pagamentos-${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-const exportPendingReport = () => {
-  const data = {
-    period: periodLabel.value,
-    date: new Date().toLocaleDateString('pt-BR'),
-    pendingSales: stats.value.pendingSales,
-    totalPending: stats.value.salesByPayment.pending
-  }
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `relatorio-pendentes-${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-const notifyClients = () => {
-  // Implement client notification logic
-  alert(`Notificando ${stats.value.pendingSales.length} clientes sobre pagamentos pendentes...`)
-}
-
-// Event handlers
-const handlePeriodChange = () => {
-  cachedData.value = null
-  loadData()
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'sales' },
+      (payload) => {
+        console.log('Venda atualizada:', payload)
+        loadAllData()
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Realtime conectado com sucesso!')
+      }
+      if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Erro no canal realtime')
+      }
+    })
 }
 
 // Lifecycle
 onMounted(() => {
   updateDateTime()
   timeInterval = setInterval(updateDateTime, 1000)
-  loadData()
-  setupRealtimeSubscription()
+  loadAllData()
+  setupRealtime()
 })
 
 onUnmounted(() => {
   if (timeInterval) {
     clearInterval(timeInterval)
   }
-  if (realtimeSubscription) {
-    realtimeSubscription.unsubscribe()
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel)
   }
-  loadData.cancel()
 })
 </script>
 
