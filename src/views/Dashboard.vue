@@ -4,7 +4,7 @@
       <!-- Header com Filtros -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between">
         <div class="flex items-center space-x-4">
-          <img src="/natural-fruit-logo-192.jpg" alt="Natural Fruit" class="w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg border-4 border-primary-200">
+          <img src="/logo-192.jpg" alt="Natural Fruit" class="w-20 h-20 md:w-24 md:h-24 rounded-2xl shadow-lg border-4 border-primary-200">
           <div>
             <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h2>
             <p class="text-gray-600 mt-1">Bem-vindo, {{ authStore.userName }}!</p>
