@@ -107,7 +107,7 @@ const toggleMenu = () => {
 const menuItems = computed(() => {
   const items = [
     { path: '/', name: 'Dashboard', icon: '📊' },
-    { path: '/materia-prima', name: 'Matéria-Prima', icon: '📦' },
+    { path: '/estoque', name: 'Estoque', icon: '📦' },
     { path: '/producao', name: 'Produção', icon: '🏭' },
     { path: '/vendas', name: 'Vendas', icon: '💰' },
     { path: '/clientes', name: 'Clientes', icon: '👥' },
@@ -127,7 +127,7 @@ const menuItems = computed(() => {
 
 const bottomMenuItems = computed(() => [
   { path: '/', name: 'Início', icon: '📊' },
-  { path: '/producao', name: 'Produção', icon: '🏭' },
+  { path: '/estoque', name: 'Estoque', icon: '📦' },
   { path: '/vendas', name: 'Vendas', icon: '💰' },
   { path: '/despesas', name: 'Despesas', icon: '💸' }
 ])
