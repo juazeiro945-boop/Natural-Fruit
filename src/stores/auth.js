@@ -5,18 +5,20 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     userProfile: null,
-    loading: false
+    loading: false,
+    sessionError: false
   }),
-
+  
   getters: {
-    isAuthenticated: (state) => !!state.user,
+    isAuthenticated: (state) => !!state.user && !state.sessionError,
     isAdmin: (state) => state.userProfile?.role === 'admin',
     userName: (state) => state.userProfile?.name || state.user?.email
   },
-
+  
   actions: {
     async signIn(email, password) {
       this.loading = true
+      this.sessionError = false
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -29,12 +31,13 @@ export const useAuthStore = defineStore('auth', {
         await this.fetchUserProfile()
         return { success: true }
       } catch (error) {
+        console.error('Erro no login:', error)
         return { success: false, error: error.message }
       } finally {
         this.loading = false
       }
     },
-
+    
     async signUp(email, password, name, role = 'user') {
       this.loading = true
       try {
@@ -56,22 +59,33 @@ export const useAuthStore = defineStore('auth', {
         
         return { success: true }
       } catch (error) {
+        console.error('Erro no cadastro:', error)
         return { success: false, error: error.message }
       } finally {
         this.loading = false
       }
     },
-
+    
     async signOut() {
       try {
         await supabase.auth.signOut()
         this.user = null
         this.userProfile = null
+        this.sessionError = false
+        // Limpar storage
+        localStorage.clear()
+        sessionStorage.clear()
       } catch (error) {
         console.error('Erro ao fazer logout:', error)
+        // Mesmo com erro, limpar estado local
+        this.user = null
+        this.userProfile = null
+        this.sessionError = false
+        localStorage.clear()
+        sessionStorage.clear()
       }
     },
-
+    
     async fetchUserProfile() {
       if (!this.user) return
       
@@ -82,19 +96,57 @@ export const useAuthStore = defineStore('auth', {
           .eq('id', this.user.id)
           .single()
         
-        if (error) throw error
+        if (error) {
+          // Se erro de autenticação, marcar sessão como inválida
+          if (error.message.includes('JWT') || error.message.includes('token')) {
+            this.sessionError = true
+            await this.signOut()
+            return
+          }
+          throw error
+        }
+        
         this.userProfile = data
       } catch (error) {
         console.error('Erro ao buscar perfil:', error)
+        this.sessionError = true
       }
     },
-
+    
     async checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        this.user = session.user
-        await this.fetchUserProfile()
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Erro ao verificar sessão:', error)
+          this.sessionError = true
+          this.user = null
+          this.userProfile = null
+          return
+        }
+        
+        if (session) {
+          this.user = session.user
+          await this.fetchUserProfile()
+        } else {
+          this.user = null
+          this.userProfile = null
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        this.sessionError = true
+        this.user = null
+        this.userProfile = null
       }
+    },
+    
+    // Método para forçar logout em caso de erro
+    forceLogout() {
+      this.user = null
+      this.userProfile = null
+      this.sessionError = false
+      localStorage.clear()
+      sessionStorage.clear()
     }
   }
 })
