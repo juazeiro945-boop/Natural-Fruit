@@ -11,8 +11,28 @@ export const useAuthStore = defineStore('auth', {
   
   getters: {
     isAuthenticated: (state) => !!state.user && !state.sessionError,
-    isAdmin: (state) => state.userProfile?.role === 'admin',
-    userName: (state) => state.userProfile?.name || state.user?.email
+    
+    // Getters para tipos de usuário
+    isAdmin: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    isEscritorio: (state) => state.userProfile?.tipo_usuario === 'escritorio',
+    isVendedor: (state) => state.userProfile?.tipo_usuario === 'vendedor',
+    
+    // Permissões de acesso
+    canViewFinanceiro: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canViewEstoque: (state) => ['administrador', 'escritorio'].includes(state.userProfile?.tipo_usuario),
+    canViewVendas: (state) => ['administrador', 'escritorio', 'vendedor'].includes(state.userProfile?.tipo_usuario),
+    canManageUsers: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canManageProducts: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    
+    userName: (state) => state.userProfile?.name || state.user?.email,
+    userType: (state) => {
+      const tipos = {
+        'administrador': 'Administrador',
+        'escritorio': 'Escritório',
+        'vendedor': 'Vendedor'
+      }
+      return tipos[state.userProfile?.tipo_usuario] || 'Usuário'
+    }
   },
   
   actions: {
@@ -29,6 +49,13 @@ export const useAuthStore = defineStore('auth', {
         
         this.user = data.user
         await this.fetchUserProfile()
+        
+        // Verificar se usuário está ativo
+        if (!this.userProfile?.ativo) {
+          await this.signOut()
+          return { success: false, error: 'Usuário inativo. Contate o administrador.' }
+        }
+        
         return { success: true }
       } catch (error) {
         console.error('Erro no login:', error)
@@ -38,7 +65,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    async signUp(email, password, name, role = 'user') {
+    async signUp(email, password, name, tipo_usuario = 'escritorio', telefone = '') {
       this.loading = true
       try {
         const { data, error } = await supabase.auth.signUp({
@@ -52,7 +79,14 @@ export const useAuthStore = defineStore('auth', {
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
-            { id: data.user.id, name, role }
+            { 
+              id: data.user.id, 
+              name, 
+              email,
+              tipo_usuario,
+              telefone,
+              ativo: true
+            }
           ])
         
         if (profileError) throw profileError
@@ -72,12 +106,10 @@ export const useAuthStore = defineStore('auth', {
         this.user = null
         this.userProfile = null
         this.sessionError = false
-        // Limpar storage
         localStorage.clear()
         sessionStorage.clear()
       } catch (error) {
         console.error('Erro ao fazer logout:', error)
-        // Mesmo com erro, limpar estado local
         this.user = null
         this.userProfile = null
         this.sessionError = false
@@ -97,7 +129,6 @@ export const useAuthStore = defineStore('auth', {
           .single()
         
         if (error) {
-          // Se erro de autenticação, marcar sessão como inválida
           if (error.message.includes('JWT') || error.message.includes('token')) {
             this.sessionError = true
             await this.signOut()
@@ -140,7 +171,6 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    // Método para forçar logout em caso de erro
     forceLogout() {
       this.user = null
       this.userProfile = null
