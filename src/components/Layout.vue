@@ -106,7 +106,8 @@ const toggleMenu = () => {
 
 // Itens do menu com permissões
 const menuItems = [
-  { path: '/', name: 'Dashboard', icon: '📊', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/', name: 'Dashboard', icon: '📊', roles: ['administrador', 'escritorio'] },
+  { path: '/vendedor', name: 'Pedidos', icon: '📦', roles: ['vendedor'] },
   { path: '/estoque', name: 'Estoque', icon: '📦', roles: ['administrador', 'escritorio'] },
   { path: '/producao', name: 'Produção', icon: '🏭', roles: ['administrador', 'escritorio'] },
   { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
@@ -114,7 +115,7 @@ const menuItems = [
   { path: '/produtos', name: 'Produtos', icon: '🍎', roles: ['administrador'] },
   { path: '/despesas', name: 'Despesas', icon: '💸', roles: ['administrador'] },
   { path: '/perdas', name: 'Perdas', icon: '📉', roles: ['administrador'] },
-  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio'] },
+  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio', 'vendedor'] },
   { path: '/relatorios', name: 'Relatórios', icon: '📈', roles: ['administrador'] },
   { path: '/configuracoes', name: 'Configurações', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
 ]
@@ -126,9 +127,10 @@ const filteredMenuItems = computed(() => {
 })
 
 const bottomMenuItems = [
-  { path: '/', name: 'Início', icon: '📊', roles: ['administrador', 'escritorio', 'vendedor'] },
-  { path: '/estoque', name: 'Estoque', icon: '📦', roles: ['administrador', 'escritorio'] },
+  { path: '/', name: 'Início', icon: '📊', roles: ['administrador', 'escritorio'] },
+  { path: '/vendedor', name: 'Pedidos', icon: '📦', roles: ['vendedor'] },
   { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio', 'vendedor'] },
   { path: '/configuracoes', name: 'Config', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
 ]
 
