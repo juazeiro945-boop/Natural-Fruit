@@ -65,7 +65,7 @@ const routes = [
     path: '/trocas',
     name: 'Trocas',
     component: () => import('../views/Trocas.vue'),
-    meta: { requiresAuth: true, roles: ['administrador', 'escritorio'] }
+    meta: { requiresAuth: true, roles: ['administrador', 'escritorio', 'vendedor'] }
   },
   {
     path: '/relatorios',
@@ -101,16 +101,13 @@ router.beforeEach(async (to, from, next) => {
       return next('/login')
     }
     
-    // Redirecionar vendedor para seu dashboard específico
     if (to.path === '/' && authStore.isVendedor) {
       return next('/vendedor')
     }
     
-    // Verificar permissões por tipo de usuário
     if (to.meta.roles && authStore.userProfile) {
       const hasPermission = to.meta.roles.includes(authStore.userProfile.tipo_usuario)
       if (!hasPermission) {
-        // Redirecionar vendedor para seu dashboard
         if (authStore.isVendedor) {
           return next('/vendedor')
         }
@@ -119,7 +116,6 @@ router.beforeEach(async (to, from, next) => {
     }
     
     if (to.path === '/login' && authStore.isAuthenticated) {
-      // Redirecionar vendedor para seu dashboard
       if (authStore.isVendedor) {
         return next('/vendedor')
       }
