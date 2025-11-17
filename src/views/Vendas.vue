@@ -417,60 +417,115 @@ const generateReceipt = async (sale) => {
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
   
+  // Header com logo
   doc.setFillColor(...primaryColor)
-  doc.rect(0, 0, 210, 35, 'F')
+  doc.rect(0, 0, 210, 40, 'F')
   
+  // Tentar adicionar logo
   try {
     const img = new Image()
-    img.src = '/logo.png'
+    img.src = '/natural-fruit-logo-192.jpg'
     await new Promise((resolve, reject) => {
       img.onload = resolve
       img.onerror = reject
     })
-    doc.addImage(img, 'PNG', 15, 8, 20, 20)
+    doc.addImage(img, 'JPEG', 85, 5, 40, 30)
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
   }
   
-  doc.setTextColor(255, 255, 255)
+  // DADOS DA EMPRESA NO HEADER (onde estava o texto)
+  doc.setTextColor(...darkGray)
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('FRUIT NATURAL', 15, 50)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text('CNPJ: 60.127.371/0001-60', 15, 56)
+  doc.text('Juazeiro, Bahia, Brasil', 15, 61)
+  doc.text('Telefone: (74) 99999-9999', 15, 66)
+  
+  // Número do recibo e tipo de venda no canto direito
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
-  doc.text('Natural Fruit - Processamento de Frutas', 40, 13)
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.text('Juazeiro, Bahia, Brasil', 40, 19)
-  doc.text('Telefone: (74) 99999-9999', 40, 24)
-  
-  doc.setFontSize(12)
-  doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(sale.id).slice(-8).toUpperCase()}`
-  doc.text(receiptNumber, 210 - 15, 15, { align: 'right' })
+  doc.text(receiptNumber, 210 - 15, 50, { align: 'right' })
   doc.setFontSize(10)
   const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
-  doc.text(saleTypeText, 210 - 15, 22, { align: 'right' })
+  doc.text(saleTypeText, 210 - 15, 57, { align: 'right' })
   
+  // Linha separadora
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
-  doc.line(15, 40, 195, 40)
+  doc.line(15, 72, 195, 72)
   
+  // TÍTULO "RECIBO DE VENDA" CENTRALIZADO NA ÁREA BRANCA
+  doc.setTextColor(...darkGray)
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('RECIBO DE VENDA', 105, 82, { align: 'center' })
+  
+  // DATA DA VENDA (mantém no canto)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DATA DA VENDA', 15, 92)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(formatDate(sale.date), 15, 99)
+  doc.text(formatDateTime(sale.created_at || sale.date), 15, 104)
+  
+  // DADOS DO CLIENTE (subiu para onde estava os dados da empresa)
+  doc.setFillColor(245, 245, 245)
+  doc.rect(15, 110, 180, 35, 'F')
+  doc.setTextColor(...darkGray)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DADOS DO CLIENTE', 20, 118)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 125)
+  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 130)
+  if (sale.clients?.email) doc.text(`Email: ${sale.clients.email}`, 20, 135)
+  if (sale.clients?.address) doc.text(`Endereço: ${sale.clients.address}`, 20, 140)
+  
+  // DETALHES DA VENDA
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text('DETALHES DA VENDA', 15, 155)
+  
+  // Cabeçalho da tabela
+  doc.setFillColor(...primaryColor)
+  doc.rect(15, 160, 180, 10, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.text('PRODUTO', 20, 166)
+  doc.text('QTD', 120, 166)
+  doc.text('VALOR UNIT.', 145, 166)
+  doc.text('TOTAL', 190, 166, { align: 'right' })
+  
+  // Dados do produto
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
-  doc.text(sale.products?.name || 'Produto', 20, 146)
-  doc.text(String(sale.quantity), 120, 146)
-  doc.text(formatCurrency(sale.unit_price || sale.total / sale.quantity), 145, 146)
-  doc.text(formatCurrency(sale.total), 190, 146, { align: 'right' })
+  doc.text(sale.products?.name || 'Produto', 20, 176)
+  doc.text(String(sale.quantity), 120, 176)
+  doc.text(formatCurrency(sale.unit_price || sale.total / sale.quantity), 145, 176)
+  doc.text(formatCurrency(sale.total), 190, 176, { align: 'right' })
   
+  // Linha separadora
   doc.setDrawColor(...lightGray)
   doc.setLineWidth(0.3)
-  doc.line(15, 150, 195, 150)
+  doc.line(15, 180, 195, 180)
   
-  const yTotal = 160
+  // TOTAIS
+  const yTotal = 190
   doc.setFont('helvetica', 'normal')
   doc.text('Subtotal:', 145, yTotal)
   doc.text(formatCurrency(sale.total), 190, yTotal, { align: 'right' })
   doc.text('Descontos:', 145, yTotal + 6)
   doc.text(formatCurrency(0), 190, yTotal + 6, { align: 'right' })
   
+  // Total final destacado
   doc.setFillColor(...primaryColor)
   doc.rect(140, yTotal + 12, 55, 12, 'F')
   doc.setTextColor(255, 255, 255)
@@ -479,6 +534,7 @@ const generateReceipt = async (sale) => {
   doc.text('TOTAL:', 145, yTotal + 20)
   doc.text(formatCurrency(sale.total), 190, yTotal + 20, { align: 'right' })
   
+  // FORMA DE PAGAMENTO
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
@@ -488,6 +544,7 @@ const generateReceipt = async (sale) => {
   doc.text(`Método: ${getPaymentLabel(sale.payment_method)}`, 15, yTotal + 37)
   doc.text(`Status: ${sale.paid ? 'PAGO ✓' : 'PENDENTE'}`, 15, yTotal + 44)
   
+  // OBSERVAÇÕES
   if (sale.notes) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
@@ -498,6 +555,7 @@ const generateReceipt = async (sale) => {
     doc.text(splitNotes, 15, yTotal + 62)
   }
   
+  // RODAPÉ
   const footerY = 270
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
@@ -506,10 +564,11 @@ const generateReceipt = async (sale) => {
   doc.setFontSize(8)
   doc.setFont('helvetica', 'italic')
   doc.text('Obrigado pela preferência!', 105, footerY + 7, { align: 'center' })
-  doc.text('Natural Fruit - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
+  doc.text('Fruit Natural - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
   doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
   
-  const fileName = `recibo-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
+  // Salvar PDF
+  const fileName = `recibo-fruit-natural-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
 }
 
@@ -564,41 +623,3 @@ onMounted(() => {
   }
 }
 </style>
-  doc.setFontSize(16)
-  doc.setFont('helvetica', 'bold')
-  doc.text('RECIBO DE VENDA', 105, 50, { align: 'center' })
-  
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DATA DA VENDA', 15, 60)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(formatDate(sale.date), 15, 67)
-  doc.text(formatDateTime(sale.created_at || sale.date), 15, 72)
-  
-  doc.setFillColor(245, 245, 245)
-  doc.rect(15, 80, 180, 35, 'F')
-  doc.setTextColor(...darkGray)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DADOS DO CLIENTE', 20, 88)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 95)
-  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 100)
-  if (sale.clients?.email) doc.text(`Email: ${sale.clients.email}`, 20, 105)
-  if (sale.clients?.address) doc.text(`Endereço: ${sale.clients.address}`, 20, 110)
-  
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DETALHES DA VENDA', 15, 125)
-  doc.setFillColor(...primaryColor)
-  doc.rect(15, 130, 180, 10, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.text('PRODUTO', 20, 136)
-  doc.text('QTD', 120, 136)
-  doc.text('VALOR UNIT.', 145, 136)
-  doc.text('TOTAL', 175, 136, { align: 'right' })
-  doc.setTextColor(...darkGray)
