@@ -17,13 +17,13 @@ const routes = [
     path: '/producao',
     name: 'Producao',
     component: () => import('../views/Producao.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador', 'escritorio'] }
   },
   {
     path: '/estoque',
     name: 'Estoque',
     component: () => import('../views/Estoque.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador', 'escritorio'] }
   },
   {
     path: '/vendas',
@@ -35,37 +35,37 @@ const routes = [
     path: '/clientes',
     name: 'Clientes',
     component: () => import('../views/Clientes.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador', 'escritorio'] }
   },
   {
     path: '/produtos',
     name: 'Produtos',
     component: () => import('../views/Produtos.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, roles: ['administrador'] }
   },
   {
     path: '/despesas',
     name: 'Despesas',
     component: () => import('../views/Despesas.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador'] }
   },
   {
     path: '/perdas',
     name: 'Perdas',
     component: () => import('../views/Perdas.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador'] }
   },
   {
     path: '/trocas',
     name: 'Trocas',
     component: () => import('../views/Trocas.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador', 'escritorio'] }
   },
   {
     path: '/relatorios',
     name: 'Relatorios',
     component: () => import('../views/Relatorios.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['administrador'] }
   },
   {
     path: '/configuracoes',
@@ -95,8 +95,12 @@ router.beforeEach(async (to, from, next) => {
       return next('/login')
     }
     
-    if (to.meta.requiresAdmin && !authStore.isAdmin) {
-      return next('/')
+    // Verificar permissões por tipo de usuário
+    if (to.meta.roles && authStore.userProfile) {
+      const hasPermission = to.meta.roles.includes(authStore.userProfile.tipo_usuario)
+      if (!hasPermission) {
+        return next('/')
+      }
     }
     
     if (to.path === '/login' && authStore.isAuthenticated) {
