@@ -11,7 +11,7 @@
                 <span class="text-white">Natural</span> 
                 <span class="text-white">fruit</span>
               </h1>
-              <p class="text-primary-100 text-xs font-medium">Gestão de Produção</p>
+              <p class="text-primary-100 text-xs font-medium">{{ authStore.userType }}</p>
             </div>
           </div>
           <button @click="toggleMenu" class="text-white p-2 md:hidden">
@@ -27,7 +27,7 @@
     <div v-if="showMenu" class="md:hidden bg-white shadow-lg">
       <nav class="px-4 py-2">
         <router-link
-          v-for="item in menuItems"
+          v-for="item in filteredMenuItems"
           :key="item.path"
           :to="item.path"
           @click="showMenu = false"
@@ -45,7 +45,7 @@
       <aside class="hidden md:block w-64 bg-white shadow-lg min-h-screen">
         <nav class="p-4 space-y-2">
           <router-link
-            v-for="item in menuItems"
+            v-for="item in filteredMenuItems"
             :key="item.path"
             :to="item.path"
             class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
@@ -77,7 +77,7 @@
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t">
       <div class="flex justify-around">
         <router-link
-          v-for="item in bottomMenuItems"
+          v-for="item in filteredBottomMenuItems"
           :key="item.path"
           :to="item.path"
           class="flex flex-col items-center py-2 px-3 flex-1"
@@ -104,33 +104,38 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-const menuItems = computed(() => {
-  const items = [
-    { path: '/', name: 'Dashboard', icon: '📊' },
-    { path: '/estoque', name: 'Estoque', icon: '📦' },
-    { path: '/producao', name: 'Produção', icon: '🏭' },
-    { path: '/vendas', name: 'Vendas', icon: '💰' },
-    { path: '/clientes', name: 'Clientes', icon: '👥' },
-    { path: '/despesas', name: 'Despesas', icon: '💸' },
-    { path: '/perdas', name: 'Perdas', icon: '📉' },
-    { path: '/trocas', name: 'Trocas', icon: '🔄' },
-    { path: '/relatorios', name: 'Relatórios', icon: '📈' },
-    { path: '/configuracoes', name: 'Configurações', icon: '⚙️' }
-  ]
+// Itens do menu com permissões
+const menuItems = [
+  { path: '/', name: 'Dashboard', icon: '📊', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/estoque', name: 'Estoque', icon: '📦', roles: ['administrador', 'escritorio'] },
+  { path: '/producao', name: 'Produção', icon: '🏭', roles: ['administrador', 'escritorio'] },
+  { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/clientes', name: 'Clientes', icon: '👥', roles: ['administrador', 'escritorio'] },
+  { path: '/produtos', name: 'Produtos', icon: '🍎', roles: ['administrador'] },
+  { path: '/despesas', name: 'Despesas', icon: '💸', roles: ['administrador'] },
+  { path: '/perdas', name: 'Perdas', icon: '📉', roles: ['administrador'] },
+  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio'] },
+  { path: '/relatorios', name: 'Relatórios', icon: '📈', roles: ['administrador'] },
+  { path: '/configuracoes', name: 'Configurações', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
+]
 
-  if (authStore.isAdmin) {
-    items.splice(5, 0, { path: '/produtos', name: 'Produtos', icon: '🍎' })
-  }
-
-  return items
+// Filtrar menu baseado nas permissões do usuário
+const filteredMenuItems = computed(() => {
+  const userType = authStore.userProfile?.tipo_usuario
+  return menuItems.filter(item => item.roles.includes(userType))
 })
 
-const bottomMenuItems = computed(() => [
-  { path: '/', name: 'Início', icon: '📊' },
-  { path: '/estoque', name: 'Estoque', icon: '📦' },
-  { path: '/vendas', name: 'Vendas', icon: '💰' },
-  { path: '/despesas', name: 'Despesas', icon: '💸' }
-])
+const bottomMenuItems = [
+  { path: '/', name: 'Início', icon: '📊', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/estoque', name: 'Estoque', icon: '📦', roles: ['administrador', 'escritorio'] },
+  { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
+  { path: '/configuracoes', name: 'Config', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
+]
+
+const filteredBottomMenuItems = computed(() => {
+  const userType = authStore.userProfile?.tipo_usuario
+  return bottomMenuItems.filter(item => item.roles.includes(userType))
+})
 
 const handleLogout = async () => {
   await authStore.signOut()
@@ -144,10 +149,5 @@ const handleLogout = async () => {
 .logo-text {
   font-family: 'Dancing Script', 'Brush Script MT', cursive;
   letter-spacing: 1px;
-}
-
-.text-natural-green {
-  color: #4CAF50;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 </style>
