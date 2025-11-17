@@ -421,20 +421,43 @@ const generateReceipt = async (sale) => {
   doc.setFillColor(...primaryColor)
   doc.rect(0, 0, 210, 40, 'F')
   
-  // Tentar adicionar logo
+  // Tentar adicionar logo REDONDA
   try {
     const img = new Image()
+    img.crossOrigin = 'Anonymous'
     img.src = '/natural-fruit-logo-192.jpg'
+    
     await new Promise((resolve, reject) => {
       img.onload = resolve
       img.onerror = reject
     })
-    doc.addImage(img, 'JPEG', 85, 5, 40, 30)
+    
+    // Criar canvas para fazer a imagem redonda
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const size = 120 // Tamanho da imagem circular
+    
+    canvas.width = size
+    canvas.height = size
+    
+    // Desenhar círculo e recortar imagem
+    ctx.beginPath()
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+    ctx.closePath()
+    ctx.clip()
+    
+    // Desenhar a imagem dentro do círculo
+    ctx.drawImage(img, 0, 0, size, size)
+    
+    // Converter canvas para imagem e adicionar no PDF
+    const circularImage = canvas.toDataURL('image/png')
+    doc.addImage(circularImage, 'PNG', 85, 5, 40, 40) // Logo redonda centralizada
+    
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
   }
   
-  // DADOS DA EMPRESA NO HEADER (onde estava o texto)
+  // DADOS DA EMPRESA NO HEADER
   doc.setTextColor(...darkGray)
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
@@ -474,7 +497,7 @@ const generateReceipt = async (sale) => {
   doc.text(formatDate(sale.date), 15, 99)
   doc.text(formatDateTime(sale.created_at || sale.date), 15, 104)
   
-  // DADOS DO CLIENTE (subiu para onde estava os dados da empresa)
+  // DADOS DO CLIENTE
   doc.setFillColor(245, 245, 245)
   doc.rect(15, 110, 180, 35, 'F')
   doc.setTextColor(...darkGray)
@@ -554,6 +577,23 @@ const generateReceipt = async (sale) => {
     const splitNotes = doc.splitTextToSize(sale.notes, 180)
     doc.text(splitNotes, 15, yTotal + 62)
   }
+  
+  // RODAPÉ
+  const footerY = 270
+  doc.setDrawColor(...primaryColor)
+  doc.setLineWidth(0.5)
+  doc.line(15, footerY, 195, footerY)
+  doc.setTextColor(...lightGray)
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Obrigado pela preferência!', 105, footerY + 7, { align: 'center' })
+  doc.text('Fruit Natural - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
+  doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
+  
+  // Salvar PDF
+  const fileName = `recibo-fruit-natural-${receiptNumber}-${Date.now()}.pdf`
+  doc.save(fileName)
+}
   
   // RODAPÉ
   const footerY = 270
