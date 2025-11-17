@@ -1,21 +1,16 @@
 <template>
   <Layout>
     <div class="space-y-6 pb-20 md:pb-6">
-      <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Pedidos para Entrega</h2>
           <p class="text-gray-600 mt-1">Gerencie suas entregas e novos pedidos</p>
         </div>
         <button @click="showModalNovoPedido = true" class="w-full md:w-auto btn-primary">
-          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          Novo Pedido
+          ➕ Novo Pedido
         </button>
       </div>
 
-      <!-- Filtros -->
       <div class="card">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -38,7 +33,6 @@
         </div>
       </div>
 
-      <!-- Contador de Pedidos -->
       <div class="grid grid-cols-3 gap-3 md:gap-4">
         <div class="card text-center">
           <div class="text-3xl mb-2">🕐</div>
@@ -57,13 +51,11 @@
         </div>
       </div>
 
-      <!-- Cards de Pedidos -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
-          <!-- Header do Card -->
           <div class="flex justify-between items-start mb-4 pb-3 border-b">
             <div>
-              <span class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(-6).toUpperCase() }}</span>
+              <span class="text-xs text-gray-500">Pedido</span>
               <p class="font-bold text-lg text-gray-900 mt-1">{{ pedido.clients?.name }}</p>
             </div>
             <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-3 py-1 rounded-full font-semibold">
@@ -71,7 +63,6 @@
             </span>
           </div>
 
-          <!-- Informações do Pedido -->
           <div class="space-y-3 mb-4">
             <div class="flex items-start space-x-2">
               <span class="text-lg">📦</span>
@@ -123,7 +114,6 @@
             </div>
           </div>
 
-          <!-- Informações de Entrega/Cancelamento -->
           <div v-if="pedido.status_entrega !== 'pendente'" class="bg-gray-50 rounded-lg p-3 mb-4">
             <p class="text-xs text-gray-500 mb-1">
               {{ pedido.status_entrega === 'entregue' ? '✅ Entregue em:' : '❌ Cancelado em:' }}
@@ -137,7 +127,6 @@
             </p>
           </div>
 
-          <!-- Botões de Ação -->
           <div v-if="pedido.status_entrega === 'pendente'" class="flex gap-2">
             <button @click="confirmarEntrega(pedido)" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors">
               ✅ Entregue
@@ -149,7 +138,6 @@
         </div>
       </div>
 
-      <!-- Mensagem se não houver pedidos -->
       <div v-if="pedidos.length === 0" class="card text-center py-12">
         <div class="text-gray-400 mb-4">
           <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,16 +148,11 @@
         <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou aguarde novos pedidos</p>
       </div>
 
-      <!-- Modal de Cancelamento -->
       <div v-if="showModalCancelamento" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900">Cancelar Pedido</h3>
-            <button @click="closeModalCancelamento" class="text-gray-500 hover:text-gray-700">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+            <button @click="closeModalCancelamento" class="text-gray-500 hover:text-gray-700">×</button>
           </div>
 
           <div class="mb-4 p-4 bg-red-50 rounded-lg">
@@ -179,7 +162,7 @@
 
           <form @submit.prevent="confirmarCancelamento" class="space-y-4">
             <div>
-              <label class="label">Motivo do Cancelamento *</label>
+              <label class="label">Motivo do Cancelamento</label>
               <select v-model="formCancelamento.motivo" required class="input-field">
                 <option value="">Selecione o motivo</option>
                 <option value="Cliente não encontrado">Cliente não encontrado</option>
@@ -192,40 +175,31 @@
 
             <div>
               <label class="label">Observações</label>
-              <textarea v-model="formCancelamento.observacao" class="input-field" rows="3" placeholder="Detalhes adicionais..."></textarea>
+              <textarea v-model="formCancelamento.observacao" class="input-field" rows="3" placeholder="Detalhes adicionais"></textarea>
             </div>
 
             <div class="flex gap-3">
-              <button type="button" @click="closeModalCancelamento" class="flex-1 btn-outline">
-                Voltar
-              </button>
-              <button type="submit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold">
-                Confirmar Cancelamento
-              </button>
+              <button type="button" @click="closeModalCancelamento" class="flex-1 btn-outline">Voltar</button>
+              <button type="submit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold">Confirmar</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- Modal Novo Pedido -->
       <div v-if="showModalNovoPedido" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50">
-        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-md max-h-screen md:max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-md max-h-screen md:max-h-90vh overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
             <h3 class="text-lg md:text-xl font-bold text-white">Novo Pedido</h3>
-            <button @click="closeModalNovoPedido" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
+            <button @click="closeModalNovoPedido" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors">×</button>
           </div>
           <form @submit.prevent="salvarNovoPedido" class="p-4 md:p-6 space-y-4">
             <div>
-              <label class="label">Data *</label>
+              <label class="label">Data</label>
               <input v-model="formPedido.date" type="date" required class="input-field" />
             </div>
 
             <div>
-              <label class="label">Cliente *</label>
+              <label class="label">Cliente</label>
               <select v-model="formPedido.client_id" required class="input-field">
                 <option value="">Selecione um cliente</option>
                 <option v-for="client in clientes" :key="client.id" :value="client.id">{{ client.name }}</option>
@@ -233,7 +207,7 @@
             </div>
 
             <div>
-              <label class="label">Produto *</label>
+              <label class="label">Produto</label>
               <select v-model="formPedido.product_id" required class="input-field" @change="updatePrice">
                 <option value="">Selecione um produto</option>
                 <option v-for="product in produtos" :key="product.id" :value="product.id">{{ product.name }} - {{ formatCurrency(product.price) }}</option>
@@ -241,12 +215,12 @@
             </div>
 
             <div>
-              <label class="label">Quantidade *</label>
+              <label class="label">Quantidade</label>
               <input v-model.number="formPedido.quantity" type="number" min="1" required class="input-field" @input="calculateTotal" />
             </div>
 
             <div>
-              <label class="label">Preço Unitário *</label>
+              <label class="label">Preço Unitário</label>
               <input v-model.number="formPedido.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotal" />
             </div>
 
@@ -256,7 +230,7 @@
             </div>
 
             <div>
-              <label class="label">Forma de Pagamento *</label>
+              <label class="label">Forma de Pagamento</label>
               <select v-model="formPedido.payment_method" required class="input-field">
                 <option value="cash">💵 Dinheiro</option>
                 <option value="pix">📱 PIX</option>
@@ -266,13 +240,11 @@
 
             <div>
               <label class="label">Observações</label>
-              <textarea v-model="formPedido.notes" class="input-field" rows="3" placeholder="Informações adicionais..."></textarea>
+              <textarea v-model="formPedido.notes" class="input-field" rows="3" placeholder="Informações adicionais"></textarea>
             </div>
 
             <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeModalNovoPedido" class="flex-1 btn-outline">
-                Cancelar
-              </button>
+              <button type="button" @click="closeModalNovoPedido" class="flex-1 btn-outline">Cancelar</button>
               <button type="submit" :disabled="loading" class="flex-1 btn-primary">
                 {{ loading ? 'Salvando...' : 'Salvar Pedido' }}
               </button>
@@ -324,7 +296,6 @@ const formPedido = ref({
   status_entrega: 'pendente'
 })
 
-// Estatísticas
 const stats = computed(() => {
   return {
     pendentes: pedidos.value.filter(p => p.status_entrega === 'pendente').length,
@@ -367,7 +338,7 @@ const loadPedidos = async () => {
   try {
     let query = supabase
       .from('sales')
-      .select(`*, clients(name, phone, email, address), products(name, description)`)
+      .select('*, clients(name, phone, email, address), products(name, description)')
       .order('date', { ascending: false })
 
     if (filters.value.date) {
@@ -382,7 +353,6 @@ const loadPedidos = async () => {
 
     if (error) throw error
 
-    // Filtrar por nome do cliente se houver busca
     if (filters.value.cliente) {
       pedidos.value = (data || []).filter(p => 
         p.clients?.name?.toLowerCase().includes(filters.value.cliente.toLowerCase())
@@ -392,7 +362,7 @@ const loadPedidos = async () => {
     }
   } catch (error) {
     console.error('Erro ao carregar pedidos:', error)
-    alert('Erro ao carregar pedidos: ' + error.message)
+    alert('Erro ao carregar pedidos')
   }
 }
 
@@ -419,7 +389,7 @@ const calculateTotal = () => {
 }
 
 const confirmarEntrega = async (pedido) => {
-  if (!confirm(`Confirmar entrega do pedido para ${pedido.clients?.name}?`)) return
+  if (!confirm('Confirmar entrega do pedido?')) return
 
   try {
     const { error } = await supabase
@@ -433,11 +403,11 @@ const confirmarEntrega = async (pedido) => {
 
     if (error) throw error
 
-    alert('✅ Pedido marcado como entregue!')
+    alert('✅ Pedido entregue!')
     await loadPedidos()
   } catch (error) {
-    console.error('Erro ao confirmar entrega:', error)
-    alert('Erro ao confirmar entrega: ' + error.message)
+    console.error('Erro:', error)
+    alert('Erro ao confirmar entrega')
   }
 }
 
@@ -469,8 +439,8 @@ const confirmarCancelamento = async () => {
     closeModalCancelamento()
     await loadPedidos()
   } catch (error) {
-    console.error('Erro ao cancelar pedido:', error)
-    alert('Erro ao cancelar pedido: ' + error.message)
+    console.error('Erro:', error)
+    alert('Erro ao cancelar pedido')
   }
 }
 
@@ -486,12 +456,12 @@ const salvarNovoPedido = async () => {
 
     if (error) throw error
 
-    alert('✅ Pedido criado com sucesso!')
+    alert('✅ Pedido criado!')
     closeModalNovoPedido()
     await loadPedidos()
   } catch (error) {
-    console.error('Erro ao salvar pedido:', error)
-    alert('Erro ao salvar pedido: ' + error.message)
+    console.error('Erro:', error)
+    alert('Erro ao criar pedido')
   } finally {
     loading.value = false
   }
@@ -518,11 +488,7 @@ onMounted(() => {
   loadPedidos()
   loadClientes()
   loadProdutos()
-
-  // Auto-refresh a cada 30 segundos
-  setInterval(() => {
-    loadPedidos()
-  }, 30000)
+  setInterval(() => loadPedidos(), 30000)
 })
 </script>
 
