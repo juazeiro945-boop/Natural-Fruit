@@ -461,7 +461,7 @@ const generateReceipt = async (sale) => {
   doc.setTextColor(...darkGray)
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
-  doc.text('FRUIT NATURAL', 15, 50)
+  doc.text('NATURAL FRUIT', 15, 50)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.text('CNPJ: 60.127.371/0001-60', 15, 56)
