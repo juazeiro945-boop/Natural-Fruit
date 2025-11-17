@@ -68,30 +68,38 @@ export const useAuthStore = defineStore('auth', {
     async signUp(email, password, name, tipo_usuario = 'escritorio', telefone = '') {
       this.loading = true
       try {
+        // IMPORTANTE: options com emailRedirectTo null desabilita confirmação
         const { data, error } = await supabase.auth.signUp({
           email,
-          password
+          password,
+          options: {
+            data: {
+              name: name
+            },
+            emailRedirectTo: null // Desabilita email de confirmação
+          }
         })
         
         if (error) throw error
         
-        // Criar perfil do usuário
+        // Aguardar um pouco para garantir que o trigger criou o perfil
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Atualizar o perfil criado automaticamente pelo trigger
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([
-            { 
-              id: data.user.id, 
-              name, 
-              email,
-              tipo_usuario,
-              telefone,
-              ativo: true
-            }
-          ])
+          .update({ 
+            name, 
+            email,
+            tipo_usuario,
+            telefone,
+            ativo: true
+          })
+          .eq('id', data.user.id)
         
         if (profileError) throw profileError
         
-        return { success: true }
+        return { success: true, userId: data.user.id }
       } catch (error) {
         console.error('Erro no cadastro:', error)
         return { success: false, error: error.message }
