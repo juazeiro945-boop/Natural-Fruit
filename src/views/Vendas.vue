@@ -591,7 +591,7 @@ const generateReceipt = async (sale) => {
   doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
   
   // Salvar PDF
-  const fileName = `recibo-fruit-natural-${receiptNumber}-${Date.now()}.pdf`
+  const fileName = `recibo-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
 }
 
