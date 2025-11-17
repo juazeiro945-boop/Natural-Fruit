@@ -451,7 +451,7 @@ const generateReceipt = async (sale) => {
     
     // Converter canvas para imagem e adicionar no PDF
     const circularImage = canvas.toDataURL('image/png')
-    doc.addImage(circularImage, 'PNG', 85, 5, 40, 40) // Logo redonda centralizada
+    doc.addImage(circularImage, 'PNG', 85, 5, 30, 30) // Logo redonda centralizada
     
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
@@ -577,23 +577,6 @@ const generateReceipt = async (sale) => {
     const splitNotes = doc.splitTextToSize(sale.notes, 180)
     doc.text(splitNotes, 15, yTotal + 62)
   }
-  
-  // RODAPÉ
-  const footerY = 270
-  doc.setDrawColor(...primaryColor)
-  doc.setLineWidth(0.5)
-  doc.line(15, footerY, 195, footerY)
-  doc.setTextColor(...lightGray)
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'italic')
-  doc.text('Obrigado pela preferência!', 105, footerY + 7, { align: 'center' })
-  doc.text('Fruit Natural - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
-  doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
-  
-  // Salvar PDF
-  const fileName = `recibo-fruit-natural-${receiptNumber}-${Date.now()}.pdf`
-  doc.save(fileName)
-}
   
   // RODAPÉ
   const footerY = 270
