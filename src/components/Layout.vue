@@ -49,15 +49,15 @@
           
           <nav class="p-4">
             <router-link
-              v-for="item in filteredMenuItems"
-              :key="item.path"
-              :to="item.path"
+              v-for="item in allowedMenuItems"
+              :key="item.rota"
+              :to="item.rota"
               @click="showMenu = false"
               class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors mb-2"
-              :class="{ 'bg-primary-50 text-primary-600 font-semibold': $route.path === item.path }"
+              :class="{ 'bg-primary-50 text-primary-600 font-semibold': $route.path === item.rota }"
             >
-              <span class="text-2xl">{{ item.icon }}</span>
-              <span class="font-medium">{{ item.name }}</span>
+              <span class="text-2xl">{{ item.icone }}</span>
+              <span class="font-medium">{{ item.nome }}</span>
             </router-link>
 
             <div class="pt-4 border-t mt-4">
@@ -84,14 +84,14 @@
         
         <nav class="p-4 space-y-2">
           <router-link
-            v-for="item in filteredMenuItems"
-            :key="item.path"
-            :to="item.path"
+            v-for="item in allowedMenuItems"
+            :key="item.rota"
+            :to="item.rota"
             class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
-            :class="{ 'bg-primary-50 text-primary-600 font-semibold': $route.path === item.path }"
+            :class="{ 'bg-primary-50 text-primary-600 font-semibold': $route.path === item.rota }"
           >
-            <span class="text-2xl">{{ item.icon }}</span>
-            <span class="font-medium">{{ item.name }}</span>
+            <span class="text-2xl">{{ item.icone }}</span>
+            <span class="font-medium">{{ item.nome }}</span>
           </router-link>
 
           <div class="pt-4 border-t mt-4">
@@ -116,14 +116,14 @@
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t z-30">
       <div class="flex justify-around">
         <router-link
-          v-for="item in filteredBottomMenuItems"
-          :key="item.path"
-          :to="item.path"
+          v-for="item in allowedBottomMenuItems"
+          :key="item.rota"
+          :to="item.rota"
           class="flex flex-col items-center py-2 px-2 flex-1 transition-colors"
-          :class="{ 'text-primary-600': $route.path === item.path, 'text-gray-600': $route.path !== item.path }"
+          :class="{ 'text-primary-600': $route.path === item.rota, 'text-gray-600': $route.path !== item.rota }"
         >
-          <span class="text-2xl">{{ item.icon }}</span>
-          <span class="text-xs mt-1 font-medium">{{ item.name }}</span>
+          <span class="text-2xl">{{ item.icone }}</span>
+          <span class="text-xs mt-1 font-medium">{{ item.nome_curto || item.nome }}</span>
         </router-link>
       </div>
     </nav>
@@ -131,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -143,40 +143,46 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-// Itens do menu com permissões
-const menuItems = [
-  { path: '/', name: 'Dashboard', icon: '📊', roles: ['administrador', 'escritorio'] },
-  { path: '/vendedor', name: 'Pedidos', icon: '📦', roles: ['vendedor'] },
-  { path: '/estoque', name: 'Estoque', icon: '📦', roles: ['administrador', 'escritorio'] },
-  { path: '/producao', name: 'Produção', icon: '🏭', roles: ['administrador', 'escritorio'] },
-  { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
-  { path: '/clientes', name: 'Clientes', icon: '👥', roles: ['administrador', 'escritorio'] },
-  { path: '/produtos', name: 'Produtos', icon: '🍎', roles: ['administrador'] },
-  { path: '/despesas', name: 'Despesas', icon: '💸', roles: ['administrador'] },
-  { path: '/perdas', name: 'Perdas', icon: '📉', roles: ['administrador'] },
-  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio', 'vendedor'] },
-  { path: '/relatorios', name: 'Relatórios', icon: '📈', roles: ['administrador'] },
-  { path: '/configuracoes', name: 'Configurações', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
-]
-
-// Filtrar menu baseado nas permissões do usuário
-const filteredMenuItems = computed(() => {
-  const userType = authStore.userProfile?.tipo_usuario
-  return menuItems.filter(item => item.roles.includes(userType))
+// NOVO: Menu dinâmico baseado nas permissões do banco de dados
+const allowedMenuItems = computed(() => {
+  // Pega as permissões que o usuário tem acesso
+  return authStore.allowedPages || []
 })
 
-const bottomMenuItems = [
-  { path: '/', name: 'Início', icon: '📊', roles: ['administrador', 'escritorio'] },
-  { path: '/vendedor', name: 'Pedidos', icon: '📦', roles: ['vendedor'] },
-  { path: '/vendas', name: 'Vendas', icon: '💰', roles: ['administrador', 'escritorio', 'vendedor'] },
-  { path: '/trocas', name: 'Trocas', icon: '🔄', roles: ['administrador', 'escritorio', 'vendedor'] },
-  { path: '/configuracoes', name: 'Config', icon: '⚙️', roles: ['administrador', 'escritorio', 'vendedor'] }
-]
-
-const filteredBottomMenuItems = computed(() => {
-  const userType = authStore.userProfile?.tipo_usuario
-  return bottomMenuItems.filter(item => item.roles.includes(userType))
+// Menu inferior mobile - pega as principais páginas permitidas
+const allowedBottomMenuItems = computed(() => {
+  const pages = authStore.allowedPages || []
+  
+  // Define nomes curtos para o menu inferior
+  const pagesWithShortNames = pages.map(page => ({
+    ...page,
+    nome_curto: getShortName(page.nome)
+  }))
+  
+  // Prioriza certas páginas para o menu inferior baseado na rota
+  const priority = ['/', '/vendedor', '/vendas', '/trocas', '/configuracoes']
+  const priorityPages = pagesWithShortNames.filter(p => priority.includes(p.rota))
+  
+  // Se não tiver 5 páginas prioritárias, completa com outras
+  if (priorityPages.length < 5) {
+    const otherPages = pagesWithShortNames.filter(p => !priority.includes(p.rota))
+    return [...priorityPages, ...otherPages].slice(0, 5)
+  }
+  
+  return priorityPages.slice(0, 5)
 })
+
+// Função auxiliar para nomes curtos no menu inferior
+const getShortName = (nome) => {
+  const shortNames = {
+    'Dashboard Admin': 'Início',
+    'Dashboard Vendedor': 'Pedidos',
+    'Configurações': 'Config',
+    'Relatórios': 'Reports',
+    'Produção': 'Produção'
+  }
+  return shortNames[nome] || nome
+}
 
 const handleLogout = async () => {
   if (confirm('Deseja realmente sair do sistema?')) {
@@ -184,6 +190,13 @@ const handleLogout = async () => {
     router.push('/login')
   }
 }
+
+// Recarregar permissões ao montar o componente
+onMounted(async () => {
+  if (authStore.isAuthenticated && authStore.userPermissions.length === 0) {
+    await authStore.reloadPermissions()
+  }
+})
 </script>
 
 <style scoped>
