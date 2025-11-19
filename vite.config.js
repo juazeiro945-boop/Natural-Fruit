@@ -8,21 +8,18 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'logo-192.png', 'logo-512.png', 'natural-fruit-logo-192.jpg'],
+      injectRegister: 'inline',
       workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg}'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/, /\.(?:png|jpg|jpeg|svg|ico)$/],
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-v4',
+              cacheName: 'supabase-v5',
               networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 50,
@@ -30,28 +27,6 @@ export default defineConfig({
               },
               cacheableResponse: {
                 statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:css|js)$/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'assets-v4',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 86400
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-v4',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 604800
               }
             }
           }
@@ -96,20 +71,10 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
-    minify: 'terser',
     rollupOptions: {
       output: {
-        manualChunks: undefined,
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
+        manualChunks: undefined
       }
     }
-  },
-  server: {
-    port: 5173
-  },
-  preview: {
-    port: 4173
   }
 })
