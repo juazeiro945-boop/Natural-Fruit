@@ -63,6 +63,9 @@
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex space-x-2">
+                    <button @click="gerenciarPermissoes(usuario)" class="text-green-600 hover:text-green-800" title="Gerenciar Permissões">
+                      🔐
+                    </button>
                     <button @click="editarUsuario(usuario)" class="text-blue-600 hover:text-blue-800" title="Editar">
                       ✏️
                     </button>
@@ -125,16 +128,19 @@
               </div>
             </div>
 
-            <div class="flex gap-2 pt-2 border-t">
-              <button @click="editarUsuario(usuario)" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium">
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t">
+              <button @click="gerenciarPermissoes(usuario)" class="bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium">
+                🔐 Permissões
+              </button>
+              <button @click="editarUsuario(usuario)" class="bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium">
                 ✏️ Editar
               </button>
-              <button @click="resetarSenha(usuario)" class="flex-1 bg-orange-50 text-orange-600 py-2 rounded-lg text-sm font-medium">
+              <button @click="resetarSenha(usuario)" class="bg-orange-50 text-orange-600 py-2 rounded-lg text-sm font-medium">
                 🔑 Senha
               </button>
               <button 
                 @click="toggleStatusUsuario(usuario)" 
-                class="flex-1 py-2 rounded-lg text-sm font-medium"
+                class="py-2 rounded-lg text-sm font-medium"
                 :class="usuario.ativo ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'"
               >
                 {{ usuario.ativo ? '🔒 Desativar' : '🔓 Ativar' }}
@@ -145,7 +151,7 @@
 
         <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p class="text-sm text-blue-800">
-            <strong>ℹ️ Informação:</strong> As senhas mostradas são as cadastradas no sistema.
+            <strong>ℹ️ Informação:</strong> Clique em "🔐 Permissões" para controlar quais páginas cada usuário pode acessar.
           </p>
         </div>
       </div>
@@ -191,9 +197,85 @@
         <h3 class="text-lg font-bold mb-4">Sobre o Sistema</h3>
         <div class="space-y-2 text-sm">
           <p><strong>Nome:</strong> Natural Fruit PWA</p>
-          <p><strong>Versão:</strong> 2.0.0</p>
+          <p><strong>Versão:</strong> 3.0.0</p>
           <p><strong>Desenvolvido para:</strong> Natural Fruit - Gestão de Produção</p>
           <p><strong>Seu perfil:</strong> {{ authStore.userType }}</p>
+          <p><strong>Sistema:</strong> Permissões personalizadas por página</p>
+        </div>
+      </div>
+    </div>
+    <!-- MODAL: Gerenciar Permissões -->
+    <div v-if="showModalPermissoes" class="modal-overlay" @click.self="closeModalPermissoes">
+      <div class="modal-content max-w-4xl">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h3 class="text-xl font-bold">🔐 Gerenciar Permissões</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              Usuário: <strong>{{ usuarioPermissoes?.name }}</strong> ({{ getTipoLabel(usuarioPermissoes?.tipo_usuario) }})
+            </p>
+          </div>
+          <button @click="closeModalPermissoes" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        </div>
+
+        <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p class="text-sm text-yellow-800">
+            <strong>💡 Dica:</strong> Marque as páginas que este usuário poderá acessar. As alterações são salvas automaticamente.
+          </p>
+        </div>
+
+        <div v-if="loadingPermissoes" class="text-center py-8">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p class="mt-2 text-gray-600">Carregando permissões...</p>
+        </div>
+
+        <div v-else class="space-y-4 max-h-96 overflow-y-auto">
+          <div 
+            v-for="pagina in paginasDisponiveis" 
+            :key="pagina.id"
+            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div class="flex items-center space-x-3 flex-1">
+              <span class="text-3xl">{{ pagina.icone }}</span>
+              <div>
+                <p class="font-semibold text-gray-900">{{ pagina.nome }}</p>
+                <p class="text-sm text-gray-600">{{ pagina.descricao }}</p>
+                <p class="text-xs text-gray-500 mt-1">
+                  <strong>Rota:</strong> {{ pagina.rota }}
+                  <span v-if="pagina.requer_admin" class="ml-2 text-orange-600">👑 Requer Admin</span>
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  :checked="temPermissao(pagina.id)"
+                  @change="togglePermissao(pagina)"
+                  :disabled="pagina.requer_admin && usuarioPermissoes?.tipo_usuario !== 'administrador'"
+                  class="sr-only peer"
+                />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+              <span class="text-sm font-medium" :class="temPermissao(pagina.id) ? 'text-green-600' : 'text-gray-400'">
+                {{ temPermissao(pagina.id) ? '✅ Permitido' : '❌ Bloqueado' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800 mb-2"><strong>ℹ️ Observações:</strong></p>
+          <ul class="text-sm text-blue-700 space-y-1 ml-4 list-disc">
+            <li>Páginas marcadas com 👑 só podem ser acessadas por administradores</li>
+            <li>As alterações são salvas automaticamente ao marcar/desmarcar</li>
+            <li>O usuário precisa fazer logout e login novamente para ver as mudanças</li>
+          </ul>
+        </div>
+
+        <div class="flex justify-end mt-6">
+          <button @click="closeModalPermissoes" class="btn-primary">
+            Concluir
+          </button>
         </div>
       </div>
     </div>
@@ -248,7 +330,7 @@
             <label class="label">Tipo de Usuário *</label>
             <select v-model="formUsuario.tipo_usuario" class="input-field" required>
               <option value="administrador">👑 Administrador - Acesso Total</option>
-              <option value="escritorio">📋 Escritório - Sem Financeiro</option>
+              <option value="escritorio">📋 Escritório - Sem Financeiro Sensível</option>
               <option value="vendedor">🚚 Vendedor - Apenas Entregas</option>
             </select>
           </div>
@@ -266,12 +348,15 @@
           </div>
 
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-            <p class="font-semibold text-blue-900 mb-2">Permissões por tipo:</p>
+            <p class="font-semibold text-blue-900 mb-2">Permissões padrão por tipo:</p>
             <ul class="space-y-1 text-blue-800">
-              <li><strong>Administrador:</strong> Acesso total incluindo financeiro e relatórios</li>
-              <li><strong>Escritório:</strong> Gestão de vendas, estoque e produção (sem financeiro)</li>
-              <li><strong>Vendedor:</strong> Apenas visualizar e entregar pedidos</li>
+              <li><strong>Administrador:</strong> Acesso total a todas as páginas</li>
+              <li><strong>Escritório:</strong> Gestão completa exceto despesas e relatórios financeiros</li>
+              <li><strong>Vendedor:</strong> Apenas dashboard de pedidos, vendas e trocas</li>
             </ul>
+            <p class="mt-2 text-blue-700">
+              💡 Você pode personalizar após criar o usuário clicando em "🔐 Permissões"
+            </p>
           </div>
 
           <div class="flex space-x-2">
@@ -348,11 +433,16 @@ const confirmPassword = ref('')
 const usuarios = ref([])
 const showModalUsuario = ref(false)
 const showModalResetSenha = ref(false)
+const showModalPermissoes = ref(false)
 const editandoUsuario = ref(false)
 const usuarioResetSenha = ref(null)
+const usuarioPermissoes = ref(null)
 const novaSenhaReset = ref('')
 const senhasVisiveis = reactive({})
 const loadingReset = ref(false)
+const loadingPermissoes = ref(false)
+const paginasDisponiveis = ref([])
+const permissoesUsuario = ref([])
 
 const formUsuario = ref({
   name: '',
@@ -438,6 +528,103 @@ const carregarUsuarios = async () => {
     alert('❌ Erro ao carregar usuários')
   }
 }
+
+// ============================================
+// FUNÇÕES DE GERENCIAMENTO DE PERMISSÕES
+// ============================================
+
+const gerenciarPermissoes = async (usuario) => {
+  usuarioPermissoes.value = usuario
+  showModalPermissoes.value = true
+  loadingPermissoes.value = true
+  
+  try {
+    // Carregar páginas disponíveis
+    const { data: paginas, error: errorPaginas } = await supabase
+      .from('system_pages')
+      .select('*')
+      .eq('ativo', true)
+      .order('ordem')
+    
+    if (errorPaginas) throw errorPaginas
+    
+    paginasDisponiveis.value = paginas || []
+    
+    // Carregar permissões do usuário
+    const { data: permissoes, error: errorPermissoes } = await supabase
+      .from('user_page_permissions')
+      .select('*')
+      .eq('user_id', usuario.id)
+    
+    if (errorPermissoes) throw errorPermissoes
+    
+    permissoesUsuario.value = permissoes || []
+    
+  } catch (error) {
+    console.error('Erro:', error)
+    alert('❌ Erro ao carregar permissões')
+  } finally {
+    loadingPermissoes.value = false
+  }
+}
+
+const temPermissao = (paginaId) => {
+  const permissao = permissoesUsuario.value.find(p => p.page_id === paginaId)
+  return permissao?.pode_acessar || false
+}
+
+const togglePermissao = async (pagina) => {
+  try {
+    const permissaoAtual = temPermissao(pagina.id)
+    const novaPermissao = !permissaoAtual
+    
+    // Verificar se página requer admin e usuário não é admin
+    if (pagina.requer_admin && usuarioPermissoes.value.tipo_usuario !== 'administrador') {
+      alert('❌ Esta página só pode ser acessada por administradores')
+      return
+    }
+    
+    // Atualizar ou inserir permissão
+    const { error } = await supabase
+      .from('user_page_permissions')
+      .upsert({
+        user_id: usuarioPermissoes.value.id,
+        page_id: pagina.id,
+        pode_acessar: novaPermissao
+      }, {
+        onConflict: 'user_id,page_id'
+      })
+    
+    if (error) throw error
+    
+    // Atualizar lista local
+    const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
+    if (index >= 0) {
+      permissoesUsuario.value[index].pode_acessar = novaPermissao
+    } else {
+      permissoesUsuario.value.push({
+        user_id: usuarioPermissoes.value.id,
+        page_id: pagina.id,
+        pode_acessar: novaPermissao
+      })
+    }
+    
+  } catch (error) {
+    console.error('Erro:', error)
+    alert('❌ Erro ao alterar permissão')
+  }
+}
+
+const closeModalPermissoes = () => {
+  showModalPermissoes.value = false
+  usuarioPermissoes.value = null
+  paginasDisponiveis.value = []
+  permissoesUsuario.value = []
+}
+
+// ============================================
+// FUNÇÕES EXISTENTES
+// ============================================
 
 const toggleSenhaVisivel = (usuarioId) => {
   senhasVisiveis[usuarioId] = !senhasVisiveis[usuarioId]
@@ -554,7 +741,7 @@ const salvarUsuario = async () => {
       
       if (error) throw error
       
-      alert('✅ Usuário atualizado!')
+      alert('✅ Usuário atualizado! As permissões foram ajustadas conforme o novo tipo.')
     } else {
       const result = await authStore.signUp(
         formUsuario.value.email,
@@ -568,7 +755,7 @@ const salvarUsuario = async () => {
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!`)
+      alert(`✅ Usuário criado com permissões padrão!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!\n\n💡 Você pode personalizar as permissões clicando em "🔐 Permissões"`)
     }
     
     closeModalUsuario()
