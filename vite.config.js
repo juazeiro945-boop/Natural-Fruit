@@ -8,11 +8,41 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
-      includeAssets: ['favicon.ico', 'logo-192.png', 'logo-512.png'],
+      injectRegister: null,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg}'],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-v1',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 3600
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-v1',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 604800
+              }
+            }
+          }
+        ]
+      },
       manifest: {
         name: 'Natural Fruit - Gestão de Produção',
         short_name: 'Natural Fruit',
