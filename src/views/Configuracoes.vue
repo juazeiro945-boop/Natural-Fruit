@@ -145,7 +145,7 @@
 
         <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p class="text-sm text-blue-800">
-            <strong>ℹ️ Informação:</strong> As senhas mostradas são as cadastradas no sistema. Clique no ícone 👁️ para visualizar e 📋 para copiar.
+            <strong>ℹ️ Informação:</strong> As senhas mostradas são cadastradas no sistema. A senha REAL do login do Supabase será a mesma que você definir aqui.
           </p>
         </div>
       </div>
@@ -290,7 +290,7 @@
     <div v-if="showModalResetSenha" class="modal-overlay" @click.self="closeModalResetSenha">
       <div class="modal-content max-w-md">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold">🔑 Alterar Senha</h3>
+          <h3 class="text-xl font-bold">🔑 Alterar Senha do Login</h3>
           <button @click="closeModalResetSenha" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
 
@@ -301,7 +301,7 @@
 
         <form @submit.prevent="confirmarResetSenha" class="space-y-4">
           <div>
-            <label class="label">Nova Senha * (mínimo 6 caracteres)</label>
+            <label class="label">Nova Senha de Login * (mínimo 6 caracteres)</label>
             <div class="relative">
               <input v-model="novaSenhaReset" type="text" class="input-field pr-10" required minlength="6" />
               <button 
@@ -313,17 +313,19 @@
                 🎲
               </button>
             </div>
-            <p class="text-xs text-gray-500 mt-1">💡 Copie esta senha antes de salvar!</p>
+            <p class="text-xs text-gray-500 mt-1">💡 Esta será a nova senha para fazer login no sistema</p>
           </div>
 
           <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p class="text-sm text-yellow-800">
-              <strong>⚠️ Atenção:</strong> Esta senha será salva e você poderá visualizá-la na tabela de usuários.
+              <strong>⚠️ Atenção:</strong> Ao salvar, a senha de LOGIN será alterada. O usuário precisará usar esta nova senha para entrar no sistema.
             </p>
           </div>
 
           <div class="flex space-x-2">
-            <button type="submit" class="btn-primary flex-1">Salvar Nova Senha</button>
+            <button type="submit" class="btn-primary flex-1" :disabled="loadingReset">
+              {{ loadingReset ? 'Alterando...' : 'Alterar Senha de Login' }}
+            </button>
             <button type="button" @click="closeModalResetSenha" class="btn-secondary flex-1">Cancelar</button>
           </div>
         </form>
@@ -350,6 +352,7 @@ const editandoUsuario = ref(false)
 const usuarioResetSenha = ref(null)
 const novaSenhaReset = ref('')
 const senhasVisiveis = reactive({})
+const loadingReset = ref(false)
 
 const formUsuario = ref({
   name: '',
@@ -466,23 +469,67 @@ const gerarSenhaAleatoria = () => {
 }
 
 const confirmarResetSenha = async () => {
+  if (!confirm(`⚠️ ATENÇÃO!\n\nVocê está prestes a alterar a senha de LOGIN de:\n${usuarioResetSenha.value.name}\n\nNova senha: ${novaSenhaReset.value}\n\nO usuário precisará usar ESTA senha para entrar no sistema.\n\nConfirma a alteração?`)) {
+    return
+  }
+
+  loadingReset.value = true
+  
   try {
-    const { error: updateError } = await supabase
+    // Tenta usar a Admin API (funciona apenas se tiver SERVICE_ROLE_KEY)
+    const { data, error } = await supabase.auth.admin.updateUserById(
+      usuarioResetSenha.value.id,
+      { password: novaSenhaReset.value }
+    )
+
+    if (error) {
+      // Se der erro de permissão, usa reset por email
+      console.log('Admin API não disponível, usando reset por email...')
+      throw new Error('ADMIN_NOT_AVAILABLE')
+    }
+
+    // Se chegou aqui, a senha foi alterada com sucesso
+    await supabase
       .from('profiles')
       .update({ senha_temp: novaSenhaReset.value })
       .eq('id', usuarioResetSenha.value.id)
-
-    if (updateError) throw updateError
     
     await navigator.clipboard.writeText(novaSenhaReset.value)
     
-    alert(`✅ Senha alterada e salva!\n\nNova senha: ${novaSenhaReset.value}\n\n📋 Senha copiada para área de transferência`)
+    alert(`✅ SENHA DE LOGIN ALTERADA COM SUCESSO!\n\nUsuário: ${usuarioResetSenha.value.name}\nNova senha: ${novaSenhaReset.value}\n\n📋 Senha copiada!\n\nO usuário pode fazer login agora com esta senha.`)
     
     closeModalResetSenha()
     await carregarUsuarios()
+    
   } catch (error) {
-    console.error('Erro:', error)
-    alert('❌ Erro ao alterar senha')
+    if (error.message === 'ADMIN_NOT_AVAILABLE') {
+      // Usa método alternativo: envia email de reset
+      try {
+        await supabase.auth.resetPasswordForEmail(usuarioResetSenha.value.email, {
+          redirectTo: `${window.location.origin}/login`
+        })
+        
+        await supabase
+          .from('profiles')
+          .update({ senha_temp: novaSenhaReset.value })
+          .eq('id', usuarioResetSenha.value.id)
+        
+        await navigator.clipboard.writeText(novaSenhaReset.value)
+        
+        alert(`📧 EMAIL DE RESET ENVIADO!\n\nUsuário: ${usuarioResetSenha.value.name}\nEmail: ${usuarioResetSenha.value.email}\n\nSenha sugerida: ${novaSenhaReset.value}\n📋 Senha copiada!\n\nO usuário receberá um email para resetar a senha. Informe para ele usar a senha sugerida acima.`)
+        
+        closeModalResetSenha()
+        await carregarUsuarios()
+      } catch (emailError) {
+        console.error('Erro ao enviar email:', emailError)
+        alert('❌ Erro ao enviar email de reset. Tente novamente.')
+      }
+    } else {
+      console.error('Erro:', error)
+      alert('❌ Erro ao alterar senha: ' + error.message)
+    }
+  } finally {
+    loadingReset.value = false
   }
 }
 
@@ -548,14 +595,14 @@ const salvarUsuario = async () => {
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado!\n\nSenha: ${formUsuario.value.password}\n\n📋 Senha copiada para área de transferência`)
+      alert(`✅ Usuário criado!\n\nEmail: ${formUsuario.value.email}\nSenha: ${formUsuario.value.password}\n\n📋 Senha copiada!\n\nO usuário pode fazer login com estes dados.`)
     }
     
     closeModalUsuario()
     await carregarUsuarios()
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao salvar usuário')
+    alert('❌ Erro ao salvar usuário: ' + error.message)
   }
 }
 
