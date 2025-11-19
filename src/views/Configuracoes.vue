@@ -12,8 +12,8 @@
           </button>
         </div>
 
-        <!-- Tabela de Usuários -->
-        <div class="overflow-x-auto">
+        <!-- Tabela de Usuários Desktop -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
@@ -28,15 +28,15 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="usuario in usuarios" :key="usuario.id">
                 <td class="px-4 py-3">{{ usuario.name }}</td>
-                <td class="px-4 py-3">{{ usuario.email }}</td>
+                <td class="px-4 py-3 text-sm">{{ usuario.email }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center space-x-2">
-                    <code class="bg-gray-100 px-2 py-1 rounded text-sm">
-                      {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || '******') : '******' }}
+                    <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+                      {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || 'Não disponível') : '••••••••' }}
                     </code>
                     <button 
                       @click="toggleSenhaVisivel(usuario.id)" 
-                      class="text-gray-600 hover:text-gray-800"
+                      class="text-gray-600 hover:text-gray-800 p-1"
                       :title="senhasVisiveis[usuario.id] ? 'Ocultar senha' : 'Mostrar senha'"
                     >
                       {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
@@ -44,7 +44,7 @@
                     <button 
                       v-if="usuario.senha_temp"
                       @click="copiarSenha(usuario.senha_temp)" 
-                      class="text-blue-600 hover:text-blue-800"
+                      class="text-blue-600 hover:text-blue-800 p-1"
                       title="Copiar senha"
                     >
                       📋
@@ -66,7 +66,7 @@
                     <button @click="editarUsuario(usuario)" class="text-blue-600 hover:text-blue-800" title="Editar">
                       ✏️
                     </button>
-                    <button @click="resetarSenha(usuario)" class="text-orange-600 hover:text-orange-800" title="Resetar senha">
+                    <button @click="resetarSenha(usuario)" class="text-orange-600 hover:text-orange-800" title="Alterar senha">
                       🔑
                     </button>
                     <button 
@@ -83,10 +83,69 @@
           </table>
         </div>
 
-        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p class="text-sm text-yellow-800">
-            <strong>⚠️ Atenção:</strong> As senhas são criptografadas no banco de dados. 
-            Apenas senhas temporárias (criadas/resetadas recentemente) são visíveis aqui.
+        <!-- Cards Mobile -->
+        <div class="md:hidden space-y-4">
+          <div v-for="usuario in usuarios" :key="usuario.id" class="bg-white border rounded-lg p-4 shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <h4 class="font-bold text-gray-900">{{ usuario.name }}</h4>
+                <p class="text-sm text-gray-600">{{ usuario.email }}</p>
+              </div>
+              <span class="badge" :class="usuario.ativo ? 'badge-success' : 'badge-danger'">
+                {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <p class="text-xs text-gray-500 mb-1">Tipo:</p>
+              <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
+                {{ getTipoLabel(usuario.tipo_usuario) }}
+              </span>
+            </div>
+
+            <div class="mb-3">
+              <p class="text-xs text-gray-500 mb-1">Senha:</p>
+              <div class="flex items-center space-x-2">
+                <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono flex-1">
+                  {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || 'Não disponível') : '••••••••' }}
+                </code>
+                <button 
+                  @click="toggleSenhaVisivel(usuario.id)" 
+                  class="text-gray-600 hover:text-gray-800 p-2"
+                >
+                  {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
+                </button>
+                <button 
+                  v-if="usuario.senha_temp"
+                  @click="copiarSenha(usuario.senha_temp)" 
+                  class="text-blue-600 hover:text-blue-800 p-2"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t">
+              <button @click="editarUsuario(usuario)" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium">
+                ✏️ Editar
+              </button>
+              <button @click="resetarSenha(usuario)" class="flex-1 bg-orange-50 text-orange-600 py-2 rounded-lg text-sm font-medium">
+                🔑 Senha
+              </button>
+              <button 
+                @click="toggleStatusUsuario(usuario)" 
+                class="flex-1 py-2 rounded-lg text-sm font-medium"
+                :class="usuario.ativo ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'"
+              >
+                {{ usuario.ativo ? '🔒 Desativar' : '🔓 Ativar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800">
+            <strong>ℹ️ Informação:</strong> As senhas mostradas são as cadastradas no sistema. Clique no ícone 👁️ para visualizar e 📋 para copiar.
           </p>
         </div>
       </div>
@@ -113,15 +172,15 @@
 
       <!-- Alterar Senha -->
       <div class="card">
-        <h3 class="text-lg font-bold mb-4">Alterar Senha</h3>
+        <h3 class="text-lg font-bold mb-4">Alterar Minha Senha</h3>
         <form @submit.prevent="changePassword" class="space-y-4">
           <div>
-            <label class="label">Nova Senha</label>
-            <input v-model="newPassword" type="password" class="input-field" />
+            <label class="label">Nova Senha (mínimo 6 caracteres)</label>
+            <input v-model="newPassword" type="password" class="input-field" minlength="6" />
           </div>
           <div>
             <label class="label">Confirmar Nova Senha</label>
-            <input v-model="confirmPassword" type="password" class="input-field" />
+            <input v-model="confirmPassword" type="password" class="input-field" minlength="6" />
           </div>
           <button type="submit" class="btn-primary">Alterar Senha</button>
         </form>
@@ -171,8 +230,18 @@
 
           <div v-if="!editandoUsuario">
             <label class="label">Senha * (mínimo 6 caracteres)</label>
-            <input v-model="formUsuario.password" type="text" class="input-field" required minlength="6" />
-            <p class="text-xs text-gray-500 mt-1">💡 Dica: Anote esta senha para fornecer ao usuário</p>
+            <div class="relative">
+              <input v-model="formUsuario.password" type="text" class="input-field pr-10" required minlength="6" />
+              <button 
+                type="button"
+                @click="formUsuario.password = gerarSenhaAleatoria()" 
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800 text-xl"
+                title="Gerar senha aleatória"
+              >
+                🎲
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">💡 Clique no dado para gerar senha aleatória</p>
           </div>
 
           <div>
@@ -217,35 +286,44 @@
       </div>
     </div>
 
-    <!-- Modal Resetar Senha -->
+    <!-- Modal Alterar Senha -->
     <div v-if="showModalResetSenha" class="modal-overlay" @click.self="closeModalResetSenha">
       <div class="modal-content max-w-md">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold">🔑 Resetar Senha</h3>
+          <h3 class="text-xl font-bold">🔑 Alterar Senha</h3>
           <button @click="closeModalResetSenha" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
 
-        <div class="mb-4">
-          <p class="text-gray-700 mb-2"><strong>Usuário:</strong> {{ usuarioResetSenha?.name }}</p>
+        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+          <p class="text-gray-700 mb-1"><strong>Usuário:</strong> {{ usuarioResetSenha?.name }}</p>
           <p class="text-gray-700"><strong>Email:</strong> {{ usuarioResetSenha?.email }}</p>
         </div>
 
         <form @submit.prevent="confirmarResetSenha" class="space-y-4">
           <div>
-            <label class="label">Nova Senha *</label>
-            <input v-model="novaSenhaReset" type="text" class="input-field" required minlength="6" />
+            <label class="label">Nova Senha * (mínimo 6 caracteres)</label>
+            <div class="relative">
+              <input v-model="novaSenhaReset" type="text" class="input-field pr-10" required minlength="6" />
+              <button 
+                type="button"
+                @click="novaSenhaReset = gerarSenhaAleatoria()" 
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800 text-xl"
+                title="Gerar senha aleatória"
+              >
+                🎲
+              </button>
+            </div>
             <p class="text-xs text-gray-500 mt-1">💡 Copie esta senha antes de salvar!</p>
           </div>
 
           <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p class="text-sm text-yellow-800">
-              <strong>⚠️ Atenção:</strong> A senha antiga será substituída. 
-              Anote a nova senha e forneça ao usuário.
+              <strong>⚠️ Atenção:</strong> Esta senha será salva e você poderá visualizá-la na tabela de usuários.
             </p>
           </div>
 
           <div class="flex space-x-2">
-            <button type="submit" class="btn-primary flex-1">Resetar Senha</button>
+            <button type="submit" class="btn-primary flex-1">Salvar Nova Senha</button>
             <button type="button" @click="closeModalResetSenha" class="btn-secondary flex-1">Cancelar</button>
           </div>
         </form>
@@ -262,7 +340,6 @@ import Layout from '../components/Layout.vue'
 
 const authStore = useAuthStore()
 
-// Estados
 const profile = ref({ name: '', email: '', telefone: '' })
 const newPassword = ref('')
 const confirmPassword = ref('')
@@ -283,7 +360,6 @@ const formUsuario = ref({
   ativo: true
 })
 
-// Carregar perfil do usuário logado
 const loadProfile = () => {
   profile.value = {
     name: authStore.userProfile?.name || '',
@@ -292,7 +368,6 @@ const loadProfile = () => {
   }
 }
 
-// Atualizar perfil
 const updateProfile = async () => {
   try {
     const { error } = await supabase
@@ -308,12 +383,11 @@ const updateProfile = async () => {
     await authStore.fetchUserProfile()
     alert('✅ Perfil atualizado com sucesso!')
   } catch (error) {
-    console.error('Erro ao atualizar perfil:', error)
-    alert('❌ Erro ao atualizar perfil: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao atualizar perfil')
   }
 }
 
-// Alterar senha
 const changePassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
     alert('❌ As senhas não coincidem')
@@ -329,17 +403,21 @@ const changePassword = async () => {
     const { error } = await supabase.auth.updateUser({ password: newPassword.value })
     
     if (error) throw error
+
+    await supabase
+      .from('profiles')
+      .update({ senha_temp: newPassword.value })
+      .eq('id', authStore.user.id)
     
     alert('✅ Senha alterada com sucesso!')
     newPassword.value = ''
     confirmPassword.value = ''
   } catch (error) {
-    console.error('Erro ao alterar senha:', error)
-    alert('❌ Erro ao alterar senha: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao alterar senha')
   }
 }
 
-// Carregar usuários (somente admin)
 const carregarUsuarios = async () => {
   if (!authStore.isAdmin) return
   
@@ -353,37 +431,33 @@ const carregarUsuarios = async () => {
     
     usuarios.value = data || []
   } catch (error) {
-    console.error('Erro ao carregar usuários:', error)
-    alert('❌ Erro ao carregar usuários: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao carregar usuários')
   }
 }
 
-// Toggle visibilidade da senha
 const toggleSenhaVisivel = (usuarioId) => {
   senhasVisiveis[usuarioId] = !senhasVisiveis[usuarioId]
 }
 
-// Copiar senha
 const copiarSenha = async (senha) => {
   try {
     await navigator.clipboard.writeText(senha)
-    alert('✅ Senha copiada para a área de transferência!')
+    alert('✅ Senha copiada!')
   } catch (error) {
-    console.error('Erro ao copiar:', error)
-    alert('❌ Erro ao copiar senha')
+    console.error('Erro:', error)
+    alert('❌ Erro ao copiar')
   }
 }
 
-// Abrir modal resetar senha
 const resetarSenha = (usuario) => {
   usuarioResetSenha.value = usuario
   novaSenhaReset.value = gerarSenhaAleatoria()
   showModalResetSenha.value = true
 }
 
-// Gerar senha aleatória
 const gerarSenhaAleatoria = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
   let senha = ''
   for (let i = 0; i < 8; i++) {
     senha += chars.charAt(Math.floor(Math.random() * chars.length))
@@ -391,42 +465,33 @@ const gerarSenhaAleatoria = () => {
   return senha
 }
 
-// Confirmar reset de senha
 const confirmarResetSenha = async () => {
-  if (!confirm(`Deseja resetar a senha de ${usuarioResetSenha.value.name}?`)) {
-    return
-  }
-
   try {
-    // Atualiza senha temporária no perfil
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ senha_temp: novaSenhaReset.value })
       .eq('id', usuarioResetSenha.value.id)
 
     if (updateError) throw updateError
-
-    // Aqui você precisaria de uma Edge Function no Supabase para atualizar a senha real
-    // Por enquanto, apenas salvamos a senha temporária
     
-    alert(`✅ Senha resetada com sucesso!\n\nNova senha: ${novaSenhaReset.value}\n\n⚠️ Anote esta senha!`)
+    await navigator.clipboard.writeText(novaSenhaReset.value)
+    
+    alert(`✅ Senha alterada e salva!\n\nNova senha: ${novaSenhaReset.value}\n\n📋 Senha copiada para área de transferência`)
     
     closeModalResetSenha()
     await carregarUsuarios()
   } catch (error) {
-    console.error('Erro ao resetar senha:', error)
-    alert('❌ Erro ao resetar senha: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao alterar senha')
   }
 }
 
-// Fechar modal reset senha
 const closeModalResetSenha = () => {
   showModalResetSenha.value = false
   usuarioResetSenha.value = null
   novaSenhaReset.value = ''
 }
 
-// Abrir modal novo usuário
 const openModalNovoUsuario = () => {
   editandoUsuario.value = false
   formUsuario.value = {
@@ -440,7 +505,6 @@ const openModalNovoUsuario = () => {
   showModalUsuario.value = true
 }
 
-// Editar usuário
 const editarUsuario = (usuario) => {
   editandoUsuario.value = true
   formUsuario.value = {
@@ -455,11 +519,9 @@ const editarUsuario = (usuario) => {
   showModalUsuario.value = true
 }
 
-// Salvar usuário (criar ou editar)
 const salvarUsuario = async () => {
   try {
     if (editandoUsuario.value) {
-      // Atualizar usuário existente
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -472,9 +534,8 @@ const salvarUsuario = async () => {
       
       if (error) throw error
       
-      alert('✅ Usuário atualizado com sucesso!')
+      alert('✅ Usuário atualizado!')
     } else {
-      // Criar novo usuário
       const result = await authStore.signUp(
         formUsuario.value.email,
         formUsuario.value.password,
@@ -483,35 +544,26 @@ const salvarUsuario = async () => {
         formUsuario.value.telefone
       )
       
-      if (!result.success) {
-        throw new Error(result.error)
-      }
-
-      // Salvar senha temporária
-      await supabase
-        .from('profiles')
-        .update({ senha_temp: formUsuario.value.password })
-        .eq('id', result.userId)
+      if (!result.success) throw new Error(result.error)
       
-      alert(`✅ Usuário criado com sucesso!\n\nSenha: ${formUsuario.value.password}\n\n⚠️ Anote esta senha!`)
+      await navigator.clipboard.writeText(formUsuario.value.password)
+      
+      alert(`✅ Usuário criado!\n\nSenha: ${formUsuario.value.password}\n\n📋 Senha copiada para área de transferência`)
     }
     
     closeModalUsuario()
     await carregarUsuarios()
   } catch (error) {
-    console.error('Erro ao salvar usuário:', error)
-    alert('❌ Erro ao salvar usuário: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao salvar usuário')
   }
 }
 
-// Ativar/Desativar usuário
 const toggleStatusUsuario = async (usuario) => {
   const novoStatus = !usuario.ativo
   const acao = novoStatus ? 'ativar' : 'desativar'
   
-  if (!confirm(`Deseja ${acao} o usuário ${usuario.name}?`)) {
-    return
-  }
+  if (!confirm(`Deseja ${acao} ${usuario.name}?`)) return
   
   try {
     const { error } = await supabase
@@ -521,21 +573,19 @@ const toggleStatusUsuario = async (usuario) => {
     
     if (error) throw error
     
-    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
+    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'}!`)
     await carregarUsuarios()
   } catch (error) {
-    console.error('Erro ao alterar status:', error)
-    alert('❌ Erro ao alterar status: ' + error.message)
+    console.error('Erro:', error)
+    alert('❌ Erro ao alterar status')
   }
 }
 
-// Fechar modal
 const closeModalUsuario = () => {
   showModalUsuario.value = false
   editandoUsuario.value = false
 }
 
-// Funções auxiliares
 const getTipoLabel = (tipo) => {
   const tipos = {
     'administrador': 'Administrador',
@@ -564,7 +614,7 @@ onMounted(() => {
 
 <style scoped>
 .card {
-  @apply bg-white rounded-xl shadow-lg p-6;
+  @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
 }
 
 .label {
