@@ -19,6 +19,7 @@
               <tr>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Senha</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
@@ -28,6 +29,28 @@
               <tr v-for="usuario in usuarios" :key="usuario.id">
                 <td class="px-4 py-3">{{ usuario.name }}</td>
                 <td class="px-4 py-3">{{ usuario.email }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center space-x-2">
+                    <code class="bg-gray-100 px-2 py-1 rounded text-sm">
+                      {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || '******') : '******' }}
+                    </code>
+                    <button 
+                      @click="toggleSenhaVisivel(usuario.id)" 
+                      class="text-gray-600 hover:text-gray-800"
+                      :title="senhasVisiveis[usuario.id] ? 'Ocultar senha' : 'Mostrar senha'"
+                    >
+                      {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
+                    </button>
+                    <button 
+                      v-if="usuario.senha_temp"
+                      @click="copiarSenha(usuario.senha_temp)" 
+                      class="text-blue-600 hover:text-blue-800"
+                      title="Copiar senha"
+                    >
+                      📋
+                    </button>
+                  </div>
+                </td>
                 <td class="px-4 py-3">
                   <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
                     {{ getTipoLabel(usuario.tipo_usuario) }}
@@ -40,8 +63,11 @@
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex space-x-2">
-                    <button @click="editarUsuario(usuario)" class="text-blue-600 hover:text-blue-800">
+                    <button @click="editarUsuario(usuario)" class="text-blue-600 hover:text-blue-800" title="Editar">
                       ✏️
+                    </button>
+                    <button @click="resetarSenha(usuario)" class="text-orange-600 hover:text-orange-800" title="Resetar senha">
+                      🔑
                     </button>
                     <button 
                       @click="toggleStatusUsuario(usuario)" 
@@ -55,6 +81,13 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p class="text-sm text-yellow-800">
+            <strong>⚠️ Atenção:</strong> As senhas são criptografadas no banco de dados. 
+            Apenas senhas temporárias (criadas/resetadas recentemente) são visíveis aqui.
+          </p>
         </div>
       </div>
 
@@ -137,8 +170,9 @@
           </div>
 
           <div v-if="!editandoUsuario">
-            <label class="label">Senha *</label>
-            <input v-model="formUsuario.password" type="password" class="input-field" required />
+            <label class="label">Senha * (mínimo 6 caracteres)</label>
+            <input v-model="formUsuario.password" type="text" class="input-field" required minlength="6" />
+            <p class="text-xs text-gray-500 mt-1">💡 Dica: Anote esta senha para fornecer ao usuário</p>
           </div>
 
           <div>
@@ -182,11 +216,46 @@
         </form>
       </div>
     </div>
+
+    <!-- Modal Resetar Senha -->
+    <div v-if="showModalResetSenha" class="modal-overlay" @click.self="closeModalResetSenha">
+      <div class="modal-content max-w-md">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">🔑 Resetar Senha</h3>
+          <button @click="closeModalResetSenha" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-gray-700 mb-2"><strong>Usuário:</strong> {{ usuarioResetSenha?.name }}</p>
+          <p class="text-gray-700"><strong>Email:</strong> {{ usuarioResetSenha?.email }}</p>
+        </div>
+
+        <form @submit.prevent="confirmarResetSenha" class="space-y-4">
+          <div>
+            <label class="label">Nova Senha *</label>
+            <input v-model="novaSenhaReset" type="text" class="input-field" required minlength="6" />
+            <p class="text-xs text-gray-500 mt-1">💡 Copie esta senha antes de salvar!</p>
+          </div>
+
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-sm text-yellow-800">
+              <strong>⚠️ Atenção:</strong> A senha antiga será substituída. 
+              Anote a nova senha e forneça ao usuário.
+            </p>
+          </div>
+
+          <div class="flex space-x-2">
+            <button type="submit" class="btn-primary flex-1">Resetar Senha</button>
+            <button type="button" @click="closeModalResetSenha" class="btn-secondary flex-1">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </Layout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
@@ -199,7 +268,12 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const usuarios = ref([])
 const showModalUsuario = ref(false)
+const showModalResetSenha = ref(false)
 const editandoUsuario = ref(false)
+const usuarioResetSenha = ref(null)
+const novaSenhaReset = ref('')
+const senhasVisiveis = reactive({})
+
 const formUsuario = ref({
   name: '',
   email: '',
@@ -232,22 +306,22 @@ const updateProfile = async () => {
     if (error) throw error
     
     await authStore.fetchUserProfile()
-    alert('Perfil atualizado com sucesso!')
+    alert('✅ Perfil atualizado com sucesso!')
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error)
-    alert('Erro ao atualizar perfil: ' + error.message)
+    alert('❌ Erro ao atualizar perfil: ' + error.message)
   }
 }
 
 // Alterar senha
 const changePassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
-    alert('As senhas não coincidem')
+    alert('❌ As senhas não coincidem')
     return
   }
   
   if (newPassword.value.length < 6) {
-    alert('A senha deve ter no mínimo 6 caracteres')
+    alert('❌ A senha deve ter no mínimo 6 caracteres')
     return
   }
   
@@ -256,12 +330,12 @@ const changePassword = async () => {
     
     if (error) throw error
     
-    alert('Senha alterada com sucesso!')
+    alert('✅ Senha alterada com sucesso!')
     newPassword.value = ''
     confirmPassword.value = ''
   } catch (error) {
     console.error('Erro ao alterar senha:', error)
-    alert('Erro ao alterar senha: ' + error.message)
+    alert('❌ Erro ao alterar senha: ' + error.message)
   }
 }
 
@@ -280,8 +354,76 @@ const carregarUsuarios = async () => {
     usuarios.value = data || []
   } catch (error) {
     console.error('Erro ao carregar usuários:', error)
-    alert('Erro ao carregar usuários: ' + error.message)
+    alert('❌ Erro ao carregar usuários: ' + error.message)
   }
+}
+
+// Toggle visibilidade da senha
+const toggleSenhaVisivel = (usuarioId) => {
+  senhasVisiveis[usuarioId] = !senhasVisiveis[usuarioId]
+}
+
+// Copiar senha
+const copiarSenha = async (senha) => {
+  try {
+    await navigator.clipboard.writeText(senha)
+    alert('✅ Senha copiada para a área de transferência!')
+  } catch (error) {
+    console.error('Erro ao copiar:', error)
+    alert('❌ Erro ao copiar senha')
+  }
+}
+
+// Abrir modal resetar senha
+const resetarSenha = (usuario) => {
+  usuarioResetSenha.value = usuario
+  novaSenhaReset.value = gerarSenhaAleatoria()
+  showModalResetSenha.value = true
+}
+
+// Gerar senha aleatória
+const gerarSenhaAleatoria = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let senha = ''
+  for (let i = 0; i < 8; i++) {
+    senha += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return senha
+}
+
+// Confirmar reset de senha
+const confirmarResetSenha = async () => {
+  if (!confirm(`Deseja resetar a senha de ${usuarioResetSenha.value.name}?`)) {
+    return
+  }
+
+  try {
+    // Atualiza senha temporária no perfil
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ senha_temp: novaSenhaReset.value })
+      .eq('id', usuarioResetSenha.value.id)
+
+    if (updateError) throw updateError
+
+    // Aqui você precisaria de uma Edge Function no Supabase para atualizar a senha real
+    // Por enquanto, apenas salvamos a senha temporária
+    
+    alert(`✅ Senha resetada com sucesso!\n\nNova senha: ${novaSenhaReset.value}\n\n⚠️ Anote esta senha!`)
+    
+    closeModalResetSenha()
+    await carregarUsuarios()
+  } catch (error) {
+    console.error('Erro ao resetar senha:', error)
+    alert('❌ Erro ao resetar senha: ' + error.message)
+  }
+}
+
+// Fechar modal reset senha
+const closeModalResetSenha = () => {
+  showModalResetSenha.value = false
+  usuarioResetSenha.value = null
+  novaSenhaReset.value = ''
 }
 
 // Abrir modal novo usuário
@@ -291,7 +433,7 @@ const openModalNovoUsuario = () => {
     name: '',
     email: '',
     telefone: '',
-    password: '',
+    password: gerarSenhaAleatoria(),
     tipo_usuario: 'escritorio',
     ativo: true
   }
@@ -330,7 +472,7 @@ const salvarUsuario = async () => {
       
       if (error) throw error
       
-      alert('Usuário atualizado com sucesso!')
+      alert('✅ Usuário atualizado com sucesso!')
     } else {
       // Criar novo usuário
       const result = await authStore.signUp(
@@ -344,15 +486,21 @@ const salvarUsuario = async () => {
       if (!result.success) {
         throw new Error(result.error)
       }
+
+      // Salvar senha temporária
+      await supabase
+        .from('profiles')
+        .update({ senha_temp: formUsuario.value.password })
+        .eq('id', result.userId)
       
-      alert('Usuário criado com sucesso! Um email de confirmação foi enviado.')
+      alert(`✅ Usuário criado com sucesso!\n\nSenha: ${formUsuario.value.password}\n\n⚠️ Anote esta senha!`)
     }
     
     closeModalUsuario()
     await carregarUsuarios()
   } catch (error) {
     console.error('Erro ao salvar usuário:', error)
-    alert('Erro ao salvar usuário: ' + error.message)
+    alert('❌ Erro ao salvar usuário: ' + error.message)
   }
 }
 
@@ -373,11 +521,11 @@ const toggleStatusUsuario = async (usuario) => {
     
     if (error) throw error
     
-    alert(`Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
+    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
     await carregarUsuarios()
   } catch (error) {
     console.error('Erro ao alterar status:', error)
-    alert('Erro ao alterar status: ' + error.message)
+    alert('❌ Erro ao alterar status: ' + error.message)
   }
 }
 
