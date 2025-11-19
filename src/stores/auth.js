@@ -5,6 +5,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     userProfile: null,
+    userPermissions: [], // NOVO: permissões do usuário
     loading: false,
     sessionError: false
   }),
@@ -17,7 +18,7 @@ export const useAuthStore = defineStore('auth', {
     isEscritorio: (state) => state.userProfile?.tipo_usuario === 'escritorio',
     isVendedor: (state) => state.userProfile?.tipo_usuario === 'vendedor',
     
-    // Permissões de acesso
+    // Permissões de acesso (mantidas para compatibilidade)
     canViewFinanceiro: (state) => state.userProfile?.tipo_usuario === 'administrador',
     canViewEstoque: (state) => ['administrador', 'escritorio'].includes(state.userProfile?.tipo_usuario),
     canViewVendas: (state) => ['administrador', 'escritorio', 'vendedor'].includes(state.userProfile?.tipo_usuario),
@@ -32,6 +33,21 @@ export const useAuthStore = defineStore('auth', {
         'vendedor': 'Vendedor'
       }
       return tipos[state.userProfile?.tipo_usuario] || 'Usuário'
+    },
+    
+    // NOVO: Verifica se usuário tem acesso a uma rota específica
+    canAccessRoute: (state) => (rota) => {
+      // Admin sempre tem acesso
+      if (state.userProfile?.tipo_usuario === 'administrador') return true
+      
+      // Verifica nas permissões do usuário
+      const permission = state.userPermissions.find(p => p.rota === rota)
+      return permission?.pode_acessar || false
+    },
+    
+    // NOVO: Retorna páginas permitidas para o menu
+    allowedPages: (state) => {
+      return state.userPermissions.filter(p => p.pode_acessar)
     }
   },
   
@@ -49,6 +65,7 @@ export const useAuthStore = defineStore('auth', {
         
         this.user = data.user
         await this.fetchUserProfile()
+        await this.fetchUserPermissions() // NOVO: Carrega permissões
         
         // Verificar se usuário está ativo
         if (!this.userProfile?.ativo) {
@@ -111,6 +128,7 @@ export const useAuthStore = defineStore('auth', {
         await supabase.auth.signOut()
         this.user = null
         this.userProfile = null
+        this.userPermissions = [] // NOVO: Limpa permissões
         this.sessionError = false
         localStorage.clear()
         sessionStorage.clear()
@@ -118,6 +136,7 @@ export const useAuthStore = defineStore('auth', {
         console.error('Erro ao fazer logout:', error)
         this.user = null
         this.userProfile = null
+        this.userPermissions = [] // NOVO: Limpa permissões
         this.sessionError = false
         localStorage.clear()
         sessionStorage.clear()
@@ -150,6 +169,24 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
+    // NOVO: Buscar permissões do usuário
+    async fetchUserPermissions() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .rpc('get_user_permissions', { user_uuid: this.user.id })
+        
+        if (error) throw error
+        
+        this.userPermissions = data || []
+      } catch (error) {
+        console.error('Erro ao buscar permissões:', error)
+        // Se falhar, continua com permissões vazias
+        this.userPermissions = []
+      }
+    },
+    
     async checkAuth() {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -159,30 +196,40 @@ export const useAuthStore = defineStore('auth', {
           this.sessionError = true
           this.user = null
           this.userProfile = null
+          this.userPermissions = [] // NOVO: Limpa permissões
           return
         }
         
         if (session) {
           this.user = session.user
           await this.fetchUserProfile()
+          await this.fetchUserPermissions() // NOVO: Carrega permissões
         } else {
           this.user = null
           this.userProfile = null
+          this.userPermissions = [] // NOVO: Limpa permissões
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error)
         this.sessionError = true
         this.user = null
         this.userProfile = null
+        this.userPermissions = [] // NOVO: Limpa permissões
       }
     },
     
     forceLogout() {
       this.user = null
       this.userProfile = null
+      this.userPermissions = [] // NOVO: Limpa permissões
       this.sessionError = false
       localStorage.clear()
       sessionStorage.clear()
+    },
+    
+    // NOVO: Recarregar permissões (útil após alterações)
+    async reloadPermissions() {
+      await this.fetchUserPermissions()
     }
   }
 })
