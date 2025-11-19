@@ -98,6 +98,14 @@
             </div>
 
             <div class="flex items-start space-x-2">
+              <span class="text-lg">💳</span>
+              <div class="flex-1">
+                <p class="text-sm text-gray-600">Forma de Pagamento</p>
+                <p class="font-semibold">{{ getPaymentMethodLabel(pedido.payment_method) }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start space-x-2">
               <span class="text-lg">📅</span>
               <div class="flex-1">
                 <p class="text-sm text-gray-600">Data do Pedido</p>
@@ -232,6 +240,7 @@
             <div>
               <label class="label">Forma de Pagamento</label>
               <select v-model="formPedido.payment_method" required class="input-field">
+                <option value="pendente">⏳ Pendente</option>
                 <option value="cash">💵 Dinheiro</option>
                 <option value="pix">📱 PIX</option>
                 <option value="boleto">📄 Boleto</option>
@@ -290,7 +299,7 @@ const formPedido = ref({
   quantity: 1,
   unit_price: 0,
   total: 0,
-  payment_method: 'cash',
+  payment_method: 'pendente',
   paid: false,
   notes: '',
   status_entrega: 'pendente'
@@ -332,6 +341,16 @@ const getStatusBadge = (status) => {
     'cancelado': 'bg-red-100 text-red-700'
   }
   return badges[status] || 'bg-gray-100 text-gray-700'
+}
+
+const getPaymentMethodLabel = (method) => {
+  const labels = {
+    'pendente': '⏳ Pendente',
+    'cash': '💵 Dinheiro',
+    'pix': '📱 PIX',
+    'boleto': '📄 Boleto'
+  }
+  return labels[method] || method
 }
 
 const loadPedidos = async () => {
@@ -477,7 +496,7 @@ const closeModalNovoPedido = () => {
     quantity: 1,
     unit_price: 0,
     total: 0,
-    payment_method: 'cash',
+    payment_method: 'pendente',
     paid: false,
     notes: '',
     status_entrega: 'pendente'
