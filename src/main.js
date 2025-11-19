@@ -11,47 +11,26 @@ app.use(pinia)
 app.use(router)
 app.mount('#app')
 
-// ==========================================
-// LIMPEZA E REGISTRO DO SERVICE WORKER
-// ==========================================
-
-if ('serviceWorker' in navigator && 'caches' in window) {
-  window.addEventListener('load', async () => {
-    try {
-      const cacheVersion = localStorage.getItem('nf_cache_version')
+// Registra o Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      console.log('✅ Service Worker registrado')
       
-      if (cacheVersion !== 'v5') {
-        console.log('🧹 Limpando cache antigo...')
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
         
-        const registrations = await navigator.serviceWorker.getRegistrations()
-        for (let registration of registrations) {
-          await registration.unregister()
-          console.log('🗑️ SW removido')
-        }
-        
-        const cacheNames = await caches.keys()
-        for (let cacheName of cacheNames) {
-          await caches.delete(cacheName)
-          console.log('🗑️ Cache removido:', cacheName)
-        }
-        
-        localStorage.setItem('nf_cache_version', 'v5')
-        localStorage.setItem('nf_cache_data', new Date().toISOString())
-        
-        console.log('✨ Cache limpo! Recarregando...')
-        
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-        
-        return
-      }
-      
-      console.log('✅ Cache já está atualizado')
-      
-    } catch (error) {
-      console.error('❌ Erro:', error)
-      localStorage.removeItem('nf_cache_version')
-    }
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('🔄 Nova versão disponível')
+            newWorker.postMessage({ type: 'SKIP_WAITING' })
+            
+            setTimeout(() => {
+              window.location.reload()
+            }, 2000)
+          }
+        })
+      })
+    })
   })
 }
