@@ -44,13 +44,13 @@
           v-for="product in produtosFiltrados" 
           :key="product.id" 
           class="card hover:shadow-xl transition-shadow"
-          :class="{ 'opacity-60 border-2 border-red-200': !product.ativo }"
+          :class="{ 'opacity-60 border-2 border-red-200': !product.active }"
         >
           <div class="flex items-start justify-between mb-3">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <h3 class="text-lg font-bold text-gray-900">{{ product.name }}</h3>
-                <span v-if="!product.ativo" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-semibold">
+                <span v-if="!product.active" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-semibold">
                   Inativo
                 </span>
               </div>
@@ -78,7 +78,7 @@
               ✏️ Editar
             </button>
             <button 
-              v-if="product.ativo"
+              v-if="product.active"
               @click="inativarProduto(product)" 
               class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
             >
@@ -177,7 +177,7 @@
 
             <div v-if="editingProduct" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <input 
-                v-model="form.ativo" 
+                v-model="form.active" 
                 type="checkbox" 
                 id="produto-ativo" 
                 class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -255,15 +255,15 @@ const form = ref({
   description: '',
   unit: '',
   price: 0,
-  ativo: true
+  active: true
 })
 
 const produtosAtivos = computed(() => {
-  return products.value.filter(p => p.ativo)
+  return products.value.filter(p => p.active)
 })
 
 const produtosInativos = computed(() => {
-  return products.value.filter(p => !p.ativo)
+  return products.value.filter(p => !p.active)
 })
 
 const produtosFiltrados = computed(() => {
@@ -314,7 +314,7 @@ const saveProduct = async () => {
     } else {
       const { error } = await supabase
         .from('products')
-        .insert([{ ...form.value, ativo: true }])
+        .insert([{ ...form.value, active: true }])
 
       if (error) throw error
       alert('✅ Produto criado com sucesso!')
@@ -336,7 +336,7 @@ const inativarProduto = async (product) => {
   try {
     const { error } = await supabase
       .from('products')
-      .update({ ativo: false })
+      .update({ active: false })
       .eq('id', product.id)
 
     if (error) throw error
@@ -354,7 +354,7 @@ const reativarProduto = async (product) => {
   try {
     const { error } = await supabase
       .from('products')
-      .update({ ativo: true })
+      .update({ active: true })
       .eq('id', product.id)
 
     if (error) throw error
@@ -407,7 +407,7 @@ const closeModal = () => {
     description: '',
     unit: '',
     price: 0,
-    ativo: true
+    active: true
   }
 }
 
