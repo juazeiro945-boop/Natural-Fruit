@@ -21,6 +21,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Senha</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horário</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
               </tr>
@@ -55,6 +56,12 @@
                   <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
                     {{ getTipoLabel(usuario.tipo_usuario) }}
                   </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span v-if="usuario.horario_restrito" class="text-xs">
+                    🕐 {{ usuario.horario_inicio }} - {{ usuario.horario_fim }}
+                  </span>
+                  <span v-else class="text-xs text-gray-500">Sem restrição</span>
                 </td>
                 <td class="px-4 py-3">
                   <span class="badge" :class="usuario.ativo ? 'badge-success' : 'badge-danger'">
@@ -104,6 +111,11 @@
               <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
                 {{ getTipoLabel(usuario.tipo_usuario) }}
               </span>
+            </div>
+
+            <div v-if="usuario.horario_restrito" class="mb-3">
+              <p class="text-xs text-gray-500 mb-1">Horário de Trabalho:</p>
+              <p class="text-sm font-semibold">🕐 {{ usuario.horario_inicio }} - {{ usuario.horario_fim }}</p>
             </div>
 
             <div class="mb-3">
@@ -197,13 +209,14 @@
         <h3 class="text-lg font-bold mb-4">Sobre o Sistema</h3>
         <div class="space-y-2 text-sm">
           <p><strong>Nome:</strong> Natural Fruit PWA</p>
-          <p><strong>Versão:</strong> 3.0.0</p>
+          <p><strong>Versão:</strong> 3.5.0</p>
           <p><strong>Desenvolvido para:</strong> Natural Fruit - Gestão de Produção</p>
           <p><strong>Seu perfil:</strong> {{ authStore.userType }}</p>
-          <p><strong>Sistema:</strong> Permissões personalizadas por página</p>
+          <p><strong>Sistema:</strong> Permissões personalizadas por página + Controle de horário</p>
         </div>
       </div>
     </div>
+
     <!-- MODAL: Gerenciar Permissões -->
     <div v-if="showModalPermissoes" class="modal-overlay" @click.self="closeModalPermissoes">
       <div class="modal-content max-w-4xl">
@@ -282,27 +295,31 @@
 
     <!-- Modal Novo/Editar Usuário -->
     <div v-if="showModalUsuario" class="modal-overlay" @click.self="closeModalUsuario">
-      <div class="modal-content">
+      <div class="modal-content max-w-2xl">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">{{ editandoUsuario ? 'Editar Usuário' : 'Novo Usuário' }}</h3>
           <button @click="closeModalUsuario" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
 
         <form @submit.prevent="salvarUsuario" class="space-y-4">
-          <div>
-            <label class="label">Nome Completo *</label>
-            <input v-model="formUsuario.name" class="input-field" required />
-          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="label">Nome Completo *</label>
+              <input v-model="formUsuario.name" class="input-field" required />
+            </div>
 
-          <div>
-            <label class="label">E-mail *</label>
-            <input 
-              v-model="formUsuario.email" 
-              type="email" 
-              class="input-field" 
-              :readonly="editandoUsuario"
-              required 
-            />
+            <div>
+              <label class="label">E-mail *</label>
+              <input 
+                v-model="formUsuario.email" 
+                type="email" 
+                class="input-field"
+                required 
+              />
+              <p v-if="editandoUsuario" class="text-xs text-orange-600 mt-1">
+                ⚠️ Alterar o email afetará o login do usuário
+              </p>
+            </div>
           </div>
 
           <div>
@@ -330,9 +347,49 @@
             <label class="label">Tipo de Usuário *</label>
             <select v-model="formUsuario.tipo_usuario" class="input-field" required>
               <option value="administrador">👑 Administrador - Acesso Total</option>
-              <option value="escritorio">📋 Escritório - Sem Financeiro Sensível</option>
+              <option value="escritorio">📋 Escritório - Gestão Completa</option>
               <option value="vendedor">🚚 Vendedor - Apenas Entregas</option>
             </select>
+          </div>
+
+          <!-- NOVO: Restrição de Horário -->
+          <div class="border-2 border-orange-200 rounded-lg p-4 bg-orange-50">
+            <div class="flex items-center space-x-3 mb-3">
+              <input 
+                v-model="formUsuario.horario_restrito" 
+                type="checkbox" 
+                id="horario-restrito"
+                class="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+              />
+              <label for="horario-restrito" class="font-semibold text-gray-900">
+                🕐 Restringir Acesso por Horário
+              </label>
+            </div>
+
+            <div v-if="formUsuario.horario_restrito" class="grid grid-cols-2 gap-4 mt-3">
+              <div>
+                <label class="label text-sm">Horário Início *</label>
+                <input 
+                  v-model="formUsuario.horario_inicio" 
+                  type="time" 
+                  required
+                  class="input-field"
+                />
+              </div>
+              <div>
+                <label class="label text-sm">Horário Fim *</label>
+                <input 
+                  v-model="formUsuario.horario_fim" 
+                  type="time" 
+                  required
+                  class="input-field"
+                />
+              </div>
+            </div>
+
+            <p class="text-xs text-orange-700 mt-2">
+              ⚠️ O usuário só poderá fazer login e acessar o sistema dentro deste horário
+            </p>
           </div>
 
           <div class="flex items-center space-x-2">
@@ -351,8 +408,8 @@
             <p class="font-semibold text-blue-900 mb-2">Permissões padrão por tipo:</p>
             <ul class="space-y-1 text-blue-800">
               <li><strong>Administrador:</strong> Acesso total a todas as páginas</li>
-              <li><strong>Escritório:</strong> Gestão completa exceto despesas e relatórios financeiros</li>
-              <li><strong>Vendedor:</strong> Apenas dashboard de pedidos, vendas e trocas</li>
+              <li><strong>Escritório:</strong> Gestão completa incluindo pedidos e estoque</li>
+              <li><strong>Vendedor:</strong> Dashboard de pedidos, vendas e trocas</li>
             </ul>
             <p class="mt-2 text-blue-700">
               💡 Você pode personalizar após criar o usuário clicando em "🔐 Permissões"
@@ -360,8 +417,8 @@
           </div>
 
           <div class="flex space-x-2">
-            <button type="submit" class="btn-primary flex-1">
-              {{ editandoUsuario ? 'Salvar Alterações' : 'Criar Usuário' }}
+            <button type="submit" class="btn-primary flex-1" :disabled="loadingSave">
+              {{ loadingSave ? 'Salvando...' : (editandoUsuario ? 'Salvar Alterações' : 'Criar Usuário') }}
             </button>
             <button type="button" @click="closeModalUsuario" class="btn-secondary flex-1">
               Cancelar
@@ -441,6 +498,7 @@ const novaSenhaReset = ref('')
 const senhasVisiveis = reactive({})
 const loadingReset = ref(false)
 const loadingPermissoes = ref(false)
+const loadingSave = ref(false)
 const paginasDisponiveis = ref([])
 const permissoesUsuario = ref([])
 
@@ -450,7 +508,10 @@ const formUsuario = ref({
   telefone: '',
   password: '',
   tipo_usuario: 'escritorio',
-  ativo: true
+  ativo: true,
+  horario_restrito: false,
+  horario_inicio: '08:00',
+  horario_fim: '18:00'
 })
 
 const loadProfile = () => {
@@ -707,7 +768,10 @@ const openModalNovoUsuario = () => {
     telefone: '',
     password: gerarSenhaAleatoria(),
     tipo_usuario: 'escritorio',
-    ativo: true
+    ativo: true,
+    horario_restrito: false,
+    horario_inicio: '08:00',
+    horario_fim: '18:00'
   }
   showModalUsuario.value = true
 }
@@ -721,27 +785,49 @@ const editarUsuario = (usuario) => {
     telefone: usuario.telefone || '',
     tipo_usuario: usuario.tipo_usuario,
     ativo: usuario.ativo,
+    horario_restrito: usuario.horario_restrito || false,
+    horario_inicio: usuario.horario_inicio || '08:00',
+    horario_fim: usuario.horario_fim || '18:00',
     password: ''
   }
   showModalUsuario.value = true
 }
 
 const salvarUsuario = async () => {
+  loadingSave.value = true
   try {
     if (editandoUsuario.value) {
-      const { error } = await supabase
+      // Atualizar perfil
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           name: formUsuario.value.name,
+          email: formUsuario.value.email,
           telefone: formUsuario.value.telefone,
           tipo_usuario: formUsuario.value.tipo_usuario,
-          ativo: formUsuario.value.ativo
+          ativo: formUsuario.value.ativo,
+          horario_restrito: formUsuario.value.horario_restrito,
+          horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
+          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null
         })
         .eq('id', formUsuario.value.id)
       
-      if (error) throw error
+      if (profileError) throw profileError
+
+      // Se o email foi alterado, atualizar no auth
+      const usuarioOriginal = usuarios.value.find(u => u.id === formUsuario.value.id)
+      if (usuarioOriginal.email !== formUsuario.value.email) {
+        const { error: authError } = await supabase.functions.invoke('update-user-email', {
+          body: {
+            userId: formUsuario.value.id,
+            newEmail: formUsuario.value.email
+          }
+        })
+        
+        if (authError) throw authError
+      }
       
-      alert('✅ Usuário atualizado! As permissões foram ajustadas conforme o novo tipo.')
+      alert('✅ Usuário atualizado!')
     } else {
       const result = await authStore.signUp(
         formUsuario.value.email,
@@ -752,10 +838,20 @@ const salvarUsuario = async () => {
       )
       
       if (!result.success) throw new Error(result.error)
+
+      // Atualizar com configurações de horário
+      await supabase
+        .from('profiles')
+        .update({
+          horario_restrito: formUsuario.value.horario_restrito,
+          horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
+          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null
+        })
+        .eq('id', result.userId)
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado com permissões padrão!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!\n\n💡 Você pode personalizar as permissões clicando em "🔐 Permissões"`)
+      alert(`✅ Usuário criado com permissões padrão!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!`)
     }
     
     closeModalUsuario()
@@ -763,6 +859,8 @@ const salvarUsuario = async () => {
   } catch (error) {
     console.error('Erro:', error)
     alert('❌ Erro: ' + error.message)
+  } finally {
+    loadingSave.value = false
   }
 }
 
