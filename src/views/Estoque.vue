@@ -9,10 +9,10 @@
         </div>
         <div class="flex gap-2">
           <button @click="showLossModal = true" class="btn-secondary flex-1 md:flex-none text-sm md:text-base">
-            📉 Registrar Perda
+            📉 Perda
           </button>
           <button @click="showExitModal = true" class="btn-warning flex-1 md:flex-none text-sm md:text-base">
-            📤 Saída Manual
+            📤 Saída
           </button>
           <button @click="showEntryModal = true" class="btn-primary flex-1 md:flex-none text-sm md:text-base">
             📥 Entrada
@@ -109,7 +109,7 @@
         </div>
       </div>
 
-      <!-- Estoque Atual -->
+      <!-- Estoque Atual - Cards no Mobile, Tabela no Desktop -->
       <div class="card">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-base md:text-lg font-bold text-gray-900">Estoque Atual</h3>
@@ -267,7 +267,7 @@
         </div>
       </div>
 
-      <!-- Modal de Entrada -->
+      <!-- Modal de Entrada - Mobile Friendly -->
       <div v-if="showEntryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeEntryModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -660,7 +660,9 @@ const formatCurrency = (value, compact = false) => {
 }
 
 const formatDate = (date) => {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-BR')
+  if (!date) return 'N/A'
+  const d = new Date(date + 'T00:00:00')
+  return d.toLocaleDateString('pt-BR')
 }
 
 const calculateEntryTotal = () => {
@@ -774,7 +776,7 @@ const loadProducts = async () => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('ativo', true)
+      .eq('active', true)
       .order('name')
 
     if (error) throw error
