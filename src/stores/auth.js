@@ -5,7 +5,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     userProfile: null,
-    userPermissions: [], // NOVO: permissões do usuário
+    userPermissions: [],
     loading: false,
     sessionError: false
   }),
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', {
       return tipos[state.userProfile?.tipo_usuario] || 'Usuário'
     },
     
-    // NOVO: Verifica se usuário tem acesso a uma rota específica
+    // Verifica se usuário tem acesso a uma rota específica
     canAccessRoute: (state) => (rota) => {
       // Admin sempre tem acesso
       if (state.userProfile?.tipo_usuario === 'administrador') return true
@@ -45,13 +45,30 @@ export const useAuthStore = defineStore('auth', {
       return permission?.pode_acessar || false
     },
     
-    // NOVO: Retorna páginas permitidas para o menu
+    // Retorna páginas permitidas para o menu
     allowedPages: (state) => {
       return state.userPermissions.filter(p => p.pode_acessar)
     }
   },
   
   actions: {
+    // NOVO: Verifica se está dentro do horário permitido
+    checkHorarioAcesso() {
+      // Se não tem restrição de horário, permite acesso
+      if (!this.userProfile?.horario_restrito) return true
+      
+      const agora = new Date()
+      const horaAtual = agora.getHours() * 60 + agora.getMinutes() // minutos desde meia-noite
+      
+      const [horaInicio, minInicio] = this.userProfile.horario_inicio.split(':')
+      const [horaFim, minFim] = this.userProfile.horario_fim.split(':')
+      
+      const minutosInicio = parseInt(horaInicio) * 60 + parseInt(minInicio)
+      const minutosFim = parseInt(horaFim) * 60 + parseInt(minFim)
+      
+      return horaAtual >= minutosInicio && horaAtual <= minutosFim
+    },
+
     async signIn(email, password) {
       this.loading = true
       this.sessionError = false
@@ -65,12 +82,21 @@ export const useAuthStore = defineStore('auth', {
         
         this.user = data.user
         await this.fetchUserProfile()
-        await this.fetchUserPermissions() // NOVO: Carrega permissões
+        await this.fetchUserPermissions()
         
         // Verificar se usuário está ativo
         if (!this.userProfile?.ativo) {
           await this.signOut()
           return { success: false, error: 'Usuário inativo. Contate o administrador.' }
+        }
+        
+        // NOVO: Verificar horário de acesso
+        if (!this.checkHorarioAcesso()) {
+          await this.signOut()
+          return { 
+            success: false, 
+            error: `Acesso permitido apenas entre ${this.userProfile.horario_inicio} e ${this.userProfile.horario_fim}` 
+          }
         }
         
         return { success: true }
@@ -128,7 +154,7 @@ export const useAuthStore = defineStore('auth', {
         await supabase.auth.signOut()
         this.user = null
         this.userProfile = null
-        this.userPermissions = [] // NOVO: Limpa permissões
+        this.userPermissions = []
         this.sessionError = false
         localStorage.clear()
         sessionStorage.clear()
@@ -136,7 +162,7 @@ export const useAuthStore = defineStore('auth', {
         console.error('Erro ao fazer logout:', error)
         this.user = null
         this.userProfile = null
-        this.userPermissions = [] // NOVO: Limpa permissões
+        this.userPermissions = []
         this.sessionError = false
         localStorage.clear()
         sessionStorage.clear()
@@ -169,7 +195,6 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    // NOVO: Buscar permissões do usuário
     async fetchUserPermissions() {
       if (!this.user) return
       
@@ -182,7 +207,6 @@ export const useAuthStore = defineStore('auth', {
         this.userPermissions = data || []
       } catch (error) {
         console.error('Erro ao buscar permissões:', error)
-        // Se falhar, continua com permissões vazias
         this.userPermissions = []
       }
     },
@@ -196,38 +220,37 @@ export const useAuthStore = defineStore('auth', {
           this.sessionError = true
           this.user = null
           this.userProfile = null
-          this.userPermissions = [] // NOVO: Limpa permissões
+          this.userPermissions = []
           return
         }
         
         if (session) {
           this.user = session.user
           await this.fetchUserProfile()
-          await this.fetchUserPermissions() // NOVO: Carrega permissões
+          await this.fetchUserPermissions()
         } else {
           this.user = null
           this.userProfile = null
-          this.userPermissions = [] // NOVO: Limpa permissões
+          this.userPermissions = []
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error)
         this.sessionError = true
         this.user = null
         this.userProfile = null
-        this.userPermissions = [] // NOVO: Limpa permissões
+        this.userPermissions = []
       }
     },
     
     forceLogout() {
       this.user = null
       this.userProfile = null
-      this.userPermissions = [] // NOVO: Limpa permissões
+      this.userPermissions = []
       this.sessionError = false
       localStorage.clear()
       sessionStorage.clear()
     },
     
-    // NOVO: Recarregar permissões (útil após alterações)
     async reloadPermissions() {
       await this.fetchUserPermissions()
     }
