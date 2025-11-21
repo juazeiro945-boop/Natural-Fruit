@@ -32,25 +32,25 @@
             <label class="label">Tipo de Venda</label>
             <select v-model="filters.saleType" class="input-field">
               <option value="all">Todos</option>
-              <option value="wholesale">🏭 Atacado</option>
-              <option value="retail">🛒 Varejo</option>
+              <option value="wholesale">Atacado</option>
+              <option value="retail">Varejo</option>
             </select>
           </div>
           <div>
             <label class="label">Forma de Pagamento</label>
             <select v-model="filters.paymentMethod" class="input-field">
               <option value="all">Todas</option>
-              <option value="cash">💵 Dinheiro</option>
-              <option value="pix">📱 PIX</option>
-              <option value="boleto">📄 Boleto</option>
+              <option value="cash">Dinheiro</option>
+              <option value="pix">PIX</option>
+              <option value="boleto">Boleto</option>
             </select>
           </div>
           <div>
             <label class="label">Status de Pagamento</label>
             <select v-model="filters.paymentStatus" class="input-field">
               <option value="all">Todos</option>
-              <option value="paid">✓ Pago</option>
-              <option value="pending">⏳ Pendente</option>
+              <option value="paid">Pago</option>
+              <option value="pending">Pendente</option>
             </select>
           </div>
         </div>
@@ -63,7 +63,7 @@
       </div>
 
       <div v-if="reportData.length > 0" class="card">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
           <div>
             <h3 class="text-lg font-bold">Resultado - {{ reportData.length }} registro(s)</h3>
             <p class="text-sm text-gray-600 mt-1">
@@ -78,13 +78,14 @@
               </span>
             </p>
           </div>
-          <div class="space-x-2">
-            <button @click="exportPDF" class="btn-outline">📄 Exportar PDF</button>
-            <button @click="exportExcel" class="btn-outline">📊 Exportar Excel</button>
+          <div class="flex gap-2">
+            <button @click="exportPDF" class="btn-outline flex-1 md:flex-none text-sm">📄 PDF</button>
+            <button @click="exportExcel" class="btn-outline flex-1 md:flex-none text-sm">📊 Excel</button>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Tabela Desktop -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
@@ -111,6 +112,24 @@
           </table>
         </div>
 
+        <!-- Cards Mobile -->
+        <div class="md:hidden space-y-3">
+          <div v-for="(row, index) in reportData" :key="index" class="card p-4 border-2">
+            <div v-for="col in columns" :key="col" class="mb-2 last:mb-0">
+              <span class="text-xs text-gray-500">{{ col }}:</span>
+              <span v-if="col === 'Status'" :class="getStatusClass(row[col])" class="ml-2">
+                {{ formatValue(row[col], col) }}
+              </span>
+              <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])" class="ml-2">
+                {{ formatValue(row[col], col) }}
+              </span>
+              <span v-else class="ml-2 font-semibold">
+                {{ formatValue(row[col], col) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="mt-4 p-4 bg-primary-50 rounded-lg">
           <h4 class="font-bold text-primary-900 mb-2">Resumo do Período</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -135,11 +154,11 @@
               <p class="font-bold text-lg text-red-600">{{ formatCurrency(summary.totalPending) }}</p>
             </div>
             <div v-if="filters.type === 'sales' && summary.wholesaleTotal > 0">
-              <p class="text-gray-600">🏭 Total Atacado</p>
+              <p class="text-gray-600">Total Atacado</p>
               <p class="font-bold text-lg text-blue-600">{{ formatCurrency(summary.wholesaleTotal) }}</p>
             </div>
             <div v-if="filters.type === 'sales' && summary.retailTotal > 0">
-              <p class="text-gray-600">🛒 Total Varejo</p>
+              <p class="text-gray-600">Total Varejo</p>
               <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.retailTotal) }}</p>
             </div>
             <div v-if="filters.type === 'production'">
@@ -253,11 +272,17 @@ const getSaleTypeBadgeClass = (type) => {
   return ''
 }
 
+// Funções para remover emojis (só para PDF)
+const removeEmojis = (text) => {
+  if (!text) return text
+  return String(text).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim()
+}
+
 const getPaymentMethodName = (method) => {
   const names = {
-    cash: '💵 Dinheiro',
-    pix: '📱 PIX',
-    boleto: '📄 Boleto',
+    cash: 'Dinheiro',
+    pix: 'PIX',
+    boleto: 'Boleto',
     all: 'Todas'
   }
   return names[method] || method
@@ -265,8 +290,8 @@ const getPaymentMethodName = (method) => {
 
 const getSaleTypeName = (type) => {
   const names = {
-    wholesale: '🏭 Atacado',
-    retail: '🛒 Varejo',
+    wholesale: 'Atacado',
+    retail: 'Varejo',
     all: 'Todos'
   }
   return names[type] || type
@@ -314,17 +339,14 @@ const generateSalesReport = async () => {
     .gte('date', filters.value.startDate)
     .lte('date', filters.value.endDate)
 
-  // Aplicar filtro de tipo de venda
   if (filters.value.saleType !== 'all') {
     query = query.eq('sale_type', filters.value.saleType)
   }
 
-  // Aplicar filtro de forma de pagamento
   if (filters.value.paymentMethod !== 'all') {
     query = query.eq('payment_method', filters.value.paymentMethod)
   }
 
-  // Aplicar filtro de status de pagamento
   if (filters.value.paymentStatus !== 'all') {
     query = query.eq('paid', filters.value.paymentStatus === 'paid')
   }
@@ -336,14 +358,14 @@ const generateSalesReport = async () => {
   if (error) throw error
 
   reportData.value = data.map(d => ({
-    'Data': new Date(d.date).toLocaleDateString('pt-BR'),
-    'Tipo': d.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo',
+    'Data': new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR'),
+    'Tipo': d.sale_type === 'wholesale' ? 'Atacado' : 'Varejo',
     'Cliente': d.clients?.name || 'N/A',
     'Produto': d.products?.name || 'N/A',
     'Quantidade': d.quantity,
     'Total (R$)': d.total,
-    'Pagamento': d.payment_method === 'cash' ? '💵 Dinheiro' : d.payment_method === 'pix' ? '📱 PIX' : d.payment_method === 'boleto' ? '📄 Boleto' : 'N/A',
-    'Status': d.paid ? '✓ Pago' : '⏳ Pendente'
+    'Pagamento': d.payment_method === 'cash' ? 'Dinheiro' : d.payment_method === 'pix' ? 'PIX' : d.payment_method === 'boleto' ? 'Boleto' : 'N/A',
+    'Status': d.paid ? 'Pago' : 'Pendente'
   }))
   
   columns.value = ['Data', 'Tipo', 'Cliente', 'Produto', 'Quantidade', 'Total (R$)', 'Pagamento', 'Status']
@@ -384,7 +406,7 @@ const generateProductionReport = async () => {
   if (error) throw error
 
   reportData.value = data.map(d => ({
-    'Data': new Date(d.date).toLocaleDateString('pt-BR'),
+    'Data': new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR'),
     'Produto': d.products?.name || 'N/A',
     'Produzido': d.quantity,
     'Perdas': d.loss || 0,
@@ -423,7 +445,7 @@ const generateLossesReport = async () => {
   reportData.value = data
     .filter(d => (d.loss > 0 || d.exchange > 0))
     .map(d => ({
-      'Data': new Date(d.date).toLocaleDateString('pt-BR'),
+      'Data': new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR'),
       'Produto': d.products?.name || 'N/A',
       'Produzido': d.quantity,
       'Perdas': d.loss || 0,
@@ -516,17 +538,14 @@ const generatePaymentReport = async () => {
     .gte('date', filters.value.startDate)
     .lte('date', filters.value.endDate)
 
-  // Aplicar filtro de tipo de venda
   if (filters.value.saleType !== 'all') {
     query = query.eq('sale_type', filters.value.saleType)
   }
 
-  // Aplicar filtro de forma de pagamento
   if (filters.value.paymentMethod !== 'all') {
     query = query.eq('payment_method', filters.value.paymentMethod)
   }
 
-  // Aplicar filtro de status de pagamento
   if (filters.value.paymentStatus !== 'all') {
     query = query.eq('paid', filters.value.paymentStatus === 'paid')
   }
@@ -538,12 +557,12 @@ const generatePaymentReport = async () => {
   if (error) throw error
 
   reportData.value = data.map(d => ({
-    'Data': new Date(d.date).toLocaleDateString('pt-BR'),
-    'Tipo': d.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo',
+    'Data': new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR'),
+    'Tipo': d.sale_type === 'wholesale' ? 'Atacado' : 'Varejo',
     'Cliente': d.clients?.name || 'N/A',
-    'Forma de Pagamento': d.payment_method === 'cash' ? '💵 Dinheiro' : d.payment_method === 'pix' ? '📱 PIX' : d.payment_method === 'boleto' ? '📄 Boleto' : 'N/A',
+    'Forma de Pagamento': d.payment_method === 'cash' ? 'Dinheiro' : d.payment_method === 'pix' ? 'PIX' : d.payment_method === 'boleto' ? 'Boleto' : 'N/A',
     'Valor (R$)': d.total,
-    'Status': d.paid ? '✓ Recebido' : '⏳ Pendente'
+    'Status': d.paid ? 'Recebido' : 'Pendente'
   }))
 
   columns.value = ['Data', 'Tipo', 'Cliente', 'Forma de Pagamento', 'Valor (R$)', 'Status']
@@ -561,40 +580,94 @@ const generatePaymentReport = async () => {
 }
 
 const exportPDF = () => {
-  const doc = new jsPDF()
+  const doc = new jsPDF('landscape') // Modo paisagem para mais espaço
   
-  doc.setFontSize(18)
-  doc.text('Natural Fruit - Relatório', 14, 20)
+  // Header
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Natural Fruit - Relatorio', 14, 15)
   
-  doc.setFontSize(10)
-  doc.text(`Tipo: ${getTipeName()}`, 14, 30)
-  doc.text(`Período: ${new Date(filters.value.startDate).toLocaleDateString('pt-BR')} até ${new Date(filters.value.endDate).toLocaleDateString('pt-BR')}`, 14, 36)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Tipo: ${getTipeName()}`, 14, 22)
+  doc.text(`Periodo: ${new Date(filters.value.startDate).toLocaleDateString('pt-BR')} ate ${new Date(filters.value.endDate).toLocaleDateString('pt-BR')}`, 14, 27)
   
+  let yPos = 32
   if (filters.value.saleType !== 'all') {
-    doc.text(`Tipo de Venda: ${getSaleTypeName(filters.value.saleType)}`, 14, 42)
+    doc.text(`Tipo de Venda: ${getSaleTypeName(filters.value.saleType)}`, 14, yPos)
+    yPos += 5
   }
   if (filters.value.paymentMethod !== 'all') {
-    doc.text(`Forma de Pagamento: ${getPaymentMethodName(filters.value.paymentMethod)}`, 14, 48)
+    doc.text(`Forma de Pagamento: ${getPaymentMethodName(filters.value.paymentMethod)}`, 14, yPos)
+    yPos += 5
   }
   if (filters.value.paymentStatus !== 'all') {
-    doc.text(`Status: ${filters.value.paymentStatus === 'paid' ? 'Pago' : 'Pendente'}`, 14, 54)
+    doc.text(`Status: ${filters.value.paymentStatus === 'paid' ? 'Pago' : 'Pendente'}`, 14, yPos)
+    yPos += 5
   }
   
-  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 60)
-  doc.text(`Total de registros: ${reportData.value.length}`, 14, 66)
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, yPos)
+  yPos += 5
+  doc.text(`Total de registros: ${reportData.value.length}`, 14, yPos)
+  yPos += 8
+  
+  // Preparar dados removendo emojis
+  const pdfData = reportData.value.map(row => 
+    columns.value.map(col => {
+      let value = row[col]
+      
+      // Remover emojis
+      if (typeof value === 'string') {
+        value = removeEmojis(value)
+      }
+      
+      // Formatar valores monetários
+      if (col.includes('R$') && typeof value === 'number') {
+        value = formatCurrency(value)
+      }
+      
+      // Truncar textos longos
+      if (typeof value === 'string' && value.length > 30) {
+        value = value.substring(0, 27) + '...'
+      }
+      
+      return value
+    })
+  )
+  
+  // Configurar larguras das colunas dinamicamente
+  const columnStyles = {}
+  columns.value.forEach((col, index) => {
+    if (col.includes('Cliente') || col.includes('Produto')) {
+      columnStyles[index] = { cellWidth: 'auto', minCellWidth: 35 }
+    } else if (col.includes('R$') || col.includes('Total') || col.includes('Valor')) {
+      columnStyles[index] = { cellWidth: 25, halign: 'right' }
+    } else if (col === 'Data') {
+      columnStyles[index] = { cellWidth: 22 }
+    } else if (col === 'Status' || col === 'Tipo') {
+      columnStyles[index] = { cellWidth: 20 }
+    }
+  })
   
   doc.autoTable({
     head: [columns.value],
-    body: reportData.value.map(row => columns.value.map(col => {
-      const value = row[col]
-      if (col.includes('R$') && typeof value === 'number') {
-        return formatCurrency(value)
-      }
-      return value
-    })),
-    startY: 74,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [255, 140, 0] }
+    body: pdfData,
+    startY: yPos,
+    styles: { 
+      fontSize: 7,
+      cellPadding: 2,
+      overflow: 'linebreak',
+      cellWidth: 'wrap'
+    },
+    headStyles: { 
+      fillColor: [255, 140, 0],
+      fontStyle: 'bold',
+      fontSize: 8
+    },
+    columnStyles: columnStyles,
+    margin: { left: 14, right: 14 },
+    tableWidth: 'auto',
+    theme: 'grid'
   })
   
   doc.save(`relatorio-natural-fruit-${filters.value.type}-${Date.now()}.pdf`)
@@ -604,21 +677,30 @@ const exportExcel = () => {
   const excelData = reportData.value.map(row => {
     const formattedRow = {}
     columns.value.forEach(col => {
-      const value = row[col]
-      if (col.includes('R$') && typeof value === 'number') {
-        formattedRow[col] = value
-      } else {
-        formattedRow[col] = value
+      let value = row[col]
+      
+      // Remover emojis
+      if (typeof value === 'string') {
+        value = removeEmojis(value)
       }
+      
+      formattedRow[col] = value
     })
     return formattedRow
   })
   
   const ws = XLSX.utils.json_to_sheet(excelData)
   
-  const colWidths = columns.value.map(col => ({
-    wch: Math.max(col.length, 15)
-  }))
+  // Definir largura das colunas
+  const colWidths = columns.value.map(col => {
+    if (col.includes('Cliente') || col.includes('Produto') || col.includes('Email')) {
+      return { wch: 30 }
+    }
+    if (col.includes('R$') || col.includes('Total') || col.includes('Valor')) {
+      return { wch: 15 }
+    }
+    return { wch: 12 }
+  })
   ws['!cols'] = colWidths
   
   const wb = XLSX.utils.book_new()
@@ -630,11 +712,33 @@ const exportExcel = () => {
 const getTipeName = () => {
   const types = {
     sales: 'Vendas',
-    production: 'Produção',
+    production: 'Producao',
     losses: 'Perdas e Trocas',
     clients: 'Clientes',
     payment: 'Formas de Pagamento'
   }
-  return types[filters.value.type] || 'Relatório'
+  return types[filters.value.type] || 'Relatorio'
 }
 </script>
+
+<style scoped>
+.card {
+  @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.input-field {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+}
+
+.btn-primary {
+  @apply px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
+}
+
+.btn-outline {
+  @apply px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
+}
+</style>
