@@ -934,7 +934,7 @@ const generateReceipt = async (pedido) => {
   doc.setFontSize(9)
   doc.text('CNPJ: 60.127.371/0001-60', 15, 56)
   doc.text('Juazeiro, Bahia, Brasil', 15, 61)
-  doc.text('Telefone: (74) 99999-9999', 15, 66)
+  doc.text('Telefone: (87) 98864-1590', 15, 66)
   
   // Número do recibo
   doc.setFontSize(11)
