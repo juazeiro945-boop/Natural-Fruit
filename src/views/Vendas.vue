@@ -771,15 +771,15 @@ const saveSale = async () => {
     for (const item of form.value.produtos) {
       const { data: productData } = await supabase
         .from('products')
-        .select('stock')
+        .select('stock_quantity')
         .eq('id', item.product_id)
         .single()
       
       if (productData) {
-        const newStock = (productData.stock || 0) - item.quantity
+        const newStock = (productData.stock_quantity || 0) - item.quantity
         await supabase
           .from('products')
-          .update({ stock: newStock })
+          .update({ stock_quantity: newStock })
           .eq('id', item.product_id)
       }
     }
