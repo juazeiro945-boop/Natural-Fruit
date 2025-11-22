@@ -74,6 +74,18 @@ const routes = [
     meta: { requiresAuth: true, checkPermission: true }
   },
   {
+    path: '/eventos',
+    name: 'Eventos',
+    component: () => import('../views/Eventos.vue'),
+    meta: { requiresAuth: true, checkPermission: true }
+  },
+  {
+    path: '/crediario',
+    name: 'Crediario',
+    component: () => import('../views/Crediario.vue'),
+    meta: { requiresAuth: true, checkPermission: true }
+  },
+  {
     path: '/configuracoes',
     name: 'Configuracoes',
     component: () => import('../views/Configuracoes.vue'),
