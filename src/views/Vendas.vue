@@ -57,7 +57,28 @@
         </div>
       </div>
 
-      <div class="hidden md:block card overflow-x-auto">
+      <!-- Botão Alternar Visualização -->
+      <div class="flex justify-center">
+        <div class="inline-flex rounded-lg border-2 border-primary-200 bg-white p-1">
+          <button 
+            @click="viewMode = 'pedidos'" 
+            :class="viewMode === 'pedidos' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
+            class="px-6 py-2 rounded-lg font-semibold transition-colors"
+          >
+            📦 Por Pedido
+          </button>
+          <button 
+            @click="viewMode = 'clientes'" 
+            :class="viewMode === 'clientes' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
+            class="px-6 py-2 rounded-lg font-semibold transition-colors"
+          >
+            👥 Por Cliente
+          </button>
+        </div>
+      </div>
+
+      <!-- Visualização POR PEDIDOS (original) -->
+      <div v-if="viewMode === 'pedidos'" class="hidden md:block card overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -123,7 +144,7 @@
         </div>
       </div>
 
-      <div class="md:hidden space-y-3">
+      <div v-if="viewMode === 'pedidos'" class="md:hidden space-y-3">
         <div v-for="sale in sales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
@@ -174,6 +195,92 @@
           </div>
           <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
           <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou registre um novo pedido</p>
+        </div>
+      </div>
+
+      <!-- Visualização POR CLIENTES -->
+      <div v-if="viewMode === 'clientes'" class="space-y-4">
+        <div v-for="cliente in clientesAgrupados" :key="cliente.id" class="card border-l-4 border-primary-500">
+          <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
+            <div class="flex-1">
+              <h3 class="font-bold text-xl md:text-2xl text-gray-900">{{ cliente.name }}</h3>
+              <div class="flex flex-wrap items-center gap-3 mt-2">
+                <p class="text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
+                <p class="text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-3 mt-2">
+                <span class="text-sm font-semibold text-primary-600">
+                  📦 {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
+                </span>
+                <span class="text-sm font-semibold text-blue-600">
+                  📊 {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
+                </span>
+              </div>
+            </div>
+            <div class="text-left md:text-right">
+              <p class="text-sm text-gray-600 mb-1">Total Comprado</p>
+              <p class="font-bold text-2xl md:text-3xl text-primary-600">{{ formatCurrency(cliente.totalComprado) }}</p>
+              <div class="flex flex-wrap gap-2 mt-2 md:justify-end">
+                <span v-if="cliente.totalPago > 0" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+                  ✅ Pago: {{ formatCurrency(cliente.totalPago) }}
+                </span>
+                <span v-if="cliente.totalPendente > 0" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
+                  ⏳ Pendente: {{ formatCurrency(cliente.totalPendente) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de Pedidos do Cliente -->
+          <div class="space-y-2 pt-4 border-t">
+            <h4 class="font-semibold text-gray-700 mb-3">Histórico de Pedidos:</h4>
+            <div v-for="pedido in cliente.pedidos" :key="pedido.id" class="bg-gray-50 hover:bg-gray-100 p-3 md:p-4 rounded-lg transition-colors">
+              <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <p class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(0, 8) }}</p>
+                    <span :class="getSaleTypeBadge(pedido.sale_type)" class="text-xs">{{ getSaleTypeLabel(pedido.sale_type) }}</span>
+                    <span :class="getOrderStatusBadge(pedido.order_status)" class="text-xs">{{ getOrderStatusLabel(pedido.order_status) }}</span>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                    <p class="text-gray-700">📅 {{ formatDate(pedido.date) }}</p>
+                    <p class="text-gray-700">📦 {{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
+                    <p class="text-gray-700">💳 {{ getPaymentLabel(pedido.payment_method) }}</p>
+                  </div>
+                  <div v-if="pedido.is_event" class="mt-2">
+                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-semibold">
+                      🎉 Evento: {{ pedido.event_name }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex flex-row md:flex-col items-center md:items-end gap-2">
+                  <div class="text-left md:text-right flex-1 md:flex-none">
+                    <p class="font-bold text-lg md:text-xl text-gray-900">{{ formatCurrency(pedido.total) }}</p>
+                    <span :class="pedido.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" 
+                      class="text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap inline-block">
+                      {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button @click="viewSaleDetails(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
+                      <span class="text-lg">👁️</span>
+                    </button>
+                    <button @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
+                      <span class="text-lg">📄</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="clientesAgrupados.length === 0" class="card text-center py-12">
+          <div class="text-gray-400 mb-4">
+            <span class="text-6xl">👥</span>
+          </div>
+          <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
+          <p class="text-gray-500 text-sm mt-2">Ajuste os filtros para ver os clientes</p>
         </div>
       </div>
 
@@ -497,6 +604,7 @@ const selectedSale = ref(null)
 const loading = ref(false)
 const showReceiptConfirm = ref(false)
 const lastSaleData = ref(null)
+const viewMode = ref('pedidos') // 'pedidos' ou 'clientes'
 
 const filters = ref({
   date: '',
@@ -534,6 +642,41 @@ const form = ref({
 
 const totalPedido = computed(() => {
   return form.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
+})
+
+const clientesAgrupados = computed(() => {
+  const clientesMap = {}
+  
+  sales.value.forEach(sale => {
+    if (!clientesMap[sale.client_id]) {
+      clientesMap[sale.client_id] = {
+        id: sale.client_id,
+        name: sale.clients?.name || 'Cliente',
+        phone: sale.clients?.phone || '',
+        email: sale.clients?.email || '',
+        pedidos: [],
+        totalPedidos: 0,
+        totalItens: 0,
+        totalComprado: 0,
+        totalPago: 0,
+        totalPendente: 0
+      }
+    }
+    
+    clientesMap[sale.client_id].pedidos.push(sale)
+    clientesMap[sale.client_id].totalPedidos += 1
+    clientesMap[sale.client_id].totalItens += getTotalItems(sale)
+    clientesMap[sale.client_id].totalComprado += sale.total || 0
+    
+    if (sale.paid) {
+      clientesMap[sale.client_id].totalPago += sale.total || 0
+    } else {
+      clientesMap[sale.client_id].totalPendente += sale.total || 0
+    }
+  })
+  
+  // Ordenar por total comprado (maior para menor)
+  return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
 })
 
 const formatCurrency = (value) => {
