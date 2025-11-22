@@ -51,10 +51,41 @@
         </div>
       </div>
 
+      <!-- Informação de Paginação -->
+      <div v-if="clientesFiltrados.length > 0" class="card bg-blue-50 border-2 border-blue-200">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div class="text-sm text-gray-700">
+            <span class="font-bold">{{ clientesPaginados.length }}</span> de 
+            <span class="font-bold">{{ clientesFiltrados.length }}</span> clientes
+            <span class="text-gray-500 ml-2">(Página {{ paginaAtual }} de {{ totalPaginas }})</span>
+          </div>
+          
+          <!-- Botões de Paginação -->
+          <div class="flex gap-2">
+            <button 
+              @click="paginaAnterior" 
+              :disabled="paginaAtual === 1"
+              :class="paginaAtual === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-700'"
+              class="flex-1 md:flex-none px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold transition-colors text-sm disabled:hover:bg-primary-600"
+            >
+              ← Anterior
+            </button>
+            <button 
+              @click="proximaPagina" 
+              :disabled="paginaAtual === totalPaginas"
+              :class="paginaAtual === totalPaginas ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-700'"
+              class="flex-1 md:flex-none px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold transition-colors text-sm disabled:hover:bg-primary-600"
+            >
+              Próxima →
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Lista de Clientes -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div 
-          v-for="client in clientesFiltrados" 
+          v-for="client in clientesPaginados" 
           :key="client.id" 
           class="card hover:shadow-xl transition-shadow"
           :class="{ 'opacity-60 border-2 border-red-200': !client.ativo }"
@@ -133,6 +164,26 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Paginação Inferior (Mobile) -->
+      <div v-if="clientesFiltrados.length > itensPorPagina" class="flex md:hidden gap-2">
+        <button 
+          @click="paginaAnterior" 
+          :disabled="paginaAtual === 1"
+          :class="paginaAtual === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-700'"
+          class="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold transition-colors disabled:hover:bg-primary-600"
+        >
+          ← Anterior
+        </button>
+        <button 
+          @click="proximaPagina" 
+          :disabled="paginaAtual === totalPaginas"
+          :class="paginaAtual === totalPaginas ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-700'"
+          class="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold transition-colors disabled:hover:bg-primary-600"
+        >
+          Próxima →
+        </button>
       </div>
 
       <!-- Estado Vazio -->
@@ -225,7 +276,6 @@
               ></textarea>
             </div>
 
-            <!-- NOVO: Campo de Observações -->
             <div>
               <label class="label">📝 Observações</label>
               <textarea 
@@ -314,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
 
@@ -327,6 +377,10 @@ const clienteParaExcluir = ref(null)
 const filtroAtivo = ref('todos')
 const buscaCliente = ref('')
 
+// Paginação
+const paginaAtual = ref(1)
+const itensPorPagina = ref(10)
+
 const form = ref({
   type: 'pf',
   name: '',
@@ -334,7 +388,7 @@ const form = ref({
   phone: '',
   email: '',
   address: '',
-  observacoes: '', // NOVO
+  observacoes: '',
   requires_invoice: false,
   ativo: true
 })
@@ -365,6 +419,36 @@ const clientesFiltrados = computed(() => {
   }
 
   return resultado
+})
+
+// Paginação
+const totalPaginas = computed(() => {
+  return Math.ceil(clientesFiltrados.value.length / itensPorPagina.value)
+})
+
+const clientesPaginados = computed(() => {
+  const inicio = (paginaAtual.value - 1) * itensPorPagina.value
+  const fim = inicio + itensPorPagina.value
+  return clientesFiltrados.value.slice(inicio, fim)
+})
+
+const proximaPagina = () => {
+  if (paginaAtual.value < totalPaginas.value) {
+    paginaAtual.value++
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const paginaAnterior = () => {
+  if (paginaAtual.value > 1) {
+    paginaAtual.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Watch para resetar página quando filtros mudam
+watch([filtroAtivo, buscaCliente], () => {
+  paginaAtual.value = 1
 })
 
 const loadClients = async () => {
@@ -468,7 +552,6 @@ const excluirCliente = async () => {
   } catch (error) {
     console.error('Erro ao excluir cliente:', error)
     
-    // Verifica se é erro de relacionamento (cliente usado em vendas)
     if (error.code === '23503') {
       alert('❌ Não é possível excluir este cliente pois ele possui vendas/pedidos registrados. Você pode inativá-lo ao invés de excluir.')
     } else {
@@ -489,7 +572,7 @@ const closeModal = () => {
     phone: '', 
     email: '', 
     address: '',
-    observacoes: '', // NOVO
+    observacoes: '',
     requires_invoice: false,
     ativo: true 
   }
