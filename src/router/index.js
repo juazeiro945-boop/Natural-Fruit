@@ -129,7 +129,7 @@ router.beforeEach(async (to, from, next) => {
       const hasPermission = authStore.canAccessRoute(to.path)
       
       if (!hasPermission) {
-        console.warn(`Acesso negado à rota: ${to.path}`)
+        console.warn('Acesso negado à rota: ' + to.path)
         
         // Redireciona para o dashboard apropriado
         if (authStore.isVendedor) {
