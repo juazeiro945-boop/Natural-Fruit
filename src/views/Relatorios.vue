@@ -43,6 +43,7 @@
               <option value="cash">Dinheiro</option>
               <option value="pix">PIX</option>
               <option value="boleto">Boleto</option>
+              <option value="credito">Crediário</option>
             </select>
           </div>
           <div>
@@ -272,7 +273,6 @@ const getSaleTypeBadgeClass = (type) => {
   return ''
 }
 
-// Funções para remover emojis (só para PDF)
 const removeEmojis = (text) => {
   if (!text) return text
   return String(text).replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim()
@@ -283,6 +283,7 @@ const getPaymentMethodName = (method) => {
     cash: 'Dinheiro',
     pix: 'PIX',
     boleto: 'Boleto',
+    credito: 'Crediario',
     all: 'Todas'
   }
   return names[method] || method
@@ -364,7 +365,7 @@ const generateSalesReport = async () => {
     'Produto': d.products?.name || 'N/A',
     'Quantidade': d.quantity,
     'Total (R$)': d.total,
-    'Pagamento': d.payment_method === 'cash' ? 'Dinheiro' : d.payment_method === 'pix' ? 'PIX' : d.payment_method === 'boleto' ? 'Boleto' : 'N/A',
+    'Pagamento': getPaymentLabel(d.payment_method),
     'Status': d.paid ? 'Pago' : 'Pendente'
   }))
   
@@ -384,6 +385,17 @@ const generateSalesReport = async () => {
     retailTotal,
     avgTicket: data.length > 0 ? totalSales / data.length : 0
   }
+}
+
+const getPaymentLabel = (method) => {
+  const labels = {
+    'cash': 'Dinheiro',
+    'pix': 'PIX',
+    'boleto': 'Boleto',
+    'credito': 'Crediario',
+    'pendente': 'Pendente'
+  }
+  return labels[method] || 'N/A'
 }
 
 const generateProductionReport = async () => {
@@ -560,7 +572,7 @@ const generatePaymentReport = async () => {
     'Data': new Date(d.date + 'T00:00:00').toLocaleDateString('pt-BR'),
     'Tipo': d.sale_type === 'wholesale' ? 'Atacado' : 'Varejo',
     'Cliente': d.clients?.name || 'N/A',
-    'Forma de Pagamento': d.payment_method === 'cash' ? 'Dinheiro' : d.payment_method === 'pix' ? 'PIX' : d.payment_method === 'boleto' ? 'Boleto' : 'N/A',
+    'Forma de Pagamento': getPaymentLabel(d.payment_method),
     'Valor (R$)': d.total,
     'Status': d.paid ? 'Recebido' : 'Pendente'
   }))
@@ -575,14 +587,14 @@ const generatePaymentReport = async () => {
     totalPending,
     cashTotal: data.filter(d => d.payment_method === 'cash' && d.paid).reduce((sum, d) => sum + (d.total || 0), 0),
     pixTotal: data.filter(d => d.payment_method === 'pix' && d.paid).reduce((sum, d) => sum + (d.total || 0), 0),
-    boletoTotal: data.filter(d => d.payment_method === 'boleto' && d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
+    boletoTotal: data.filter(d => d.payment_method === 'boleto' && d.paid).reduce((sum, d) => sum + (d.total || 0), 0),
+    creditoTotal: data.filter(d => d.payment_method === 'credito' && d.paid).reduce((sum, d) => sum + (d.total || 0), 0)
   }
 }
 
 const exportPDF = () => {
-  const doc = new jsPDF('landscape') // Modo paisagem para mais espaço
+  const doc = new jsPDF('landscape')
   
-  // Header
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
   doc.text('Natural Fruit - Relatorio', 14, 15)
@@ -611,22 +623,18 @@ const exportPDF = () => {
   doc.text(`Total de registros: ${reportData.value.length}`, 14, yPos)
   yPos += 8
   
-  // Preparar dados removendo emojis
   const pdfData = reportData.value.map(row => 
     columns.value.map(col => {
       let value = row[col]
       
-      // Remover emojis
       if (typeof value === 'string') {
         value = removeEmojis(value)
       }
       
-      // Formatar valores monetários
       if (col.includes('R$') && typeof value === 'number') {
         value = formatCurrency(value)
       }
       
-      // Truncar textos longos
       if (typeof value === 'string' && value.length > 30) {
         value = value.substring(0, 27) + '...'
       }
@@ -635,7 +643,6 @@ const exportPDF = () => {
     })
   )
   
-  // Configurar larguras das colunas dinamicamente
   const columnStyles = {}
   columns.value.forEach((col, index) => {
     if (col.includes('Cliente') || col.includes('Produto')) {
@@ -679,7 +686,6 @@ const exportExcel = () => {
     columns.value.forEach(col => {
       let value = row[col]
       
-      // Remover emojis
       if (typeof value === 'string') {
         value = removeEmojis(value)
       }
@@ -691,7 +697,6 @@ const exportExcel = () => {
   
   const ws = XLSX.utils.json_to_sheet(excelData)
   
-  // Definir largura das colunas
   const colWidths = columns.value.map(col => {
     if (col.includes('Cliente') || col.includes('Produto') || col.includes('Email')) {
       return { wch: 30 }
