@@ -78,7 +78,6 @@
           </div>
 
           <div class="space-y-3 mb-4">
-            <!-- Lista de produtos (preparado para múltiplos) -->
             <div class="flex items-start space-x-2">
               <span class="text-lg">📦</span>
               <div class="flex-1">
@@ -163,7 +162,6 @@
             <p v-if="pedido.observacao_entrega" class="text-xs text-gray-600 mt-1">
               <strong>Obs:</strong> {{ pedido.observacao_entrega }}
             </p>
-            <!-- Botão para ADM desfazer entrega -->
             <button 
               v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
               @click="desfazerEntrega(pedido)"
@@ -282,7 +280,6 @@
               </select>
             </div>
 
-            <!-- Múltiplos Produtos -->
             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 space-y-4">
               <div class="flex justify-between items-center">
                 <label class="label mb-0">Produtos *</label>
@@ -343,7 +340,6 @@
               </select>
             </div>
 
-            <!-- Opção de Troca -->
             <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
               <div class="flex items-center space-x-3 mb-3">
                 <input v-model="formPedido.tem_troca" type="checkbox" id="tem-troca" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
@@ -512,7 +508,7 @@ const formCancelamento = ref({
 })
 
 const formPedido = ref({
-  date: new Date().toLocaleDateString('en-CA'), // Formato YYYY-MM-DD corrigido
+  date: new Date().toLocaleDateString('en-CA'),
   sale_type: 'retail',
   client_id: '',
   produtos: [
@@ -549,7 +545,7 @@ const formatCurrency = (value) => {
 
 const formatDate = (date) => {
   if (!date) return 'N/A'
-  const d = new Date(date + 'T00:00:00') // Força timezone local
+  const d = new Date(date + 'T00:00:00')
   return d.toLocaleDateString('pt-BR')
 }
 
@@ -559,9 +555,9 @@ const formatDateTime = (date) => {
 
 const getStatusLabel = (status) => {
   const labels = {
-    'pendente': '🕐 Pendente',
-    'entregue': '✅ Entregue',
-    'cancelado': '❌ Cancelado'
+    'pendente': 'Pendente',
+    'entregue': 'Entregue',
+    'cancelado': 'Cancelado'
   }
   return labels[status] || status
 }
@@ -577,11 +573,11 @@ const getStatusBadge = (status) => {
 
 const getPaymentMethodLabel = (method) => {
   const labels = {
-    'pendente': '⏳ Pendente',
-    'cash': '💵 Dinheiro',
-    'pix': '📱 PIX',
-    'boleto': '📄 Boleto',
-    'credito': '💳 Crediário'
+    'pendente': 'Pendente',
+    'cash': 'Dinheiro',
+    'pix': 'PIX',
+    'boleto': 'Boleto',
+    'credito': 'Crediario'
   }
   return labels[method] || method
 }
@@ -654,7 +650,7 @@ const loadClientes = async () => {
 }
 
 const loadProdutos = async () => {
-  const { data } = await supabase.from('products').select('*').eq('ativo', true).order('name')
+  const { data } = await supabase.from('products').select('*').eq('active', true).order('name')
   produtos.value = data || []
 }
 
@@ -667,14 +663,13 @@ const confirmarEntrega = async (pedido) => {
   if (!confirm('Confirmar entrega do pedido? Ele será automaticamente registrado em VENDAS.')) return
 
   try {
-    // Atualiza o pedido como entregue
     const { error: updateError } = await supabase
       .from('sales')
       .update({
         status_entrega: 'entregue',
         data_entrega: new Date().toISOString(),
         vendedor_id: authStore.user.id,
-        paid: true // Marca como pago ao entregar
+        paid: true
       })
       .eq('id', pedido.id)
 
@@ -757,7 +752,6 @@ const closeModalCancelamento = () => {
 const salvarNovoPedido = async () => {
   loading.value = true
   try {
-    // Validação
     if (formPedido.value.produtos.length === 0) {
       alert('Adicione pelo menos um produto ao pedido')
       return
@@ -768,7 +762,6 @@ const salvarNovoPedido = async () => {
       return
     }
 
-    // Por enquanto, salva apenas o primeiro produto (preparado para múltiplos)
     const primeiroProduto = formPedido.value.produtos[0]
     
     const pedidoData = {
@@ -870,7 +863,6 @@ const buscarCliente = async () => {
 const selecionarClienteConsulta = async (cliente) => {
   clienteSelecionadoConsulta.value = cliente
   
-  // Buscar histórico de pedidos
   const { data: pedidosData } = await supabase
     .from('sales')
     .select('*, products(name)')
@@ -879,7 +871,6 @@ const selecionarClienteConsulta = async (cliente) => {
 
   historicoPedidosCliente.value = pedidosData || []
 
-  // Calcular estatísticas
   const totalComprado = pedidosData?.reduce((sum, p) => sum + p.total, 0) || 0
   const totalDevido = pedidosData?.filter(p => !p.paid).reduce((sum, p) => sum + p.total, 0) || 0
 
@@ -990,7 +981,13 @@ const generateReceipt = async (pedido) => {
   doc.setFontSize(9)
   doc.text(`Nome: ${pedido.clients?.name || 'N/A'}`, 20, 120)
   doc.text(`Telefone: ${pedido.clients?.phone || 'N/A'}`, 20, 125)
-  if (pedido.clients?.address) doc.text(`Endereço: ${pedido.clients.address}`, 20, 130)
+  if (pedido.clients?.address) {
+    const endereco = pedido.clients.address.substring(0, 60)
+    doc.text(`Endereco: ${endereco}`, 20, 130)
+    if (pedido.clients.address.length > 60) {
+      doc.text(pedido.clients.address.substring(60, 120), 20, 135)
+    }
+  }
   
   // Detalhes
   doc.setFont('helvetica', 'bold')
@@ -1011,7 +1008,8 @@ const generateReceipt = async (pedido) => {
   // Dados do produto
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
-  doc.text(pedido.products?.name || 'Produto', 20, 171)
+  const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 40)
+  doc.text(nomeProduto, 20, 171)
   doc.text(String(pedido.quantity), 120, 171)
   doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, 171)
   doc.text(formatCurrency(pedido.total), 190, 171, { align: 'right' })
@@ -1037,28 +1035,33 @@ const generateReceipt = async (pedido) => {
   doc.text('FORMA DE PAGAMENTO', 15, yTotal + 20)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(`Método: ${getPaymentMethodLabel(pedido.payment_method)}`, 15, yTotal + 27)
+  doc.text(`Metodo: ${getPaymentMethodLabel(pedido.payment_method)}`, 15, yTotal + 27)
+  
+  let yPos = yTotal + 35
   
   // Troca
   if (pedido.tem_troca) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
-    doc.text('🔄 TROCA', 15, yTotal + 38)
+    doc.text('TROCA', 15, yPos)
+    yPos += 7
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     const splitTroca = doc.splitTextToSize(pedido.observacao_troca || '', 180)
-    doc.text(splitTroca, 15, yTotal + 45)
+    doc.text(splitTroca, 15, yPos)
+    yPos += splitTroca.length * 5 + 5
   }
   
   // Observações
   if (pedido.notes) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
-    doc.text('OBSERVAÇÕES', 15, yTotal + 60)
+    doc.text('OBSERVACOES', 15, yPos)
+    yPos += 7
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     const splitNotes = doc.splitTextToSize(pedido.notes, 180)
-    doc.text(splitNotes, 15, yTotal + 67)
+    doc.text(splitNotes, 15, yPos)
   }
   
   // Rodapé
@@ -1069,7 +1072,7 @@ const generateReceipt = async (pedido) => {
   doc.setTextColor(...lightGray)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'italic')
-  doc.text('Obrigado pela preferência!', 105, footerY + 7, { align: 'center' })
+  doc.text('Obrigado pela preferencia!', 105, footerY + 7, { align: 'center' })
   doc.text('Natural Fruit - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
   doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
   
@@ -1082,7 +1085,7 @@ onMounted(() => {
   loadClientes()
   loadProdutos()
   loadVendedores()
-  setInterval(() => loadPedidos(), 30000) // Atualiza a cada 30s
+  setInterval(() => loadPedidos(), 30000)
 })
 </script>
 
