@@ -94,7 +94,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="sale in sales" :key="sale.id" class="border-t hover:bg-gray-50">
+            <tr v-for="sale in paginatedSales" :key="sale.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 text-sm whitespace-nowrap">{{ formatDate(sale.date) }}</td>
               <td class="px-4 py-3 text-sm">
                 <span :class="getSaleTypeBadge(sale.sale_type)">{{ getSaleTypeLabel(sale.sale_type) }}</span>
@@ -120,18 +120,15 @@
                   <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
                     <span class="text-lg">👁️</span>
                   </button>
-                  <!-- ✅ EDITAR PEDIDO - Escritório, Gestor e Admin -->
                   <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
                     <span class="text-lg">✏️</span>
                   </button>
                   <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
                     <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
                   </button>
-                  <!-- ✅ RECIBO - Admin e Gestor -->
                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
-                  <!-- ✅ EXCLUIR - Apenas Admin -->
                   <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
                     <span class="text-lg">🗑️</span>
                   </button>
@@ -140,6 +137,43 @@
             </tr>
           </tbody>
         </table>
+        
+        <!-- PAGINAÇÃO -->
+        <div v-if="totalPages > 1" class="flex justify-between items-center mt-6 pt-4 border-t">
+          <button 
+            @click="previousPage" 
+            :disabled="currentPage === 1"
+            :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Anterior
+          </button>
+          
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-600">
+              Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
+            </span>
+            <span class="text-xs text-gray-500 ml-2">
+              ({{ sales.length }} {{ sales.length === 1 ? 'pedido' : 'pedidos' }})
+            </span>
+          </div>
+          
+          <button 
+            @click="nextPage" 
+            :disabled="currentPage === totalPages"
+            :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors"
+          >
+            Próximo
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        
         <div v-if="sales.length === 0" class="text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +186,7 @@
 
       <!-- Visualização POR PEDIDOS (Mobile) -->
       <div v-if="viewMode === 'pedidos'" class="md:hidden space-y-3">
-        <div v-for="sale in sales" :key="sale.id" class="card p-4 space-y-3">
+        <div v-for="sale in paginatedSales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
               <div class="flex items-center space-x-2 mb-1">
@@ -166,18 +200,15 @@
               <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">👁️</span>
               </button>
-              <!-- ✅ EDITAR - Escritório, Gestor e Admin -->
               <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100">
                 <span class="text-2xl">✏️</span>
               </button>
               <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200">
                 <span class="text-2xl">{{ sale.paid ? '↩️' : '✅' }}</span>
               </button>
-              <!-- ✅ RECIBO - Admin e Gestor -->
               <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">📄</span>
               </button>
-              <!-- ✅ EXCLUIR - Apenas Admin -->
               <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
                 <span class="text-2xl">🗑️</span>
               </button>
@@ -200,6 +231,38 @@
             </span>
           </div>
         </div>
+        
+        <!-- PAGINAÇÃO MOBILE -->
+        <div v-if="totalPages > 1" class="flex flex-col items-center space-y-3 mt-6 p-4 bg-gray-50 rounded-lg">
+          <span class="text-sm text-gray-600">
+            Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
+          </span>
+          <div class="flex space-x-3 w-full">
+            <button 
+              @click="previousPage" 
+              :disabled="currentPage === 1"
+              :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'"
+              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors"
+            >
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Anterior
+            </button>
+            <button 
+              @click="nextPage" 
+              :disabled="currentPage === totalPages"
+              :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'"
+              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors"
+            >
+              Próximo
+              <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
         <div v-if="sales.length === 0" class="card text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +307,6 @@
             </div>
           </div>
 
-          <!-- Lista de Pedidos do Cliente -->
           <div class="space-y-2 pt-4 border-t">
             <h4 class="font-semibold text-gray-700 mb-3">Histórico de Pedidos:</h4>
             <div v-for="pedido in cliente.pedidos" :key="pedido.id" class="bg-gray-50 hover:bg-gray-100 p-3 md:p-4 rounded-lg transition-colors">
@@ -278,7 +340,6 @@
                     <button @click="viewSaleDetails(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
                       <span class="text-lg">👁️</span>
                     </button>
-                    <!-- ✅ RECIBO - Admin e Gestor -->
                     <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg">📄</span>
                     </button>
@@ -393,7 +454,6 @@
                   </div>
                 </div>
 
-                <!-- BOTÃO ADICIONAR PRODUTO FIXO EMBAIXO -->
                 <div class="sticky bottom-0 pt-2">
                   <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,7 +463,6 @@
                   </button>
                 </div>
 
-                <!-- TOTAL DO PEDIDO -->
                 <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 rounded-lg shadow-lg">
                   <div class="flex justify-between items-center text-white">
                     <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
@@ -423,7 +482,6 @@
                 </select>
               </div>
 
-              <!-- STATUS DO PEDIDO -->
               <div>
                 <label class="label">Status do Pedido *</label>
                 <select v-model="form.order_status" required class="input-field text-base">
@@ -434,7 +492,6 @@
                 </select>
               </div>
 
-              <!-- STATUS DE EVENTO -->
               <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
                 <div class="flex items-center space-x-3 mb-3">
                   <input v-model="form.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
@@ -446,7 +503,6 @@
                 </div>
               </div>
 
-              <!-- TROCA -->
               <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
                 <div class="flex items-center space-x-3 mb-3">
                   <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
@@ -485,7 +541,6 @@
               </div>
             </div>
 
-            <!-- FOOTER FIXO COM BOTÕES -->
             <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-4 md:p-6">
               <div class="flex flex-col md:flex-row gap-3">
                 <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1">Cancelar</button>
@@ -623,6 +678,10 @@ const lastSaleData = ref(null)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
 
+// ✅ PAGINAÇÃO
+const currentPage = ref(1)
+const itemsPerPage = 15
+
 const filters = ref({
   date: '',
   saleType: '',
@@ -656,6 +715,29 @@ const form = ref({
   exchange_value: 0,
   exchange_total: 0
 })
+
+// ✅ COMPUTED PAGINAÇÃO
+const totalPages = computed(() => {
+  return Math.ceil(sales.value.length / itemsPerPage)
+})
+
+const paginatedSales = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return sales.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
 
 const totalPedido = computed(() => {
   return form.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
@@ -843,11 +925,9 @@ const closeDetailsModal = () => {
   selectedSale.value = null
 }
 
-// ✅ FUNÇÃO EDITAR PEDIDO
 const editSale = (sale) => {
   editingSale.value = sale
   
-  // Parsear produtos do pedido
   let produtos = []
   if (sale.products_data) {
     try {
@@ -901,6 +981,9 @@ const editSale = (sale) => {
 
 const loadSales = async () => {
   try {
+    // ✅ Resetar para página 1 quando filtrar
+    currentPage.value = 1
+    
     let query = supabase
       .from('sales')
       .select(`*, clients(name, phone, email, address), products(name, description)`)
@@ -976,7 +1059,6 @@ const saveSale = async () => {
     }
 
     if (editingSale.value) {
-      // ✅ ATUALIZAR PEDIDO EXISTENTE
       const { data, error } = await supabase
         .from('sales')
         .update(saleData)
@@ -993,7 +1075,6 @@ const saveSale = async () => {
         showReceiptConfirm.value = true
       }
     } else {
-      // ✅ CRIAR NOVO PEDIDO
       const { data, error } = await supabase
         .from('sales')
         .insert([saleData])
@@ -1001,7 +1082,6 @@ const saveSale = async () => {
       
       if (error) throw error
       
-      // DEDUZIR DO ESTOQUE
       for (const item of form.value.produtos) {
         const { data: productData } = await supabase
           .from('products')
@@ -1051,15 +1131,18 @@ const deleteSale = async (id) => {
   }
 }
 
+// ✅ FUNÇÃO GENERATE RECEIPT CORRIGIDA
 const generateReceipt = async (sale) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
   
+  // Faixa laranja no topo
   doc.setFillColor(...primaryColor)
-  doc.rect(0, 0, 210, 40, 'F')
+  doc.rect(0, 0, 210, 35, 'F')
   
+  // Logo à esquerda
   try {
     const img = new Image()
     img.crossOrigin = 'Anonymous'
@@ -1084,84 +1167,92 @@ const generateReceipt = async (sale) => {
     ctx.drawImage(img, 0, 0, size, size)
     
     const circularImage = canvas.toDataURL('image/png')
-    doc.addImage(circularImage, 'PNG', 85, 5, 30, 30)
+    // Logo à esquerda (x=15) e mais para cima (y=5)
+    doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
   }
   
-  doc.setTextColor(...darkGray)
-  doc.setFontSize(10)
+  // Informações da empresa ao lado da logo (texto branco)
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('NATURAL FRUIT', 15, 50)
+  doc.text('NATURAL FRUIT', 45, 12)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text('CNPJ: 60.127.371/0001-60', 15, 56)
-  doc.text('Juazeiro, Bahia, Brasil', 15, 61)
-  doc.text('Telefone: (87) 98864-1590', 15, 66)
+  doc.setFontSize(8)
+  doc.text('CNPJ: 60.127.371/0001-60', 45, 18)
+  doc.text('Juazeiro, Bahia, Brasil', 45, 23)
+  doc.text('Tel: (87) 98864-1590', 45, 28)
   
+  // Número do recibo no canto direito (texto branco)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
-  doc.text(receiptNumber, 210 - 15, 50, { align: 'right' })
-  doc.setFontSize(10)
+  doc.text(receiptNumber, 195, 12, { align: 'right' })
+  doc.setFontSize(9)
   const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
-  doc.text(saleTypeText, 210 - 15, 57, { align: 'right' })
+  doc.text(saleTypeText, 195, 18, { align: 'right' })
   
+  // Linha divisória
+  doc.setTextColor(...darkGray)
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
-  doc.line(15, 72, 195, 72)
+  doc.line(15, 40, 195, 40)
   
-  doc.setTextColor(...darkGray)
+  // Título do documento
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('RECIBO DE PEDIDO', 105, 82, { align: 'center' })
+  doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
   
+  // Informações do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('DATA', 15, 92)
-  doc.text('STATUS', 100, 92)
+  doc.text('DATA', 15, 60)
+  doc.text('STATUS', 100, 60)
   
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(formatDate(sale.date), 15, 99)
-  doc.text(getOrderStatusLabel(sale.order_status), 100, 99)
+  doc.text(formatDate(sale.date), 15, 67)
+  doc.text(getOrderStatusLabel(sale.order_status), 100, 67)
   
   if (sale.is_event) {
     doc.setFont('helvetica', 'bold')
-    doc.text('EVENTO', 150, 92)
+    doc.text('EVENTO', 150, 60)
     doc.setFont('helvetica', 'normal')
-    doc.text(sale.event_name || '', 150, 99)
+    doc.text(sale.event_name || '', 150, 67)
   }
   
+  // Dados do cliente
   doc.setFillColor(245, 245, 245)
-  doc.rect(15, 105, 180, 30, 'F')
+  doc.rect(15, 73, 180, 30, 'F')
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('DADOS DO CLIENTE', 20, 113)
+  doc.text('DADOS DO CLIENTE', 20, 81)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 120)
-  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 125)
+  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 88)
+  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 93)
   if (sale.clients?.address) {
-    doc.text(`Endereco: ${sale.clients.address.substring(0, 70)}`, 20, 130)
+    doc.text(`Endereco: ${sale.clients.address.substring(0, 70)}`, 20, 98)
   }
   
+  // Produtos do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('PRODUTOS DO PEDIDO', 15, 145)
+  doc.text('PRODUTOS DO PEDIDO', 15, 113)
   
   doc.setFillColor(...primaryColor)
-  doc.rect(15, 150, 180, 10, 'F')
+  doc.rect(15, 118, 180, 10, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
-  doc.text('PRODUTO', 20, 156)
-  doc.text('QTD', 120, 156)
-  doc.text('VALOR UNIT.', 145, 156)
-  doc.text('TOTAL', 190, 156, { align: 'right' })
+  doc.text('PRODUTO', 20, 124)
+  doc.text('QTD', 120, 124)
+  doc.text('VALOR UNIT.', 145, 124)
+  doc.text('TOTAL', 190, 124, { align: 'right' })
   
-  let yPos = 166
+  let yPos = 134
   const produtos = parseProducts(sale)
   
   produtos.forEach((item, index) => {
