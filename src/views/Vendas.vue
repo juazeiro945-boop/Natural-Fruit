@@ -21,37 +21,37 @@
             <label class="label text-sm">Tipo de Venda</label>
             <select v-model="filters.saleType" class="input-field text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="wholesale">🏭 Atacado</option>
-              <option value="retail">🛒 Varejo</option>
+              <option value="wholesale">Atacado</option>
+              <option value="retail">Varejo</option>
             </select>
           </div>
           <div>
             <label class="label text-sm">Forma de Pagamento</label>
             <select v-model="filters.payment" class="input-field text-base" @change="loadSales">
               <option value="">Todas</option>
-              <option value="cash">💵 Dinheiro</option>
-              <option value="pix">📱 PIX</option>
-              <option value="boleto">📄 Boleto</option>
-              <option value="card">💳 Cartão</option>
-              <option value="credito">💰 Crediário</option>
+              <option value="cash">Dinheiro</option>
+              <option value="pix">PIX</option>
+              <option value="boleto">Boleto</option>
+              <option value="card">Cartão</option>
+              <option value="credito">Crediário</option>
             </select>
           </div>
           <div>
             <label class="label text-sm">Status Pagamento</label>
             <select v-model="filters.status" class="input-field text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="paid">✅ Pago</option>
-              <option value="pending">⏳ Pendente</option>
+              <option value="paid">Pago</option>
+              <option value="pending">Pendente</option>
             </select>
           </div>
           <div>
             <label class="label text-sm">Status Pedido</label>
             <select v-model="filters.orderStatus" class="input-field text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="pendente">🕐 Pendente</option>
-              <option value="em_rota">🚚 Em Rota</option>
-              <option value="entregue">✅ Entregue</option>
-              <option value="cancelado">❌ Cancelado</option>
+              <option value="pendente">Pendente</option>
+              <option value="em_rota">Em Rota</option>
+              <option value="entregue">Entregue</option>
+              <option value="cancelado">Cancelado</option>
             </select>
           </div>
         </div>
@@ -65,14 +65,14 @@
             :class="viewMode === 'pedidos' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-6 py-2 rounded-lg font-semibold transition-colors"
           >
-            📦 Por Pedido
+            Por Pedido
           </button>
           <button 
             @click="viewMode = 'clientes'" 
             :class="viewMode === 'clientes' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-6 py-2 rounded-lg font-semibold transition-colors"
           >
-            👥 Por Cliente
+            Por Cliente
           </button>
         </div>
       </div>
@@ -112,25 +112,25 @@
               </td>
               <td class="px-4 py-3 text-sm">
                 <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                  {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
+                  {{ sale.paid ? 'Pago' : 'Pendente' }}
                 </span>
               </td>
               <td class="px-4 py-3 text-sm">
                 <div class="flex items-center space-x-2">
                   <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                    <span class="text-lg">👁️</span>
+                    <span class="text-lg"></span>
                   </button>
                   <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
-                    <span class="text-lg">✏️</span>
+                    <span class="text-lg"></span>
                   </button>
                   <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
-                    <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
+                    <span class="text-lg">{{ sale.paid ? '' : '✅' }}</span>
                   </button>
                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
                   <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
-                    <span class="text-lg">🗑️</span>
+                    <span class="text-lg"></span>
                   </button>
                 </div>
               </td>
@@ -198,19 +198,19 @@
             </div>
             <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
               <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
-                <span class="text-2xl">👁️</span>
+                <span class="text-2xl"></span>
               </button>
               <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100">
-                <span class="text-2xl">✏️</span>
+                <span class="text-2xl"></span>
               </button>
               <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200">
-                <span class="text-2xl">{{ sale.paid ? '↩️' : '✅' }}</span>
+                <span class="text-2xl">{{ sale.paid ? '' : '✅' }}</span>
               </button>
               <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">📄</span>
               </button>
               <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
-                <span class="text-2xl">🗑️</span>
+                <span class="text-2xl"></span>
               </button>
             </div>
           </div>
@@ -227,7 +227,7 @@
           <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t">
             <span :class="getPaymentBadge(sale.payment_method)">{{ getPaymentLabel(sale.payment_method) }}</span>
             <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
-              {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
+              {{ sale.paid ? 'Pago' : 'Pendente' }}
             </span>
           </div>
         </div>
@@ -281,15 +281,15 @@
             <div class="flex-1">
               <h3 class="font-bold text-xl md:text-2xl text-gray-900">{{ cliente.name }}</h3>
               <div class="flex flex-wrap items-center gap-3 mt-2">
-                <p class="text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
-                <p class="text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
+                <p class="text-sm text-gray-600">{{ cliente.phone || 'Sem telefone' }}</p>
+                <p class="text-sm text-gray-600">{{ cliente.email || 'Sem email' }}</p>
               </div>
               <div class="flex flex-wrap items-center gap-3 mt-2">
                 <span class="text-sm font-semibold text-primary-600">
-                  📦 {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
+                  {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
                 </span>
                 <span class="text-sm font-semibold text-blue-600">
-                  📊 {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
+                  {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
                 </span>
               </div>
             </div>
@@ -298,10 +298,10 @@
               <p class="font-bold text-2xl md:text-3xl text-primary-600">{{ formatCurrency(cliente.totalComprado) }}</p>
               <div class="flex flex-wrap gap-2 mt-2 md:justify-end">
                 <span v-if="cliente.totalPago > 0" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  ✅ Pago: {{ formatCurrency(cliente.totalPago) }}
+                  Pago: {{ formatCurrency(cliente.totalPago) }}
                 </span>
                 <span v-if="cliente.totalPendente > 0" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  ⏳ Pendente: {{ formatCurrency(cliente.totalPendente) }}
+                  Pendente: {{ formatCurrency(cliente.totalPendente) }}
                 </span>
               </div>
             </div>
@@ -318,13 +318,13 @@
                     <span :class="getOrderStatusBadge(pedido.order_status)" class="text-xs">{{ getOrderStatusLabel(pedido.order_status) }}</span>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                    <p class="text-gray-700">📅 {{ formatDate(pedido.date) }}</p>
-                    <p class="text-gray-700">📦 {{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
-                    <p class="text-gray-700">💳 {{ getPaymentLabel(pedido.payment_method) }}</p>
+                    <p class="text-gray-700">{{ formatDate(pedido.date) }}</p>
+                    <p class="text-gray-700">{{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
+                    <p class="text-gray-700">{{ getPaymentLabel(pedido.payment_method) }}</p>
                   </div>
                   <div v-if="pedido.is_event" class="mt-2">
                     <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-semibold">
-                      🎉 Evento: {{ pedido.event_name }}
+                      Evento: {{ pedido.event_name }}
                     </span>
                   </div>
                 </div>
@@ -333,12 +333,12 @@
                     <p class="font-bold text-lg md:text-xl text-gray-900">{{ formatCurrency(pedido.total) }}</p>
                     <span :class="pedido.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" 
                       class="text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap inline-block">
-                      {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
+                      {{ pedido.paid ? 'Pago' : 'Pendente' }}
                     </span>
                   </div>
                   <div class="flex items-center gap-1">
                     <button @click="viewSaleDetails(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                      <span class="text-lg">👁️</span>
+                      <span class="text-lg"></span>
                     </button>
                     <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg">📄</span>
@@ -366,7 +366,7 @@
             <div>
               <h3 class="text-lg md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
               <p v-if="form.produtos.length > 0" class="text-sm text-white opacity-90">
-                📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
+                {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
             </div>
             <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors">
@@ -386,8 +386,8 @@
                 <div>
                   <label class="label">Tipo de Venda *</label>
                   <select v-model="form.sale_type" required class="input-field text-base">
-                    <option value="wholesale">🏭 Atacado</option>
-                    <option value="retail">🛒 Varejo</option>
+                    <option value="wholesale">Atacado</option>
+                    <option value="retail">Varejo</option>
                   </select>
                 </div>
               </div>
@@ -403,7 +403,7 @@
               <!-- PRODUTOS -->
               <div class="border-2 border-dashed border-primary-300 rounded-lg p-4 space-y-4 bg-primary-50">
                 <div class="flex justify-between items-center">
-                  <label class="label mb-0 text-primary-700 font-bold">📦 Produtos do Pedido</label>
+                  <label class="label mb-0 text-primary-700 font-bold">Produtos do Pedido</label>
                   <span class="text-sm font-semibold text-primary-600">
                     Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
                   </span>
@@ -413,7 +413,7 @@
                   <div class="flex justify-between items-center">
                     <span class="font-semibold text-sm text-gray-700">Produto {{ index + 1 }}</span>
                     <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center">
-                      <span class="mr-1">🗑️</span> Remover
+                      <span class="mr-1"></span> Remover
                     </button>
                   </div>
                   
@@ -474,28 +474,28 @@
               <div>
                 <label class="label">Forma de Pagamento *</label>
                 <select v-model="form.payment_method" required class="input-field text-base">
-                  <option value="cash">💵 Dinheiro</option>
-                  <option value="pix">📱 PIX</option>
-                  <option value="boleto">📄 Boleto</option>
-                  <option value="card">💳 Cartão</option>
-                  <option value="credito">💰 Crediário</option>
+                  <option value="cash">Dinheiro</option>
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="card">Cartão</option>
+                  <option value="credito">Crediário</option>
                 </select>
               </div>
 
               <div>
                 <label class="label">Status do Pedido *</label>
                 <select v-model="form.order_status" required class="input-field text-base">
-                  <option value="pendente">🕐 Pendente</option>
-                  <option value="em_rota">🚚 Em Rota</option>
-                  <option value="entregue">✅ Entregue</option>
-                  <option value="cancelado">❌ Cancelado</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="em_rota">Em Rota</option>
+                  <option value="entregue">Entregue</option>
+                  <option value="cancelado">Cancelado</option>
                 </select>
               </div>
 
               <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
                 <div class="flex items-center space-x-3 mb-3">
                   <input v-model="form.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                  <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
+                  <label for="is-event" class="font-medium text-gray-700">Este pedido é para um evento?</label>
                 </div>
                 <div v-if="form.is_event">
                   <label class="label text-sm">Nome/Tipo do Evento *</label>
@@ -506,7 +506,7 @@
               <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
                 <div class="flex items-center space-x-3 mb-3">
                   <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                  <label for="has-exchange" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
+                  <label for="has-exchange" class="font-medium text-gray-700">Este pedido envolve troca?</label>
                 </div>
                 <div v-if="form.has_exchange" class="space-y-3">
                   <div>
@@ -532,7 +532,7 @@
 
               <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <label for="paid-checkbox" class="text-sm md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
+                <label for="paid-checkbox" class="text-sm md:text-base font-medium text-gray-700">Pagamento realizado</label>
               </div>
 
               <div>
@@ -574,13 +574,13 @@
             </div>
 
             <div class="card bg-blue-50">
-              <h4 class="font-bold mb-2 text-blue-900">👤 Cliente</h4>
+              <h4 class="font-bold mb-2 text-blue-900">Cliente</h4>
               <p class="font-semibold">{{ selectedSale.clients?.name }}</p>
               <p class="text-sm text-gray-600">{{ selectedSale.clients?.phone }}</p>
             </div>
 
             <div class="card bg-green-50">
-              <h4 class="font-bold mb-3 text-green-900">📦 Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
+              <h4 class="font-bold mb-3 text-green-900">Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
               <div class="space-y-2">
                 <div v-for="(item, index) in parseProducts(selectedSale)" :key="index" class="bg-white p-3 rounded-lg">
                   <div class="flex justify-between items-start">
@@ -595,14 +595,14 @@
             </div>
 
             <div v-if="selectedSale.has_exchange" class="card bg-yellow-50">
-              <h4 class="font-bold mb-2 text-yellow-900">🔄 Troca</h4>
+              <h4 class="font-bold mb-2 text-yellow-900">Troca</h4>
               <p class="text-sm"><strong>Produto:</strong> {{ selectedSale.exchange_product }}</p>
               <p class="text-sm"><strong>Quantidade:</strong> {{ selectedSale.exchange_quantity }}</p>
               <p class="text-sm"><strong>Valor:</strong> {{ formatCurrency(selectedSale.exchange_total) }}</p>
             </div>
 
             <div v-if="selectedSale.is_event" class="card bg-purple-50">
-              <h4 class="font-bold mb-2 text-purple-900">🎉 Evento</h4>
+              <h4 class="font-bold mb-2 text-purple-900">Evento</h4>
               <p class="font-semibold">{{ selectedSale.event_name }}</p>
             </div>
 
@@ -678,7 +678,7 @@ const lastSaleData = ref(null)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
 
-// ✅ PAGINAÇÃO
+// PAGINAÇÃO
 const currentPage = ref(1)
 const itemsPerPage = 15
 
@@ -716,7 +716,7 @@ const form = ref({
   exchange_total: 0
 })
 
-// ✅ COMPUTED PAGINAÇÃO
+// COMPUTED PAGINAÇÃO
 const totalPages = computed(() => {
   return Math.ceil(sales.value.length / itemsPerPage)
 })
@@ -812,7 +812,7 @@ const getPaymentBadge = (method) => {
 }
 
 const getSaleTypeLabel = (type) => {
-  const labels = { wholesale: '🏭 Atacado', retail: '🛒 Varejo' }
+  const labels = { wholesale: 'Atacado', retail: 'Varejo' }
   return labels[type] || type
 }
 
@@ -826,10 +826,10 @@ const getSaleTypeBadge = (type) => {
 
 const getOrderStatusLabel = (status) => {
   const labels = {
-    pendente: '🕐 Pendente',
-    em_rota: '🚚 Em Rota',
-    entregue: '✅ Entregue',
-    cancelado: '❌ Cancelado'
+    pendente: 'Pendente',
+    em_rota: 'Em Rota',
+    entregue: 'Entregue',
+    cancelado: 'Cancelado'
   }
   return labels[status] || status
 }
@@ -981,7 +981,7 @@ const editSale = (sale) => {
 
 const loadSales = async () => {
   try {
-    // ✅ Resetar para página 1 quando filtrar
+    // Resetar para página 1 quando filtrar
     currentPage.value = 1
     
     let query = supabase
@@ -1131,7 +1131,7 @@ const deleteSale = async (id) => {
   }
 }
 
-// ✅ FUNÇÃO GENERATE RECEIPT CORRIGIDA
+// FUNÇÃO GENERATE RECEIPT CORRIGIDA
 const generateReceipt = async (sale) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
