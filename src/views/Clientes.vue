@@ -365,8 +365,13 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../stores/auth'
 import Layout from '../components/Layout.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const clients = ref([])
 const showModal = ref(false)
@@ -391,6 +396,16 @@ const form = ref({
   observacoes: '',
   requires_invoice: false,
   ativo: true
+})
+
+// ✅ VERIFICAR PERMISSÃO DE ACESSO
+onMounted(() => {
+  if (!authStore.canViewClientes) {
+    alert('❌ Você não tem permissão para acessar esta página.')
+    router.push('/')
+    return
+  }
+  loadClients()
 })
 
 // Computed
@@ -577,8 +592,6 @@ const closeModal = () => {
     ativo: true 
   }
 }
-
-onMounted(loadClients)
 </script>
 
 <style scoped>
