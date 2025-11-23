@@ -77,7 +77,7 @@
         </div>
       </div>
 
-      <!-- Visualização POR PEDIDOS (original) -->
+      <!-- Visualização POR PEDIDOS (Desktop) -->
       <div v-if="viewMode === 'pedidos'" class="hidden md:block card overflow-x-auto">
         <table class="w-full">
           <thead class="bg-gray-50">
@@ -120,13 +120,19 @@
                   <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
                     <span class="text-lg">👁️</span>
                   </button>
+                  <!-- ✅ EDITAR PEDIDO - Escritório, Gestor e Admin -->
+                  <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
+                    <span class="text-lg">✏️</span>
+                  </button>
                   <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
                     <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
                   </button>
-                  <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
+                  <!-- ✅ RECIBO - Admin e Gestor -->
+                  <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
-                  <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                  <!-- ✅ EXCLUIR - Apenas Admin -->
+                  <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
                     <span class="text-lg">🗑️</span>
                   </button>
                 </div>
@@ -144,6 +150,7 @@
         </div>
       </div>
 
+      <!-- Visualização POR PEDIDOS (Mobile) -->
       <div v-if="viewMode === 'pedidos'" class="md:hidden space-y-3">
         <div v-for="sale in sales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
@@ -159,13 +166,19 @@
               <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">👁️</span>
               </button>
+              <!-- ✅ EDITAR - Escritório, Gestor e Admin -->
+              <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100">
+                <span class="text-2xl">✏️</span>
+              </button>
               <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200">
                 <span class="text-2xl">{{ sale.paid ? '↩️' : '✅' }}</span>
               </button>
-              <button @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
+              <!-- ✅ RECIBO - Admin e Gestor -->
+              <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">📄</span>
               </button>
-              <button @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
+              <!-- ✅ EXCLUIR - Apenas Admin -->
+              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
                 <span class="text-2xl">🗑️</span>
               </button>
             </div>
@@ -265,7 +278,8 @@
                     <button @click="viewSaleDetails(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
                       <span class="text-lg">👁️</span>
                     </button>
-                    <button @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
+                    <!-- ✅ RECIBO - Admin e Gestor -->
+                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg">📄</span>
                     </button>
                   </div>
@@ -284,12 +298,12 @@
         </div>
       </div>
 
-      <!-- Modal Novo Pedido -->
+      <!-- Modal Novo/Editar Pedido -->
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-3xl max-h-screen md:max-h-[95vh] flex flex-col">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
             <div>
-              <h3 class="text-lg md:text-xl font-bold text-white">Novo Pedido</h3>
+              <h3 class="text-lg md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
               <p v-if="form.produtos.length > 0" class="text-sm text-white opacity-90">
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
@@ -476,7 +490,7 @@
               <div class="flex flex-col md:flex-row gap-3">
                 <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1">Cancelar</button>
                 <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2">
-                  {{ loading ? 'Salvando...' : 'Salvar Pedido' }}
+                  {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
                 </button>
               </div>
             </div>
@@ -571,11 +585,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Pedido Registrado!</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Pedido {{ editingSale ? 'Atualizado' : 'Registrado' }}!</h3>
             <p class="text-gray-600 text-sm md:text-base">Deseja gerar o recibo agora?</p>
           </div>
           <div class="flex flex-col gap-3">
-            <button @click="confirmGenerateReceipt" class="btn-primary">
+            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary">
               <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
@@ -592,9 +606,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../stores/auth'
 import Layout from '../components/Layout.vue'
 import jsPDF from 'jspdf'
 
+const authStore = useAuthStore()
 const sales = ref([])
 const clients = ref([])
 const products = ref([])
@@ -604,7 +620,8 @@ const selectedSale = ref(null)
 const loading = ref(false)
 const showReceiptConfirm = ref(false)
 const lastSaleData = ref(null)
-const viewMode = ref('pedidos') // 'pedidos' ou 'clientes'
+const viewMode = ref('pedidos')
+const editingSale = ref(null)
 
 const filters = ref({
   date: '',
@@ -675,7 +692,6 @@ const clientesAgrupados = computed(() => {
     }
   })
   
-  // Ordenar por total comprado (maior para menor)
   return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
 })
 
@@ -827,6 +843,62 @@ const closeDetailsModal = () => {
   selectedSale.value = null
 }
 
+// ✅ FUNÇÃO EDITAR PEDIDO
+const editSale = (sale) => {
+  editingSale.value = sale
+  
+  // Parsear produtos do pedido
+  let produtos = []
+  if (sale.products_data) {
+    try {
+      const parsedProducts = JSON.parse(sale.products_data)
+      produtos = parsedProducts.map(p => ({
+        product_id: p.id,
+        quantity: p.quantity,
+        unit_price: p.unit_price,
+        total: p.total,
+        is_weight: false
+      }))
+    } catch (e) {
+      produtos = [{
+        product_id: sale.product_id,
+        quantity: sale.quantity,
+        unit_price: sale.unit_price,
+        total: sale.total,
+        is_weight: false
+      }]
+    }
+  } else {
+    produtos = [{
+      product_id: sale.product_id,
+      quantity: sale.quantity,
+      unit_price: sale.unit_price,
+      total: sale.total,
+      is_weight: false
+    }]
+  }
+  
+  form.value = {
+    date: sale.date,
+    sale_type: sale.sale_type,
+    client_id: sale.client_id,
+    produtos: produtos,
+    payment_method: sale.payment_method,
+    paid: sale.paid,
+    notes: sale.notes || '',
+    order_status: sale.order_status,
+    is_event: sale.is_event || false,
+    event_name: sale.event_name || '',
+    has_exchange: sale.has_exchange || false,
+    exchange_product: sale.exchange_product || '',
+    exchange_quantity: sale.exchange_quantity || 1,
+    exchange_value: sale.exchange_value || 0,
+    exchange_total: sale.exchange_total || 0
+  }
+  
+  showModal.value = true
+}
+
 const loadSales = async () => {
   try {
     let query = supabase
@@ -903,36 +975,56 @@ const saveSale = async () => {
       products_data: JSON.stringify(produtosData)
     }
 
-    const { data, error } = await supabase
-      .from('sales')
-      .insert([saleData])
-      .select(`*, clients(name, phone, email, address), products(name, description)`)
-    
-    if (error) throw error
-    
-    // DEDUZIR DO ESTOQUE
-    for (const item of form.value.produtos) {
-      const { data: productData } = await supabase
-        .from('products')
-        .select('stock_quantity')
-        .eq('id', item.product_id)
-        .single()
+    if (editingSale.value) {
+      // ✅ ATUALIZAR PEDIDO EXISTENTE
+      const { data, error } = await supabase
+        .from('sales')
+        .update(saleData)
+        .eq('id', editingSale.value.id)
+        .select(`*, clients(name, phone, email, address), products(name, description)`)
       
-      if (productData) {
-        const newStock = (productData.stock_quantity || 0) - item.quantity
-        await supabase
-          .from('products')
-          .update({ stock_quantity: newStock })
-          .eq('id', item.product_id)
+      if (error) throw error
+      
+      await loadSales()
+      closeModal()
+      
+      if (data && data[0]) {
+        lastSaleData.value = data[0]
+        showReceiptConfirm.value = true
       }
-    }
-    
-    await loadSales()
-    closeModal()
-    
-    if (data && data[0]) {
-      lastSaleData.value = data[0]
-      showReceiptConfirm.value = true
+    } else {
+      // ✅ CRIAR NOVO PEDIDO
+      const { data, error } = await supabase
+        .from('sales')
+        .insert([saleData])
+        .select(`*, clients(name, phone, email, address), products(name, description)`)
+      
+      if (error) throw error
+      
+      // DEDUZIR DO ESTOQUE
+      for (const item of form.value.produtos) {
+        const { data: productData } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product_id)
+          .single()
+        
+        if (productData) {
+          const newStock = (productData.stock_quantity || 0) - item.quantity
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock })
+            .eq('id', item.product_id)
+        }
+      }
+      
+      await loadSales()
+      closeModal()
+      
+      if (data && data[0]) {
+        lastSaleData.value = data[0]
+        showReceiptConfirm.value = true
+      }
     }
   } catch (error) {
     alert('Erro ao salvar pedido: ' + error.message)
@@ -1160,6 +1252,7 @@ const closeReceiptConfirm = () => {
 
 const closeModal = () => {
   showModal.value = false
+  editingSale.value = null
   form.value = {
     date: new Date().toISOString().split('T')[0],
     sale_type: 'retail',
