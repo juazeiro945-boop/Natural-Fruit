@@ -17,20 +17,27 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.userProfile?.tipo_usuario === 'administrador',
     isEscritorio: (state) => state.userProfile?.tipo_usuario === 'escritorio',
     isVendedor: (state) => state.userProfile?.tipo_usuario === 'vendedor',
+    isGestor: (state) => state.userProfile?.tipo_usuario === 'gestor',
     
-    // Permissões de acesso (mantidas para compatibilidade)
+    // Permissões de acesso
     canViewFinanceiro: (state) => state.userProfile?.tipo_usuario === 'administrador',
-    canViewEstoque: (state) => ['administrador', 'escritorio'].includes(state.userProfile?.tipo_usuario),
-    canViewVendas: (state) => ['administrador', 'escritorio', 'vendedor'].includes(state.userProfile?.tipo_usuario),
+    canViewEstoque: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canViewVendas: (state) => ['administrador', 'escritorio', 'vendedor', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canViewClientes: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canGenerateReceipt: (state) => ['administrador', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canEditOrders: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canDeleteOrders: (state) => ['administrador'].includes(state.userProfile?.tipo_usuario),
     canManageUsers: (state) => state.userProfile?.tipo_usuario === 'administrador',
     canManageProducts: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canZeroStock: (state) => state.userProfile?.tipo_usuario === 'administrador',
     
     userName: (state) => state.userProfile?.name || state.user?.email,
     userType: (state) => {
       const tipos = {
         'administrador': 'Administrador',
         'escritorio': 'Escritório',
-        'vendedor': 'Vendedor'
+        'vendedor': 'Vendedor',
+        'gestor': 'Gestor'
       }
       return tipos[state.userProfile?.tipo_usuario] || 'Usuário'
     },
@@ -52,7 +59,7 @@ export const useAuthStore = defineStore('auth', {
   },
   
   actions: {
-    // NOVO: Verifica se está dentro do horário permitido
+    // Verifica se está dentro do horário permitido
     checkHorarioAcesso() {
       // Se não tem restrição de horário, permite acesso
       if (!this.userProfile?.horario_restrito) return true
@@ -90,7 +97,7 @@ export const useAuthStore = defineStore('auth', {
           return { success: false, error: 'Usuário inativo. Contate o administrador.' }
         }
         
-        // NOVO: Verificar horário de acesso
+        // Verificar horário de acesso
         if (!this.checkHorarioAcesso()) {
           await this.signOut()
           return { 
