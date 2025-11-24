@@ -673,7 +673,6 @@ const calculateEntryTotal = () => {
   entryForm.value.total_cost = entryForm.value.quantity * entryForm.value.unit_cost
 }
 
-// Calcula o novo estoque baseado no tipo de ajuste
 const calcularNovoEstoque = () => {
   const atual = Number(produtoEditando.value?.stock_quantity || 0)
   const valor = Number(editForm.value.new_quantity || 0)
@@ -811,7 +810,11 @@ const loadProducts = async () => {
       .order('name')
 
     if (error) throw error
-    products.value = data || []
+    
+    // ✅ FORÇA ATUALIZAÇÃO REATIVA
+    products.value = [...(data || [])]
+    
+    console.log('📦 Produtos carregados:', products.value.length)
   } catch (error) {
     console.error('Erro ao carregar produtos:', error)
   }
@@ -844,7 +847,7 @@ const loadMovements = async () => {
     const { data, error } = await query
 
     if (error) throw error
-    movements.value = data || []
+    movements.value = [...(data || [])]
   } catch (error) {
     console.error('Erro ao carregar movimentações:', error)
   } finally {
@@ -899,7 +902,7 @@ const closeEditModal = () => {
 }
 
 const editarEstoque = (product) => {
-  produtoEditando.value = product
+  produtoEditando.value = { ...product }
   editForm.value = {
     tipo: 'set',
     new_quantity: product.stock_quantity || 0,
@@ -991,7 +994,6 @@ const saveLoss = async () => {
   }
 }
 
-// ✅ NOVA ABORDAGEM - ATUALIZA DIRETO SEM DEPENDER DE TRIGGERS
 const saveEdit = async () => {
   if (!editForm.value.notes.trim()) {
     alert('⚠️ Por favor, descreva o motivo do ajuste.')
@@ -1014,13 +1016,11 @@ const saveEdit = async () => {
     console.log('✨ Novo Estoque Calculado:', novoEstoque)
     console.log('='.repeat(50))
 
-    // Validação
     if (novoEstoque < 0) {
       alert('⚠️ O estoque não pode ficar negativo!')
       return
     }
 
-    // ✅ PASSO 1: Atualizar o produto DIRETAMENTE
     console.log('📝 Atualizando produto...')
     const { data: updateData, error: updateError } = await supabase
       .from('products')
@@ -1038,7 +1038,6 @@ const saveEdit = async () => {
 
     console.log('✅ Produto atualizado:', updateData)
 
-    // ✅ PASSO 2: Verificar se realmente atualizou
     const { data: verificacao, error: verifyError } = await supabase
       .from('products')
       .select('stock_quantity')
@@ -1052,7 +1051,6 @@ const saveEdit = async () => {
 
     console.log('🔍 Verificação - Estoque no banco:', verificacao.stock_quantity)
 
-    // ✅ PASSO 3: Registrar movimentação apenas se houve mudança
     const diferenca = novoEstoque - estoqueAtual
     
     if (diferenca !== 0) {
@@ -1079,7 +1077,6 @@ const saveEdit = async () => {
 
       if (movementError) {
         console.error('❌ ERRO ao registrar movimentação:', movementError)
-        // Não vamos fazer throw aqui porque o estoque já foi atualizado
         console.warn('⚠️ Estoque foi atualizado mas a movimentação não foi registrada')
       } else {
         console.log('✅ Movimentação registrada com sucesso')
@@ -1090,13 +1087,15 @@ const saveEdit = async () => {
     console.log('✅ AJUSTE CONCLUÍDO COM SUCESSO')
     console.log('='.repeat(50))
 
+    // ✅ FECHA O MODAL ANTES DE RECARREGAR
+    closeEditModal()
+    
     alert(`✅ Estoque ajustado com sucesso!\n\n📊 Estoque anterior: ${estoqueAtual}\n✨ Novo estoque: ${novoEstoque}`)
     
-    // Aguarda um pouco e recarrega
-    await new Promise(resolve => setTimeout(resolve, 500))
-    await Promise.all([loadProducts(), loadMovements()])
-    
-    closeEditModal()
+    // ✅ FORÇA RECARREGAMENTO COMPLETO
+    await new Promise(resolve => setTimeout(resolve, 300))
+    await loadProducts()
+    await loadMovements()
     
   } catch (error) {
     console.error('='.repeat(50))
@@ -1117,6 +1116,7 @@ const setupRealtime = () => {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'stock_movements' },
       () => {
+        console.log('🔄 Realtime: Movimentação detectada')
         loadProducts()
         loadMovements()
       }
@@ -1124,7 +1124,8 @@ const setupRealtime = () => {
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'products' },
-      () => {
+      (payload) => {
+        console.log('🔄 Realtime: Produto atualizado', payload)
         loadProducts()
       }
     )
@@ -1144,6 +1145,58 @@ onUnmounted(() => {
 })
 </script>
 
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md;
+}
+
+.btn-warning {
+  @apply px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium shadow-md;
+}
+
+.btn-outline {
+  @apply px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.input-field {
+  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
+}
+
+@media (max-width: 640px) {
+  .card {
+    @apply p-3;
+  }
+  
+  .input-field {
+    @apply py-2 text-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-primary, .btn-outline, .btn-secondary, .btn-warning {
+    @apply py-2 text-sm;
+  }
+}
+</style>
 <style scoped>
 .line-clamp-2 {
   display: -webkit-box;
