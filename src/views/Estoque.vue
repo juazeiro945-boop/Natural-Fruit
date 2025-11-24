@@ -134,6 +134,9 @@
                 <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors" title="Editar">
                   ✏️
                 </button>
+                <button @click="confirmarExclusao(product)" class="text-red-600 hover:text-red-800 p-1 rounded transition-colors" title="Excluir">
+                  🗑️
+                </button>
                 <span :class="getStockBadgeClass(product.stock_quantity)" class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
                   {{ getStockStatus(product.stock_quantity) }}
                 </span>
@@ -194,9 +197,15 @@
                   </span>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors" title="Editar Estoque">
-                    ✏️ Editar
-                  </button>
+                  <div class="flex items-center justify-center gap-3">
+                    <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors text-sm" title="Editar Estoque">
+                      ✏️ Editar
+                    </button>
+                    <span class="text-gray-300">|</span>
+                    <button @click="confirmarExclusao(product)" class="text-red-600 hover:text-red-800 font-semibold transition-colors text-sm" title="Excluir Produto">
+                      🗑️ Excluir
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -335,7 +344,57 @@
         </div>
       </div>
 
-      <!-- Modais... (mantém os mesmos) -->
+      <!-- Modal de Confirmação de Exclusão -->
+      <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeDeleteModal">
+        <div class="bg-white rounded-xl w-full max-w-md">
+          <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
+            <h3 class="text-lg md:text-xl font-bold text-red-600">🗑️ Excluir Produto</h3>
+            <button @click="closeDeleteModal" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+          </div>
+
+          <div class="p-4 md:p-6 space-y-4">
+            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+              <p class="font-bold text-red-800 text-sm md:text-base">⚠️ Atenção!</p>
+              <p class="text-red-700 text-sm mt-2">
+                Você está prestes a excluir o produto <strong>"{{ produtoExcluindo?.name }}"</strong>.
+              </p>
+              <p class="text-red-600 text-xs mt-2">
+                ❗ Esta ação não pode ser desfeita.<br>
+                ❗ Todas as movimentações relacionadas serão mantidas para histórico.
+              </p>
+            </div>
+
+            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+              <p class="text-yellow-800 text-sm">
+                <strong>Estoque atual:</strong> {{ produtoExcluindo?.stock_quantity || 0 }} {{ produtoExcluindo?.unit }}
+              </p>
+              <p class="text-yellow-800 text-sm mt-1">
+                <strong>Valor em estoque:</strong> {{ formatCurrency((produtoExcluindo?.stock_quantity || 0) * (produtoExcluindo?.average_cost || 0)) }}
+              </p>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+              <button 
+                @click="closeDeleteModal" 
+                :disabled="loadingDelete"
+                class="flex-1 btn-outline text-sm md:text-base py-2 md:py-3"
+              >
+                Cancelar
+              </button>
+              <button 
+                @click="excluirProduto" 
+                :disabled="loadingDelete"
+                class="flex-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm md:text-base py-2 md:py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <span v-if="loadingDelete" class="animate-spin">⏳</span>
+                <span v-else>🗑️</span>
+                {{ loadingDelete ? 'Excluindo...' : 'Confirmar Exclusão' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal de Entrada -->
       <div v-if="showEntryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeEntryModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -658,13 +717,16 @@ const loadingEntry = ref(false)
 const loadingExit = ref(false)
 const loadingLoss = ref(false)
 const loadingEdit = ref(false)
+const loadingDelete = ref(false)
 
 const showEntryModal = ref(false)
 const showExitModal = ref(false)
 const showLossModal = ref(false)
 const showEditModal = ref(false)
+const showDeleteModal = ref(false)
 
 const produtoEditando = ref(null)
+const produtoExcluindo = ref(null)
 
 // Filtros
 const filterProduct = ref('')
@@ -1032,6 +1094,12 @@ const closeEditModal = () => {
   }
 }
 
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  produtoExcluindo.value = null
+  loadingDelete.value = false
+}
+
 const editarEstoque = (product) => {
   produtoEditando.value = { ...product }
   editForm.value = {
@@ -1040,6 +1108,11 @@ const editarEstoque = (product) => {
     notes: ''
   }
   showEditModal.value = true
+}
+
+const confirmarExclusao = (product) => {
+  produtoExcluindo.value = { ...product }
+  showDeleteModal.value = true
 }
 
 // Save functions
@@ -1203,6 +1276,103 @@ const saveEdit = async () => {
   }
 }
 
+// 🔥 FUNÇÃO PROFISSIONAL DE EXCLUSÃO
+const excluirProduto = async () => {
+  if (!produtoExcluindo.value) return
+  
+  loadingDelete.value = true
+  
+  try {
+    console.log('🗑️ Iniciando exclusão do produto:', produtoExcluindo.value.id)
+    
+    // SOLUÇÃO PROFISSIONAL: Exclusão em transação com fallback
+    let exclusaoBemSucedida = false
+    
+    // Tenta primeiro o soft delete (mais seguro)
+    try {
+      const { error: softDeleteError } = await supabase
+        .from('products')
+        .update({ 
+          active: false,
+          deleted_at: new Date().toISOString()
+        })
+        .eq('id', produtoExcluindo.value.id)
+
+      if (softDeleteError) throw softDeleteError
+      
+      exclusaoBemSucedida = true
+      console.log('✅ Soft delete realizado com sucesso')
+      
+    } catch (softError) {
+      console.warn('❌ Soft delete falhou, tentando hard delete:', softError)
+      
+      // Fallback para hard delete
+      const { error: hardDeleteError } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', produtoExcluindo.value.id)
+
+      if (hardDeleteError) throw hardDeleteError
+      
+      exclusaoBemSucedida = true
+      console.log('✅ Hard delete realizado com sucesso')
+    }
+
+    if (exclusaoBemSucedida) {
+      // Verifica se o produto realmente foi excluído
+      const { data: produtoVerificado } = await supabase
+        .from('products')
+        .select('id')
+        .eq('id', produtoExcluindo.value.id)
+        .single()
+
+      if (produtoVerificado) {
+        throw new Error('Produto ainda existe após exclusão. Possível problema de RLS ou constraints.')
+      }
+
+      console.log('✅ Produto excluído com sucesso!')
+      
+      // Feedback visual
+      closeDeleteModal()
+      
+      // Toast de sucesso (substitui alert)
+      setTimeout(() => {
+        // Você pode implementar um sistema de toast aqui
+        alert(`✅ Produto "${produtoExcluindo.value.name}" excluído com sucesso!`)
+      }, 100)
+      
+      // Recarrega os dados
+      await Promise.all([
+        loadProducts(),
+        loadMovements()
+      ])
+      
+      // Reseta a paginação se necessário
+      if (paginatedProducts.value.length === 0 && productPage.value > 1) {
+        productPage.value = Math.max(1, productPage.value - 1)
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao excluir produto:', error)
+    
+    // Tratamento específico de erros
+    let mensagemErro = 'Erro ao excluir produto: '
+    
+    if (error.message.includes('foreign key constraint')) {
+      mensagemErro += 'Este produto possui movimentações vinculadas. Exclua as movimentações primeiro.'
+    } else if (error.message.includes('RLS')) {
+      mensagemErro += 'Sem permissão para excluir. Verifique as políticas RLS.'
+    } else {
+      mensagemErro += error.message
+    }
+    
+    alert(`❌ ${mensagemErro}`)
+  } finally {
+    loadingDelete.value = false
+  }
+}
+
 // Realtime
 const setupRealtime = () => {
   realtimeChannel = supabase
@@ -1221,6 +1391,14 @@ const setupRealtime = () => {
       { event: 'UPDATE', schema: 'public', table: 'products' },
       (payload) => {
         console.log('🔄 Realtime: Produto atualizado', payload)
+        loadProducts()
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'products' },
+      () => {
+        console.log('🔄 Realtime: Produto excluído')
         loadProducts()
       }
     )
