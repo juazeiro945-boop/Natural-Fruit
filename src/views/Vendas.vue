@@ -367,12 +367,12 @@
         </div>
       </div>
 
-      <!-- ========== MODAL NOVO/EDITAR PEDIDO - ESTRUTURA TESTADA E FUNCIONANDO ========== -->
-      <div v-if="showModal" class="modal-overlay-sales">
-        <div class="modal-container-sales">
+      <!-- ✅ MODAL NOVO/EDITAR PEDIDO - CORRIGIDO PARA MOBILE -->
+      <div v-if="showModal" class="modal-overlay">
+        <div class="modal-container">
           
-          <!-- HEADER FIXO -->
-          <div class="modal-header-sales">
+          <!-- Header Fixo -->
+          <div class="modal-header">
             <div>
               <h3 class="text-base md:text-xl font-bold text-white">
                 {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
@@ -381,17 +381,19 @@
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
             </div>
-            <button @click="closeModal" type="button" class="text-white p-2 rounded-lg hover:bg-primary-700 flex-shrink-0">
+            <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors flex-shrink-0">
               <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
-          
-          <!-- BODY SCROLLÁVEL -->
-          <div class="modal-body-sales">
-            <form @submit.prevent="saveSale" class="h-full flex flex-col">
-              <div class="modal-content-sales">
+
+          <!-- Formulário -->
+          <form @submit.prevent="saveSale" class="modal-form">
+            
+            <!-- Conteúdo Scrollable -->
+            <div class="modal-content">
+              <div class="modal-content-inner">
                 
                 <!-- Informações Básicas -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -485,27 +487,197 @@
                   </div>
                 </div>
 
-                <!-- Informações Adicionais -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                  <div>
-                    <label class="label text-sm md:text-base">Forma de Pagamento *</label>
-                    <select v-model="form.payment_method" required class="input-field">
-                      <option value="cash">💵 Dinheiro</option>
-                      <option value="pix">📱 PIX</option>
-                      <option value="boleto">📄 Boleto</option>
-                      <option value="card">💳 Cartão</option>
-                      <option value="credito">💰 Crediário</option>
-                    </select>
-                  </div>
+                <!-- Forma de Pagamento - CORRIGIDO PARA MOBILE -->
+                <div class="border-2 border-primary-200 rounded-lg p-3 md:p-4 bg-primary-50">
+                  <label class="label text-sm md:text-base font-bold text-primary-700 mb-3">💳 Forma de Pagamento *</label>
+                  
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                    <!-- Dinheiro -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.payment_method" 
+                        value="cash" 
+                        type="radio" 
+                        id="cash" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="cash" 
+                        :class="form.payment_method === 'cash' 
+                          ? 'bg-green-500 text-white border-green-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        💵 Dinheiro
+                      </label>
+                    </div>
 
-                  <div>
-                    <label class="label text-sm md:text-base">Status do Pedido *</label>
-                    <select v-model="form.order_status" required class="input-field">
-                      <option value="pendente">🕐 Pendente</option>
-                      <option value="em_rota">🚚 Em Rota</option>
-                      <option value="entregue">✅ Entregue</option>
-                      <option value="cancelado">❌ Cancelado</option>
-                    </select>
+                    <!-- PIX -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.payment_method" 
+                        value="pix" 
+                        type="radio" 
+                        id="pix" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="pix" 
+                        :class="form.payment_method === 'pix' 
+                          ? 'bg-purple-500 text-white border-purple-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        📱 PIX
+                      </label>
+                    </div>
+
+                    <!-- Cartão -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.payment_method" 
+                        value="card" 
+                        type="radio" 
+                        id="card" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="card" 
+                        :class="form.payment_method === 'card' 
+                          ? 'bg-pink-500 text-white border-pink-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        💳 Cartão
+                      </label>
+                    </div>
+
+                    <!-- Boleto -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.payment_method" 
+                        value="boleto" 
+                        type="radio" 
+                        id="boleto" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="boleto" 
+                        :class="form.payment_method === 'boleto' 
+                          ? 'bg-blue-500 text-white border-blue-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        📄 Boleto
+                      </label>
+                    </div>
+
+                    <!-- Crediário -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.payment_method" 
+                        value="credito" 
+                        type="radio" 
+                        id="credito" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="credito" 
+                        :class="form.payment_method === 'credito' 
+                          ? 'bg-orange-500 text-white border-orange-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        💰 Crediário
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status do Pedido - CORRIGIDO PARA MOBILE -->
+                <div class="border-2 border-blue-200 rounded-lg p-3 md:p-4 bg-blue-50">
+                  <label class="label text-sm md:text-base font-bold text-blue-700 mb-3">📋 Status do Pedido *</label>
+                  
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                    <!-- Pendente -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.order_status" 
+                        value="pendente" 
+                        type="radio" 
+                        id="pendente" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="pendente" 
+                        :class="form.order_status === 'pendente' 
+                          ? 'bg-yellow-500 text-white border-yellow-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        🕐 Pendente
+                      </label>
+                    </div>
+
+                    <!-- Em Rota -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.order_status" 
+                        value="em_rota" 
+                        type="radio" 
+                        id="em_rota" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="em_rota" 
+                        :class="form.order_status === 'em_rota' 
+                          ? 'bg-blue-500 text-white border-blue-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        🚚 Em Rota
+                      </label>
+                    </div>
+
+                    <!-- Entregue -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.order_status" 
+                        value="entregue" 
+                        type="radio" 
+                        id="entregue" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="entregue" 
+                        :class="form.order_status === 'entregue' 
+                          ? 'bg-green-500 text-white border-green-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        ✅ Entregue
+                      </label>
+                    </div>
+
+                    <!-- Cancelado -->
+                    <div class="flex items-center">
+                      <input 
+                        v-model="form.order_status" 
+                        value="cancelado" 
+                        type="radio" 
+                        id="cancelado" 
+                        class="hidden"
+                      />
+                      <label 
+                        for="cancelado" 
+                        :class="form.order_status === 'cancelado' 
+                          ? 'bg-red-500 text-white border-red-600' 
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
+                      >
+                        ❌ Cancelado
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -549,10 +721,35 @@
                   </div>
                 </div>
 
-                <!-- Pagamento -->
-                <div class="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
-                  <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                  <label for="paid-checkbox" class="text-xs md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
+                <!-- Pagamento Realizado - CORRIGIDO PARA MOBILE -->
+                <div class="border-2 border-green-200 rounded-lg p-3 md:p-4 bg-green-50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2 md:space-x-3">
+                      <input 
+                        v-model="form.paid" 
+                        type="checkbox" 
+                        id="paid-checkbox" 
+                        class="w-5 h-5 md:w-6 md:h-6 rounded border-2 border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                      />
+                      <label for="paid-checkbox" class="text-sm md:text-base font-bold text-green-700">
+                        ✅ Pagamento realizado
+                      </label>
+                    </div>
+                    
+                    <!-- Status visual -->
+                    <div :class="form.paid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'" 
+                         class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-xs md:text-sm transition-colors">
+                      {{ form.paid ? 'PAGO' : 'PENDENTE' }}
+                    </div>
+                  </div>
+                  
+                  <!-- Valor total quando pago -->
+                  <div v-if="form.paid" class="mt-3 p-2 md:p-3 bg-white rounded-lg border-2 border-green-300">
+                    <div class="flex justify-between items-center">
+                      <span class="text-xs md:text-sm font-semibold text-gray-700">Valor a receber:</span>
+                      <span class="text-sm md:text-base font-bold text-green-600">{{ formatCurrency(totalPedido) }}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Observações -->
@@ -561,27 +758,22 @@
                   <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
                 </div>
 
-                <!-- Indicador de fim do scroll -->
-                <div class="text-center py-6 text-gray-500 text-sm">
-                  ✅ Final do formulário
-                </div>
-                
               </div>
+            </div>
 
-              <!-- FOOTER FIXO -->
-              <div class="modal-footer-sales">
-                <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-                  <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
-                    Cancelar
-                  </button>
-                  <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
-                    {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
-                  </button>
-                </div>
+            <!-- Footer Fixo -->
+            <div class="modal-footer">
+              <div class="flex flex-col md:flex-row gap-2 md:gap-3">
+                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
+                  Cancelar
+                </button>
+                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
+                  {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
+                </button>
               </div>
-            </form>
-          </div>
-          
+            </div>
+
+          </form>
         </div>
       </div>
 
@@ -1482,9 +1674,9 @@ onMounted(() => {
   }
 }
 
-/* ==================== MODAL - ESTRUTURA TESTADA E FUNCIONANDO ==================== */
+/* ===== MODAL RESPONSIVO - SOLUÇÃO COMPLETA ===== */
 
-/* Previne scroll do body quando modal está aberto */
+/* Previne scroll do body quando modal aberto */
 body.modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -1492,99 +1684,74 @@ body.modal-open {
   height: 100% !important;
 }
 
-/* Overlay do Modal */
-.modal-overlay-sales {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Container do Modal */
-.modal-container-sales {
-  background: white;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  padding: 0;
 }
 
+.modal-container {
+  @apply bg-white w-full h-full flex flex-col;
+  max-height: 100vh;
+}
+
+/* Desktop: modal com tamanho limitado e bordas arredondadas */
 @media (min-width: 768px) {
-  .modal-overlay-sales {
-    padding: 16px;
+  .modal-overlay {
+    @apply p-4;
   }
   
-  .modal-container-sales {
-    max-width: 48rem; /* 768px */
-    max-height: 90vh;
+  .modal-container {
+    @apply rounded-xl;
+    max-width: 48rem; /* max-w-3xl */
+    max-height: 95vh;
     height: auto;
-    border-radius: 12px;
   }
 }
 
 /* Header Fixo */
-.modal-header-sales {
-  background: linear-gradient(to right, #f97316, #ea580c);
-  padding: 12px 16px;
-  color: white;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.modal-header {
+  @apply sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0;
+  z-index: 30;
 }
 
-@media (min-width: 768px) {
-  .modal-header-sales {
-    padding: 16px 24px;
-  }
+/* Formulário */
+.modal-form {
+  @apply flex-1 flex flex-col;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* Body Scrollável */
-.modal-body-sales {
-  flex: 1;
+/* Área de Conteúdo Scrollable */
+.modal-content {
+  @apply flex-1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
-/* Conteúdo com Padding Extra */
-.modal-content-sales {
-  padding: 16px;
-  padding-bottom: 200px; /* ✅ CRÍTICO: Espaço extra para ver TODO o conteúdo */
+.modal-content-inner {
+  @apply p-4 md:p-6 space-y-4;
+  padding-bottom: 12rem; /* Espaço extra no mobile para não ficar embaixo do footer */
 }
 
 @media (min-width: 768px) {
-  .modal-content-sales {
-    padding: 24px;
-    padding-bottom: 24px; /* Desktop não precisa de tanto espaço */
+  .modal-content-inner {
+    padding-bottom: 1.5rem; /* Desktop não precisa de tanto espaço */
   }
 }
 
 /* Footer Fixo */
-.modal-footer-sales {
-  background: white;
-  border-top: 2px solid #e5e7eb;
-  padding: 12px 16px;
-  flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
+.modal-footer {
+  @apply sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-4 flex-shrink-0;
+  z-index: 30;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 768px) {
-  .modal-footer-sales {
-    padding: 16px 24px;
+  .modal-footer {
+    @apply md:p-6;
     box-shadow: none;
   }
 }
@@ -1596,8 +1763,8 @@ textarea.input-field {
   font-size: 16px !important;
 }
 
-/* Scroll suave */
-.modal-body-sales {
+/* Scroll suave em todos os navegadores */
+.modal-content {
   scroll-behavior: smooth;
 }
 
@@ -1606,5 +1773,38 @@ textarea.input-field {
   .card {
     @apply p-3;
   }
+}
+
+/* Melhorias para os radio buttons customizados */
+.radio-option {
+  transition: all 0.2s ease-in-out;
+}
+
+.radio-option:active {
+  transform: scale(0.95);
+}
+
+/* Melhorias de toque para mobile */
+@media (max-width: 768px) {
+  .input-field, 
+  select.input-field, 
+  textarea.input-field {
+    min-height: 44px; /* Tamanho mínimo para toque */
+  }
+  
+  .btn-primary, 
+  .btn-outline {
+    min-height: 48px; /* Botões maiores para toque */
+  }
+  
+  /* Labels mais legíveis no mobile */
+  .label {
+    @apply text-sm font-semibold;
+  }
+}
+
+/* Animações suaves */
+.transition-all {
+  transition: all 0.3s ease;
 }
 </style>
