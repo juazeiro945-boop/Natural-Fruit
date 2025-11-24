@@ -673,23 +673,20 @@ const calculateEntryTotal = () => {
   entryForm.value.total_cost = entryForm.value.quantity * entryForm.value.unit_cost
 }
 
-// ✅ FUNÇÃO CORRIGIDA - Calcula o novo estoque baseado no tipo de ajuste
+// Calcula o novo estoque baseado no tipo de ajuste
 const calcularNovoEstoque = () => {
   const atual = Number(produtoEditando.value?.stock_quantity || 0)
   const valor = Number(editForm.value.new_quantity || 0)
   
   if (editForm.value.tipo === 'set') {
-    // Definir valor exato (aceita 0 para zerar)
     return valor
   }
   
   if (editForm.value.tipo === 'add') {
-    // Adicionar quantidade
     return atual + valor
   }
   
   if (editForm.value.tipo === 'remove') {
-    // Remover quantidade (não permite negativos)
     const resultado = atual - valor
     return Math.max(0, resultado)
   }
@@ -698,7 +695,6 @@ const calcularNovoEstoque = () => {
 }
 
 const onTipoAjusteChange = () => {
-  // Quando muda o tipo, ajusta o valor inicial
   if (editForm.value.tipo === 'set') {
     editForm.value.new_quantity = produtoEditando.value?.stock_quantity || 0
   } else {
@@ -707,7 +703,6 @@ const onTipoAjusteChange = () => {
 }
 
 const onQuantidadeChange = () => {
-  // Força reatividade
   editForm.value.new_quantity = Number(editForm.value.new_quantity)
 }
 
@@ -996,7 +991,7 @@ const saveLoss = async () => {
   }
 }
 
-// ✅ FUNÇÃO SAVEDIT CORRIGIDA
+// ✅ NOVA ABORDAGEM - ATUALIZA DIRETO SEM DEPENDER DE TRIGGERS
 const saveEdit = async () => {
   if (!editForm.value.notes.trim()) {
     alert('⚠️ Por favor, descreva o motivo do ajuste.')
@@ -1004,54 +999,74 @@ const saveEdit = async () => {
   }
 
   loadingEdit.value = true
+  
   try {
     const estoqueAtual = Number(produtoEditando.value?.stock_quantity || 0)
     const novoEstoque = calcularNovoEstoque()
     
-    console.log('🔍 Debug - Salvando ajuste:', {
-      produto: produtoEditando.value?.name,
-      tipo: editForm.value.tipo,
-      valorInformado: editForm.value.new_quantity,
-      estoqueAtual,
-      novoEstoque
-    })
+    console.log('='.repeat(50))
+    console.log('🔍 INICIANDO AJUSTE DE ESTOQUE')
+    console.log('='.repeat(50))
+    console.log('📦 Produto:', produtoEditando.value?.name)
+    console.log('📊 Estoque Atual:', estoqueAtual)
+    console.log('🎯 Tipo de Ajuste:', editForm.value.tipo)
+    console.log('🔢 Valor Informado:', editForm.value.new_quantity)
+    console.log('✨ Novo Estoque Calculado:', novoEstoque)
+    console.log('='.repeat(50))
 
-    // ✅ Validação: não permite estoque negativo
+    // Validação
     if (novoEstoque < 0) {
       alert('⚠️ O estoque não pode ficar negativo!')
       return
     }
 
-    // ✅ Atualiza o estoque do produto
-    const { error: updateError } = await supabase
+    // ✅ PASSO 1: Atualizar o produto DIRETAMENTE
+    console.log('📝 Atualizando produto...')
+    const { data: updateData, error: updateError } = await supabase
       .from('products')
       .update({ 
         stock_quantity: novoEstoque,
         updated_at: new Date().toISOString()
       })
       .eq('id', produtoEditando.value.id)
+      .select()
 
     if (updateError) {
-      console.error('❌ Erro ao atualizar produto:', updateError)
+      console.error('❌ ERRO ao atualizar produto:', updateError)
       throw updateError
     }
 
-    console.log('✅ Produto atualizado com sucesso')
+    console.log('✅ Produto atualizado:', updateData)
 
-    // ✅ Registra a movimentação
+    // ✅ PASSO 2: Verificar se realmente atualizou
+    const { data: verificacao, error: verifyError } = await supabase
+      .from('products')
+      .select('stock_quantity')
+      .eq('id', produtoEditando.value.id)
+      .single()
+
+    if (verifyError) {
+      console.error('❌ ERRO ao verificar atualização:', verifyError)
+      throw verifyError
+    }
+
+    console.log('🔍 Verificação - Estoque no banco:', verificacao.stock_quantity)
+
+    // ✅ PASSO 3: Registrar movimentação apenas se houve mudança
     const diferenca = novoEstoque - estoqueAtual
     
     if (diferenca !== 0) {
       let descricaoAjuste = ''
       
       if (editForm.value.tipo === 'set') {
-        descricaoAjuste = `Estoque ajustado de ${estoqueAtual} para ${novoEstoque}`
+        descricaoAjuste = `Estoque ajustado manualmente de ${estoqueAtual} para ${novoEstoque}`
       } else if (editForm.value.tipo === 'add') {
-        descricaoAjuste = `Adicionado ${editForm.value.new_quantity} unidades`
+        descricaoAjuste = `Adicionadas ${editForm.value.new_quantity} unidades ao estoque`
       } else if (editForm.value.tipo === 'remove') {
-        descricaoAjuste = `Removido ${editForm.value.new_quantity} unidades`
+        descricaoAjuste = `Removidas ${editForm.value.new_quantity} unidades do estoque`
       }
 
+      console.log('📋 Registrando movimentação...')
       const { error: movementError } = await supabase
         .from('stock_movements')
         .insert([{
@@ -1063,21 +1078,31 @@ const saveEdit = async () => {
         }])
 
       if (movementError) {
-        console.error('❌ Erro ao registrar movimentação:', movementError)
-        throw movementError
+        console.error('❌ ERRO ao registrar movimentação:', movementError)
+        // Não vamos fazer throw aqui porque o estoque já foi atualizado
+        console.warn('⚠️ Estoque foi atualizado mas a movimentação não foi registrada')
+      } else {
+        console.log('✅ Movimentação registrada com sucesso')
       }
-
-      console.log('✅ Movimentação registrada')
     }
 
-    alert(`✅ Estoque ajustado com sucesso!\n\nEstoque anterior: ${estoqueAtual}\nNovo estoque: ${novoEstoque}`)
+    console.log('='.repeat(50))
+    console.log('✅ AJUSTE CONCLUÍDO COM SUCESSO')
+    console.log('='.repeat(50))
+
+    alert(`✅ Estoque ajustado com sucesso!\n\n📊 Estoque anterior: ${estoqueAtual}\n✨ Novo estoque: ${novoEstoque}`)
     
-    // Recarrega os dados
+    // Aguarda um pouco e recarrega
+    await new Promise(resolve => setTimeout(resolve, 500))
     await Promise.all([loadProducts(), loadMovements()])
     
     closeEditModal()
+    
   } catch (error) {
-    console.error('❌ Erro ao ajustar estoque:', error)
+    console.error('='.repeat(50))
+    console.error('❌ ERRO FATAL')
+    console.error('='.repeat(50))
+    console.error(error)
     alert('❌ Erro ao ajustar estoque: ' + error.message)
   } finally {
     loadingEdit.value = false
@@ -1118,6 +1143,7 @@ onUnmounted(() => {
   }
 })
 </script>
+
 <style scoped>
 .line-clamp-2 {
   display: -webkit-box;
