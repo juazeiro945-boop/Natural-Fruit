@@ -7,7 +7,7 @@
           <p class="text-gray-600 mt-1">Gerencie suas entregas e novos pedidos</p>
         </div>
         <div class="flex gap-2">
-          <button @click="showModalConsultaCliente = true" class="flex-1 md:flex-none btn-secondary">
+          <button v-if="authStore.isAdmin" @click="showModalConsultaCliente = true" class="flex-1 md:flex-none btn-secondary">
             🔍 Consultar Cliente
           </button>
           <button @click="showModalNovoPedido = true" class="flex-1 md:flex-none btn-primary">
@@ -423,8 +423,8 @@
         </div>
       </div>
 
-      <!-- Modal Consulta Cliente -->
-      <div v-if="showModalConsultaCliente" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <!-- Modal Consulta Cliente - APENAS PARA ADMIN -->
+      <div v-if="showModalConsultaCliente && authStore.isAdmin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
             <h3 class="text-xl font-bold text-white">Consultar Cliente</h3>
@@ -535,7 +535,7 @@ const formPedido = ref({
   date: new Date().toLocaleDateString('en-CA'),
   sale_type: 'retail',
   client_id: '',
-  vendedor_id: '', // NOVO
+  vendedor_id: '',
   produtos: [
     {
       product_id: '',
@@ -607,7 +607,6 @@ const getPaymentMethodLabel = (method) => {
   return labels[method] || method
 }
 
-// NOVO: Função para pegar nome do vendedor
 const getVendedorName = (vendedorId) => {
   if (!vendedorId) return 'Não informado'
   const vendedor = vendedores.value.find(v => v.id === vendedorId)
@@ -813,7 +812,7 @@ const salvarNovoPedido = async () => {
       status_entrega: 'pendente',
       tem_troca: formPedido.value.tem_troca,
       observacao_troca: formPedido.value.observacao_troca,
-      vendedor_id: formPedido.value.vendedor_id, // NOVO
+      vendedor_id: formPedido.value.vendedor_id,
       created_by: authStore.user.id
     }
 
@@ -838,7 +837,7 @@ const closeModalNovoPedido = () => {
     date: new Date().toLocaleDateString('en-CA'),
     sale_type: 'retail',
     client_id: '',
-    vendedor_id: '', // NOVO
+    vendedor_id: '',
     produtos: [
       {
         product_id: '',
@@ -987,7 +986,6 @@ const generateReceipt = async (pedido) => {
   doc.setFont('helvetica', 'bold')
   doc.text('RECIBO DE PEDIDO', 105, 82, { align: 'center' })
   
-  // Data e Vendedor lado a lado - NOVO
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('DATA DO PEDIDO', 15, 92)
@@ -996,7 +994,7 @@ const generateReceipt = async (pedido) => {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.text(formatDate(pedido.date), 15, 99)
-  doc.text(getVendedorName(pedido.vendedor_id), 100, 99) // NOVO
+  doc.text(getVendedorName(pedido.vendedor_id), 100, 99)
   
   doc.setFont('helvetica', 'bold')
   doc.text('STATUS', 150, 92)
