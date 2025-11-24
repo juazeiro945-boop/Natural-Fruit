@@ -368,412 +368,270 @@
       </div>
 
       <!-- ✅ MODAL NOVO/EDITAR PEDIDO - CORRIGIDO PARA MOBILE -->
-      <div v-if="showModal" class="modal-overlay">
-        <div class="modal-container">
+      <div v-if="showModal" class="modal-overlay-fixed">
+        <div class="modal-container-mobile">
           
           <!-- Header Fixo -->
-          <div class="modal-header">
-            <div>
-              <h3 class="text-base md:text-xl font-bold text-white">
-                {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
-              </h3>
-              <p v-if="form.produtos.length > 0" class="text-xs md:text-sm text-white opacity-90">
-                📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
-              </p>
+          <div class="modal-header-mobile">
+            <div class="flex items-center space-x-3">
+              <button @click="closeModal" class="text-white p-1 rounded-lg flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <div>
+                <h3 class="text-lg font-bold text-white">
+                  {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
+                </h3>
+                <p v-if="form.produtos.length > 0" class="text-xs text-white opacity-90">
+                  📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                </p>
+              </div>
             </div>
-            <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors flex-shrink-0">
-              <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+            <button @click="closeModal" class="text-white p-2 rounded-lg flex-shrink-0 text-xl">
+              ×
             </button>
           </div>
 
-          <!-- Formulário -->
-          <form @submit.prevent="saveSale" class="modal-form">
-            
-            <!-- Conteúdo Scrollable -->
-            <div class="modal-content">
-              <div class="modal-content-inner">
-                
-                <!-- Informações Básicas -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                  <div>
-                    <label class="label text-sm md:text-base">Data *</label>
-                    <input v-model="form.date" type="date" required class="input-field" />
-                  </div>
-                  <div>
-                    <label class="label text-sm md:text-base">Tipo de Venda *</label>
-                    <select v-model="form.sale_type" required class="input-field">
-                      <option value="wholesale">🏭 Atacado</option>
-                      <option value="retail">🛒 Varejo</option>
-                    </select>
-                  </div>
-                </div>
-
+          <!-- Formulário Scrollable -->
+          <div class="modal-content-mobile">
+            <form @submit.prevent="saveSale" class="p-4 space-y-4 pb-32">
+              
+              <!-- Informações Básicas -->
+              <div class="grid grid-cols-1 gap-3">
                 <div>
-                  <label class="label text-sm md:text-base">Cliente *</label>
-                  <select v-model="form.client_id" required class="input-field">
-                    <option value="">Selecione um cliente</option>
-                    <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                  <label class="label">Data *</label>
+                  <input v-model="form.date" type="date" required class="input-field" />
+                </div>
+                <div>
+                  <label class="label">Tipo de Venda *</label>
+                  <select v-model="form.sale_type" required class="input-field">
+                    <option value="wholesale">🏭 Atacado</option>
+                    <option value="retail">🛒 Varejo</option>
                   </select>
                 </div>
+              </div>
 
-                <!-- PRODUTOS -->
-                <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 bg-primary-50">
+              <div>
+                <label class="label">Cliente *</label>
+                <select v-model="form.client_id" required class="input-field">
+                  <option value="">Selecione um cliente</option>
+                  <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                </select>
+              </div>
+
+              <!-- PRODUTOS -->
+              <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 space-y-3 bg-primary-50">
+                <div class="flex justify-between items-center">
+                  <label class="label mb-0 text-primary-700 font-bold">📦 Produtos do Pedido</label>
+                  <span class="text-xs font-semibold text-primary-600">
+                    Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                  </span>
+                </div>
+                
+                <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-3 rounded-lg shadow-sm space-y-2 border border-gray-200">
                   <div class="flex justify-between items-center">
-                    <label class="label mb-0 text-primary-700 font-bold text-sm md:text-base">📦 Produtos do Pedido</label>
-                    <span class="text-xs md:text-sm font-semibold text-primary-600">
-                      Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
-                    </span>
+                    <span class="font-semibold text-xs text-gray-700">Produto {{ index + 1 }}</span>
+                    <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs flex items-center">
+                      <span class="mr-1">🗑️</span> Remover
+                    </button>
                   </div>
                   
-                  <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-3 md:p-4 rounded-lg shadow-sm space-y-2 md:space-y-3 border border-gray-200">
-                    <div class="flex justify-between items-center">
-                      <span class="font-semibold text-xs md:text-sm text-gray-700">Produto {{ index + 1 }}</span>
-                      <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs md:text-sm flex items-center">
-                        <span class="mr-1">🗑️</span> Remover
-                      </button>
-                    </div>
-                    
+                  <div>
+                    <label class="label text-xs">Produto *</label>
+                    <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
+                      <option value="">Selecione um produto</option>
+                      <option v-for="product in products" :key="product.id" :value="product.id">
+                        {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 gap-2">
                     <div>
-                      <label class="label text-xs md:text-sm">Produto *</label>
-                      <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
-                        <option value="">Selecione um produto</option>
-                        <option v-for="product in products" :key="product.id" :value="product.id">
-                          {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
-                        </option>
-                      </select>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
-                      <div>
-                        <label class="label text-xs md:text-sm">
-                          {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
-                        </label>
-                        <input 
-                          v-model.number="item.quantity" 
-                          type="number" 
-                          :step="item.is_weight ? '0.001' : '1'" 
-                          :min="item.is_weight ? '0.001' : '1'" 
-                          required 
-                          class="input-field" 
-                          @input="calculateTotalItem(index)" 
-                          :inputmode="item.is_weight ? 'decimal' : 'numeric'" 
-                        />
-                      </div>
-                      <div>
-                        <label class="label text-xs md:text-sm">Preço Unit. *</label>
-                        <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" inputmode="decimal" />
-                      </div>
-                      <div>
-                        <label class="label text-xs md:text-sm">Total</label>
-                        <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center text-sm md:text-base">
-                    <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Adicionar Produto
-                  </button>
-
-                  <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-3 md:p-4 rounded-lg shadow-lg">
-                    <div class="flex justify-between items-center text-white">
-                      <span class="font-bold text-base md:text-lg">TOTAL DO PEDIDO:</span>
-                      <span class="font-bold text-xl md:text-2xl">{{ formatCurrency(totalPedido) }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Forma de Pagamento - CORRIGIDO PARA MOBILE -->
-                <div class="border-2 border-primary-200 rounded-lg p-3 md:p-4 bg-primary-50">
-                  <label class="label text-sm md:text-base font-bold text-primary-700 mb-3">💳 Forma de Pagamento *</label>
-                  
-                  <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-                    <!-- Dinheiro -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.payment_method" 
-                        value="cash" 
-                        type="radio" 
-                        id="cash" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="cash" 
-                        :class="form.payment_method === 'cash' 
-                          ? 'bg-green-500 text-white border-green-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        💵 Dinheiro
+                      <label class="label text-xs">
+                        {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
                       </label>
-                    </div>
-
-                    <!-- PIX -->
-                    <div class="flex items-center">
                       <input 
-                        v-model="form.payment_method" 
-                        value="pix" 
-                        type="radio" 
-                        id="pix" 
-                        class="hidden"
+                        v-model.number="item.quantity" 
+                        type="number" 
+                        :step="item.is_weight ? '0.001' : '1'" 
+                        :min="item.is_weight ? '0.001' : '1'" 
+                        required 
+                        class="input-field" 
+                        @input="calculateTotalItem(index)" 
                       />
-                      <label 
-                        for="pix" 
-                        :class="form.payment_method === 'pix' 
-                          ? 'bg-purple-500 text-white border-purple-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        📱 PIX
-                      </label>
-                    </div>
-
-                    <!-- Cartão -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.payment_method" 
-                        value="card" 
-                        type="radio" 
-                        id="card" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="card" 
-                        :class="form.payment_method === 'card' 
-                          ? 'bg-pink-500 text-white border-pink-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        💳 Cartão
-                      </label>
-                    </div>
-
-                    <!-- Boleto -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.payment_method" 
-                        value="boleto" 
-                        type="radio" 
-                        id="boleto" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="boleto" 
-                        :class="form.payment_method === 'boleto' 
-                          ? 'bg-blue-500 text-white border-blue-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        📄 Boleto
-                      </label>
-                    </div>
-
-                    <!-- Crediário -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.payment_method" 
-                        value="credito" 
-                        type="radio" 
-                        id="credito" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="credito" 
-                        :class="form.payment_method === 'credito' 
-                          ? 'bg-orange-500 text-white border-orange-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        💰 Crediário
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Status do Pedido - CORRIGIDO PARA MOBILE -->
-                <div class="border-2 border-blue-200 rounded-lg p-3 md:p-4 bg-blue-50">
-                  <label class="label text-sm md:text-base font-bold text-blue-700 mb-3">📋 Status do Pedido *</label>
-                  
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-                    <!-- Pendente -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.order_status" 
-                        value="pendente" 
-                        type="radio" 
-                        id="pendente" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="pendente" 
-                        :class="form.order_status === 'pendente' 
-                          ? 'bg-yellow-500 text-white border-yellow-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        🕐 Pendente
-                      </label>
-                    </div>
-
-                    <!-- Em Rota -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.order_status" 
-                        value="em_rota" 
-                        type="radio" 
-                        id="em_rota" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="em_rota" 
-                        :class="form.order_status === 'em_rota' 
-                          ? 'bg-blue-500 text-white border-blue-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        🚚 Em Rota
-                      </label>
-                    </div>
-
-                    <!-- Entregue -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.order_status" 
-                        value="entregue" 
-                        type="radio" 
-                        id="entregue" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="entregue" 
-                        :class="form.order_status === 'entregue' 
-                          ? 'bg-green-500 text-white border-green-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        ✅ Entregue
-                      </label>
-                    </div>
-
-                    <!-- Cancelado -->
-                    <div class="flex items-center">
-                      <input 
-                        v-model="form.order_status" 
-                        value="cancelado" 
-                        type="radio" 
-                        id="cancelado" 
-                        class="hidden"
-                      />
-                      <label 
-                        for="cancelado" 
-                        :class="form.order_status === 'cancelado' 
-                          ? 'bg-red-500 text-white border-red-600' 
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-                        class="w-full p-2 md:p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-xs md:text-sm font-medium"
-                      >
-                        ❌ Cancelado
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Evento -->
-                <div class="border-2 border-purple-200 rounded-lg p-3 md:p-4 bg-purple-50">
-                  <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
-                    <input v-model="form.is_event" type="checkbox" id="is-event" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                    <label for="is-event" class="font-medium text-gray-700 text-sm md:text-base">🎉 Este pedido é para um evento?</label>
-                  </div>
-                  <div v-if="form.is_event">
-                    <label class="label text-xs md:text-sm">Nome/Tipo do Evento *</label>
-                    <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
-                  </div>
-                </div>
-
-                <!-- Troca -->
-                <div class="border-2 border-yellow-200 rounded-lg p-3 md:p-4 bg-yellow-50">
-                  <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
-                    <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                    <label for="has-exchange" class="font-medium text-gray-700 text-sm md:text-base">🔄 Este pedido envolve troca?</label>
-                  </div>
-                  <div v-if="form.has_exchange" class="space-y-2 md:space-y-3">
-                    <div>
-                      <label class="label text-xs md:text-sm">Produto da Troca *</label>
-                      <input v-model="form.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                      <div>
-                        <label class="label text-xs md:text-sm">Quantidade *</label>
-                        <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field" />
-                      </div>
-                      <div>
-                        <label class="label text-xs md:text-sm">Valor da Troca *</label>
-                        <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
-                      </div>
                     </div>
                     <div>
-                      <label class="label text-xs md:text-sm">Total da Troca</label>
-                      <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
+                      <label class="label text-xs">Preço Unit. *</label>
+                      <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" />
+                    </div>
+                    <div>
+                      <label class="label text-xs">Total</label>
+                      <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600" />
                     </div>
                   </div>
                 </div>
 
-                <!-- Pagamento Realizado - CORRIGIDO PARA MOBILE -->
-                <div class="border-2 border-green-200 rounded-lg p-3 md:p-4 bg-green-50">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2 md:space-x-3">
-                      <input 
-                        v-model="form.paid" 
-                        type="checkbox" 
-                        id="paid-checkbox" 
-                        class="w-5 h-5 md:w-6 md:h-6 rounded border-2 border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
-                      />
-                      <label for="paid-checkbox" class="text-sm md:text-base font-bold text-green-700">
-                        ✅ Pagamento realizado
-                      </label>
-                    </div>
-                    
-                    <!-- Status visual -->
-                    <div :class="form.paid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'" 
-                         class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-xs md:text-sm transition-colors">
-                      {{ form.paid ? 'PAGO' : 'PENDENTE' }}
-                    </div>
-                  </div>
-                  
-                  <!-- Valor total quando pago -->
-                  <div v-if="form.paid" class="mt-3 p-2 md:p-3 bg-white rounded-lg border-2 border-green-300">
-                    <div class="flex justify-between items-center">
-                      <span class="text-xs md:text-sm font-semibold text-gray-700">Valor a receber:</span>
-                      <span class="text-sm md:text-base font-bold text-green-600">{{ formatCurrency(totalPedido) }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Observações -->
-                <div>
-                  <label class="label text-sm md:text-base">Observações</label>
-                  <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Footer Fixo -->
-            <div class="modal-footer">
-              <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
-                  Cancelar
+                <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Adicionar Produto
                 </button>
-                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
-                  {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
-                </button>
-              </div>
-            </div>
 
-          </form>
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 rounded-lg shadow-lg">
+                  <div class="flex justify-between items-center text-white">
+                    <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
+                    <span class="font-bold text-2xl">{{ formatCurrency(totalPedido) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Forma de Pagamento -->
+              <div class="border-2 border-primary-200 rounded-lg p-3 bg-primary-50">
+                <label class="label font-bold text-primary-700 mb-3">💳 Forma de Pagamento *</label>
+                
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center" v-for="method in paymentMethods" :key="method.value">
+                    <input 
+                      v-model="form.payment_method" 
+                      :value="method.value" 
+                      type="radio" 
+                      :id="method.value" 
+                      class="hidden"
+                    />
+                    <label 
+                      :for="method.value" 
+                      :class="form.payment_method === method.value 
+                        ? method.selectedClass 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                      class="w-full p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-sm font-medium"
+                    >
+                      {{ method.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status do Pedido -->
+              <div class="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
+                <label class="label font-bold text-blue-700 mb-3">📋 Status do Pedido *</label>
+                
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center" v-for="status in orderStatuses" :key="status.value">
+                    <input 
+                      v-model="form.order_status" 
+                      :value="status.value" 
+                      type="radio" 
+                      :id="status.value" 
+                      class="hidden"
+                    />
+                    <label 
+                      :for="status.value" 
+                      :class="form.order_status === status.value 
+                        ? status.selectedClass 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                      class="w-full p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-sm font-medium"
+                    >
+                      {{ status.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Evento -->
+              <div class="border-2 border-purple-200 rounded-lg p-3 bg-purple-50">
+                <div class="flex items-center space-x-3 mb-3">
+                  <input v-model="form.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                  <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
+                </div>
+                <div v-if="form.is_event">
+                  <label class="label text-sm">Nome/Tipo do Evento *</label>
+                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
+                </div>
+              </div>
+
+              <!-- Troca -->
+              <div class="border-2 border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                <div class="flex items-center space-x-3 mb-3">
+                  <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
+                  <label for="has-exchange" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
+                </div>
+                <div v-if="form.has_exchange" class="space-y-3">
+                  <div>
+                    <label class="label text-sm">Produto da Troca *</label>
+                    <input v-model="form.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="label text-sm">Quantidade *</label>
+                      <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field" />
+                    </div>
+                    <div>
+                      <label class="label text-sm">Valor da Troca *</label>
+                      <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="label text-sm">Total da Troca</label>
+                    <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pagamento Realizado -->
+              <div class="border-2 border-green-200 rounded-lg p-3 bg-green-50">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <input 
+                      v-model="form.paid" 
+                      type="checkbox" 
+                      id="paid-checkbox" 
+                      class="w-6 h-6 rounded border-2 border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                    />
+                    <label for="paid-checkbox" class="font-bold text-green-700">
+                      ✅ Pagamento realizado
+                    </label>
+                  </div>
+                  
+                  <!-- Status visual -->
+                  <div :class="form.paid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'" 
+                       class="px-4 py-2 rounded-full font-bold text-sm transition-colors">
+                    {{ form.paid ? 'PAGO' : 'PENDENTE' }}
+                  </div>
+                </div>
+                
+                <!-- Valor total quando pago -->
+                <div v-if="form.paid" class="mt-3 p-3 bg-white rounded-lg border-2 border-green-300">
+                  <div class="flex justify-between items-center">
+                    <span class="font-semibold text-gray-700">Valor a receber:</span>
+                    <span class="font-bold text-green-600">{{ formatCurrency(totalPedido) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Observações -->
+              <div>
+                <label class="label">Observações</label>
+                <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Footer Fixo Mobile -->
+          <div class="fixed-bottom-actions">
+            <div class="flex flex-col gap-2">
+              <button type="submit" @click="saveSale" :disabled="loading" class="w-full btn-primary py-4 text-lg font-bold">
+                {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
+              </button>
+              <button type="button" @click="closeModal" class="w-full btn-outline py-3">
+                Cancelar
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -939,6 +797,22 @@ const form = ref({
   exchange_value: 0,
   exchange_total: 0
 })
+
+// CONSTANTES PARA OS RADIO BUTTONS
+const paymentMethods = [
+  { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
+  { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
+  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'credito', label: '💰 Crediário', selectedClass: 'bg-orange-500 text-white border-orange-600' }
+]
+
+const orderStatuses = [
+  { value: 'pendente', label: '🕐 Pendente', selectedClass: 'bg-yellow-500 text-white border-yellow-600' },
+  { value: 'em_rota', label: '🚚 Em Rota', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'entregue', label: '✅ Entregue', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'cancelado', label: '❌ Cancelado', selectedClass: 'bg-red-500 text-white border-red-600' }
+]
 
 // COMPUTED PAGINAÇÃO
 const totalPages = computed(() => {
@@ -1151,9 +1025,7 @@ const closeDetailsModal = () => {
 
 const openModal = () => {
   showModal.value = true
-  if (window.innerWidth < 768) {
-    document.body.classList.add('modal-open')
-  }
+  document.body.classList.add('modal-open')
 }
 
 const editSale = (sale) => {
@@ -1674,7 +1546,7 @@ onMounted(() => {
   }
 }
 
-/* ===== MODAL RESPONSIVO - SOLUÇÃO COMPLETA ===== */
+/* 🔥 ESTILOS CRÍTICOS PARA O MODAL NO MOBILE */
 
 /* Previne scroll do body quando modal aberto */
 body.modal-open {
@@ -1684,113 +1556,147 @@ body.modal-open {
   height: 100% !important;
 }
 
-/* Container do Modal */
-.modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-  padding: 0;
+/* Overlay que cobre a tela toda */
+.modal-overlay-fixed {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.modal-container {
-  @apply bg-white w-full h-full flex flex-col;
-  max-height: 100vh;
-}
-
-/* Desktop: modal com tamanho limitado e bordas arredondadas */
-@media (min-width: 768px) {
-  .modal-overlay {
-    @apply p-4;
-  }
-  
-  .modal-container {
-    @apply rounded-xl;
-    max-width: 48rem; /* max-w-3xl */
-    max-height: 95vh;
-    height: auto;
-  }
-}
-
-/* Header Fixo */
-.modal-header {
-  @apply sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0;
-  z-index: 30;
-}
-
-/* Formulário */
-.modal-form {
-  @apply flex-1 flex flex-col;
-  min-height: 0;
+/* Container principal do modal */
+.modal-container-mobile {
+  background: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
   overflow: hidden;
 }
 
-/* Área de Conteúdo Scrollable */
-.modal-content {
-  @apply flex-1;
+/* Header fixo no topo */
+.modal-header-mobile {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Área de conteúdo scrollable */
+.modal-content-mobile {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  background: #f8fafc;
 }
 
-.modal-content-inner {
-  padding: 16px;
-  padding-bottom: 350px !important; /* ✅ 350px é MUITO espaço */
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .modal-content-inner {
-    padding: 24px;
-    padding-bottom: 24px !important;
-  }
-}
-  /* CRÍTICO: Garante scroll até o final */
-.modal-content {
-  flex: 1 1 auto !important;
-  overflow-y: scroll !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  height: 100% !important;
-}
-
-.modal-form {
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-  min-height: 0 !important;
-}
-
-@media (min-width: 768px) {
-  .modal-content-inner {
-    padding-bottom: 1.5rem; /* Desktop não precisa de tanto espaço */
-  }
-}
-
-/* Footer Fixo */
-.modal-footer {
-  @apply sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-4 flex-shrink-0;
-  z-index: 30;
+/* Footer fixo na parte inferior */
+.fixed-bottom-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 2px solid #e5e7eb;
+  padding: 1rem;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 100;
 }
 
-@media (min-width: 768px) {
-  .modal-footer {
-    @apply md:p-6;
-    box-shadow: none;
-  }
+/* Garante que os inputs não tenham zoom no iOS */
+.input-field {
+  font-size: 16px !important;
+  min-height: 44px !important;
 }
 
-/* Previne zoom no iOS em inputs e selects */
-input.input-field,
-select.input-field,
-textarea.input-field {
+/* Botões grandes para toque */
+.btn-primary, .btn-outline {
+  min-height: 50px !important;
   font-size: 16px !important;
 }
 
-/* Scroll suave em todos os navegadores */
-.modal-content {
+/* Scroll suave */
+.modal-content-mobile {
   scroll-behavior: smooth;
+}
+
+/* Media query para desktop */
+@media (min-width: 768px) {
+  .modal-overlay-fixed {
+    padding: 2rem;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-container-mobile {
+    max-width: 48rem;
+    max-height: 90vh;
+    height: auto;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .modal-header-mobile {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+  
+  .fixed-bottom-actions {
+    position: static;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: none;
+    padding: 1.5rem;
+  }
+  
+  .modal-content-mobile {
+    padding-bottom: 0;
+  }
+}
+
+/* Animações */
+.modal-container-mobile {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-container-mobile {
+    animation: scaleIn 0.3s ease-out;
+  }
+  
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 }
 
 /* Melhorias de responsividade */
@@ -1814,15 +1720,14 @@ textarea.input-field {
   .input-field, 
   select.input-field, 
   textarea.input-field {
-    min-height: 44px; /* Tamanho mínimo para toque */
+    min-height: 44px;
   }
   
   .btn-primary, 
   .btn-outline {
-    min-height: 48px; /* Botões maiores para toque */
+    min-height: 48px;
   }
   
-  /* Labels mais legíveis no mobile */
   .label {
     @apply text-sm font-semibold;
   }
