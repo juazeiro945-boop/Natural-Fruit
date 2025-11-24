@@ -253,18 +253,47 @@
         </div>
       </div>
 
-      <!-- Modal Novo Pedido -->
-      <div v-if="showModalNovoPedido" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-2xl max-h-screen md:max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
-            <h3 class="text-lg md:text-xl font-bold text-white">Novo Pedido</h3>
-            <button @click="closeModalNovoPedido" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors text-2xl">×</button>
-          </div>
-          <form @submit.prevent="salvarNovoPedido" class="p-4 md:p-6 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- ✅ MODAL NOVO PEDIDO COMPLETO -->
+      <div v-if="showModalNovoPedido" class="modal-overlay-fixed">
+        <div class="modal-container-mobile">
+          
+          <!-- Header Fixo -->
+          <div class="modal-header-mobile">
+            <div class="flex items-center space-x-3">
+              <button @click="closeModalNovoPedido" class="text-white p-1 rounded-lg flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
               <div>
-                <label class="label">Data *</label>
-                <input v-model="formPedido.date" type="date" required class="input-field" />
+                <h3 class="text-lg font-bold text-white">Novo Pedido</h3>
+                <p v-if="formPedido.produtos.length > 0" class="text-xs text-white opacity-90">
+                  📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                </p>
+              </div>
+            </div>
+            <button @click="closeModalNovoPedido" class="text-white p-2 rounded-lg flex-shrink-0 text-xl">
+              ×
+            </button>
+          </div>
+
+          <!-- Formulário Scrollable -->
+          <div class="modal-content-mobile">
+            <form @submit.prevent="salvarNovoPedido" class="p-4 space-y-4 pb-32">
+              
+              <!-- Informações Básicas -->
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="label">Data *</label>
+                  <input v-model="formPedido.date" type="date" required class="input-field" />
+                </div>
+                <div>
+                  <label class="label">Tipo de Venda *</label>
+                  <select v-model="formPedido.sale_type" required class="input-field">
+                    <option value="wholesale">🏭 Atacado</option>
+                    <option value="retail">🛒 Varejo</option>
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -276,113 +305,227 @@
                   </option>
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label class="label">Tipo de Venda *</label>
-              <div class="grid grid-cols-2 gap-3">
-                <button type="button" @click="formPedido.sale_type = 'wholesale'" :class="formPedido.sale_type === 'wholesale' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300'" class="p-4 rounded-lg border-2 transition-all hover:border-blue-400 flex flex-col items-center space-y-2">
-                  <span class="text-3xl">🏭</span>
-                  <span class="font-semibold text-sm">Atacado</span>
-                </button>
-                <button type="button" @click="formPedido.sale_type = 'retail'" :class="formPedido.sale_type === 'retail' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'" class="p-4 rounded-lg border-2 transition-all hover:border-green-400 flex flex-col items-center space-y-2">
-                  <span class="text-3xl">🛒</span>
-                  <span class="font-semibold text-sm">Varejo</span>
-                </button>
+              <div>
+                <label class="label">Cliente *</label>
+                <select v-model="formPedido.client_id" required class="input-field">
+                  <option value="">Selecione um cliente</option>
+                  <option v-for="client in clientes" :key="client.id" :value="client.id">{{ client.name }}</option>
+                </select>
               </div>
-            </div>
 
-            <div>
-              <label class="label">Cliente *</label>
-              <select v-model="formPedido.client_id" required class="input-field">
-                <option value="">Selecione um cliente</option>
-                <option v-for="client in clientes" :key="client.id" :value="client.id">{{ client.name }}</option>
-              </select>
-            </div>
-
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 space-y-4">
-              <div class="flex justify-between items-center">
-                <label class="label mb-0">Produtos *</label>
-                <button type="button" @click="adicionarProduto" class="text-sm bg-primary-500 text-white px-3 py-1 rounded-lg hover:bg-primary-600">
-                  + Adicionar Produto
-                </button>
-              </div>
-              
-              <div v-for="(item, index) in formPedido.produtos" :key="index" class="bg-gray-50 p-3 rounded-lg space-y-3">
+              <!-- PRODUTOS -->
+              <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 space-y-3 bg-primary-50">
                 <div class="flex justify-between items-center">
-                  <span class="font-semibold text-sm">Produto {{ index + 1 }}</span>
-                  <button v-if="formPedido.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700">
-                    🗑️
-                  </button>
+                  <label class="label mb-0 text-primary-700 font-bold">📦 Produtos do Pedido</label>
+                  <span class="text-xs font-semibold text-primary-600">
+                    Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                  </span>
                 </div>
                 
-                <div>
-                  <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
-                    <option value="">Selecione um produto</option>
-                    <option v-for="product in produtos" :key="product.id" :value="product.id">
-                      {{ product.name }} - {{ formatCurrency(product.price) }}
-                    </option>
-                  </select>
+                <div v-for="(item, index) in formPedido.produtos" :key="index" class="bg-white p-3 rounded-lg shadow-sm space-y-2 border border-gray-200">
+                  <div class="flex justify-between items-center">
+                    <span class="font-semibold text-xs text-gray-700">Produto {{ index + 1 }}</span>
+                    <button v-if="formPedido.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs flex items-center">
+                      <span class="mr-1">🗑️</span> Remover
+                    </button>
+                  </div>
+                  
+                  <div>
+                    <label class="label text-xs">Produto *</label>
+                    <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
+                      <option value="">Selecione um produto</option>
+                      <option v-for="product in produtos" :key="product.id" :value="product.id">
+                        {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 gap-2">
+                    <div>
+                      <label class="label text-xs">
+                        {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
+                      </label>
+                      <input 
+                        v-model.number="item.quantity" 
+                        type="number" 
+                        :step="item.is_weight ? '0.001' : '1'" 
+                        :min="item.is_weight ? '0.001' : '1'" 
+                        required 
+                        class="input-field" 
+                        @input="calculateTotalItem(index)" 
+                      />
+                    </div>
+                    <div>
+                      <label class="label text-xs">Preço Unit. *</label>
+                      <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" />
+                    </div>
+                    <div>
+                      <label class="label text-xs">Total</label>
+                      <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Adicionar Produto
+                </button>
+
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 rounded-lg shadow-lg">
+                  <div class="flex justify-between items-center text-white">
+                    <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
+                    <span class="font-bold text-2xl">{{ formatCurrency(totalPedido) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Forma de Pagamento -->
+              <div class="border-2 border-primary-200 rounded-lg p-3 bg-primary-50">
+                <label class="label font-bold text-primary-700 mb-3">💳 Forma de Pagamento *</label>
+                
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center" v-for="method in paymentMethods" :key="method.value">
+                    <input 
+                      v-model="formPedido.payment_method" 
+                      :value="method.value" 
+                      type="radio" 
+                      :id="method.value" 
+                      class="hidden"
+                    />
+                    <label 
+                      :for="method.value" 
+                      :class="formPedido.payment_method === method.value 
+                        ? method.selectedClass 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                      class="w-full p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-sm font-medium"
+                    >
+                      {{ method.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status do Pedido -->
+              <div class="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
+                <label class="label font-bold text-blue-700 mb-3">📋 Status do Pedido *</label>
+                
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center" v-for="status in orderStatuses" :key="status.value">
+                    <input 
+                      v-model="formPedido.order_status" 
+                      :value="status.value" 
+                      type="radio" 
+                      :id="status.value" 
+                      class="hidden"
+                    />
+                    <label 
+                      :for="status.value" 
+                      :class="formPedido.order_status === status.value 
+                        ? status.selectedClass 
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                      class="w-full p-3 border-2 rounded-lg cursor-pointer transition-all flex items-center justify-center text-sm font-medium"
+                    >
+                      {{ status.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Evento -->
+              <div class="border-2 border-purple-200 rounded-lg p-3 bg-purple-50">
+                <div class="flex items-center space-x-3 mb-3">
+                  <input v-model="formPedido.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                  <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
+                </div>
+                <div v-if="formPedido.is_event">
+                  <label class="label text-sm">Nome/Tipo do Evento *</label>
+                  <input v-model="formPedido.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
+                </div>
+              </div>
+
+              <!-- Troca COMPLETA -->
+              <div class="border-2 border-yellow-200 rounded-lg p-3 bg-yellow-50">
+                <div class="flex items-center space-x-3 mb-3">
+                  <input v-model="formPedido.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
+                  <label for="has-exchange" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
+                </div>
+                <div v-if="formPedido.has_exchange" class="space-y-3">
+                  <div>
+                    <label class="label text-sm">Produto da Troca *</label>
+                    <input v-model="formPedido.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="label text-sm">Quantidade *</label>
+                      <input v-model.number="formPedido.exchange_quantity" type="number" min="1" required class="input-field" />
+                    </div>
+                    <div>
+                      <label class="label text-sm">Valor da Troca *</label>
+                      <input v-model.number="formPedido.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="label text-sm">Total da Troca</label>
+                    <input v-model.number="formPedido.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pagamento Realizado -->
+              <div class="border-2 border-green-200 rounded-lg p-3 bg-green-50">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <input 
+                      v-model="formPedido.paid" 
+                      type="checkbox" 
+                      id="paid-checkbox" 
+                      class="w-6 h-6 rounded border-2 border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                    />
+                    <label for="paid-checkbox" class="font-bold text-green-700">
+                      ✅ Pagamento realizado
+                    </label>
+                  </div>
+                  
+                  <!-- Status visual -->
+                  <div :class="formPedido.paid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'" 
+                       class="px-4 py-2 rounded-full font-bold text-sm transition-colors">
+                    {{ formPedido.paid ? 'PAGO' : 'PENDENTE' }}
+                  </div>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-2">
-                  <div>
-                    <label class="label text-xs">Quantidade *</label>
-                    <input v-model.number="item.quantity" type="number" min="1" required class="input-field" @input="calculateTotalItem(index)" />
-                  </div>
-                  <div>
-                    <label class="label text-xs">Preço Unit. *</label>
-                    <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" />
-                  </div>
-                  <div>
-                    <label class="label text-xs">Total</label>
-                    <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold" />
+                <!-- Valor total quando pago -->
+                <div v-if="formPedido.paid" class="mt-3 p-3 bg-white rounded-lg border-2 border-green-300">
+                  <div class="flex justify-between items-center">
+                    <span class="font-semibold text-gray-700">Valor a receber:</span>
+                    <span class="font-bold text-green-600">{{ formatCurrency(totalPedido) }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="bg-primary-50 p-3 rounded-lg">
-                <div class="flex justify-between items-center">
-                  <span class="font-bold text-gray-700">TOTAL DO PEDIDO:</span>
-                  <span class="font-bold text-xl text-primary-600">{{ formatCurrency(totalPedido) }}</span>
-                </div>
+              <!-- Observações -->
+              <div>
+                <label class="label">Observações</label>
+                <textarea v-model="formPedido.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
               </div>
-            </div>
 
-            <div>
-              <label class="label">Forma de Pagamento *</label>
-              <select v-model="formPedido.payment_method" required class="input-field">
-                <option value="pendente">⏳ Pendente</option>
-                <option value="cash">💵 Dinheiro</option>
-                <option value="pix">📱 PIX</option>
-                <option value="boleto">📄 Boleto</option>
-                <option value="credito">💳 Crediário</option>
-              </select>
-            </div>
+            </form>
+          </div>
 
-            <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
-              <div class="flex items-center space-x-3 mb-3">
-                <input v-model="formPedido.tem_troca" type="checkbox" id="tem-troca" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                <label for="tem-troca" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
-              </div>
-              <div v-if="formPedido.tem_troca">
-                <label class="label text-sm">Descrição da Troca *</label>
-                <textarea v-model="formPedido.observacao_troca" required class="input-field" rows="2" placeholder="Ex: Troca de 10 caixas de polpa de acerola por manga"></textarea>
-              </div>
-            </div>
-
-            <div>
-              <label class="label">Observações</label>
-              <textarea v-model="formPedido.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido"></textarea>
-            </div>
-
-            <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeModalNovoPedido" class="flex-1 btn-outline">Cancelar</button>
-              <button type="submit" :disabled="loading" class="flex-1 btn-primary">
+          <!-- Footer Fixo Mobile -->
+          <div class="fixed-bottom-actions">
+            <div class="flex flex-col gap-2">
+              <button type="submit" @click="salvarNovoPedido" :disabled="loading" class="w-full btn-primary py-4 text-lg font-bold">
                 {{ loading ? 'Salvando...' : 'Salvar Pedido' }}
               </button>
+              <button type="button" @click="closeModalNovoPedido" class="w-full btn-outline py-3">
+                Cancelar
+              </button>
             </div>
-          </form>
+          </div>
+
         </div>
       </div>
 
@@ -528,7 +671,7 @@ const formCancelamento = ref({
 })
 
 const formPedido = ref({
-  date: new Date().toLocaleDateString('en-CA'),
+  date: new Date().toISOString().split('T')[0],
   sale_type: 'retail',
   client_id: '',
   vendedor_id: '',
@@ -537,16 +680,38 @@ const formPedido = ref({
       product_id: '',
       quantity: 1,
       unit_price: 0,
-      total: 0
+      total: 0,
+      is_weight: false
     }
   ],
-  payment_method: 'pendente',
+  payment_method: 'cash',
   paid: false,
   notes: '',
-  status_entrega: 'pendente',
-  tem_troca: false,
-  observacao_troca: ''
+  order_status: 'pendente',
+  is_event: false,
+  event_name: '',
+  has_exchange: false,
+  exchange_product: '',
+  exchange_quantity: 1,
+  exchange_value: 0,
+  exchange_total: 0
 })
+
+// CONSTANTES PARA OS RADIO BUTTONS
+const paymentMethods = [
+  { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
+  { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
+  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'credito', label: '💰 Crediário', selectedClass: 'bg-orange-500 text-white border-orange-600' }
+]
+
+const orderStatuses = [
+  { value: 'pendente', label: '🕐 Pendente', selectedClass: 'bg-yellow-500 text-white border-yellow-600' },
+  { value: 'em_rota', label: '🚚 Em Rota', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'entregue', label: '✅ Entregue', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'cancelado', label: '❌ Cancelado', selectedClass: 'bg-red-500 text-white border-red-600' }
+]
 
 const stats = computed(() => {
   return {
@@ -559,6 +724,10 @@ const stats = computed(() => {
 const totalPedido = computed(() => {
   return formPedido.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
 })
+
+const getTotalItemsForm = () => {
+  return formPedido.value.produtos.length
+}
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
@@ -598,6 +767,7 @@ const getPaymentMethodLabel = (method) => {
     'cash': 'Dinheiro',
     'pix': 'PIX',
     'boleto': 'Boleto',
+    'card': 'Cartão',
     'credito': 'Crediario'
   }
   return labels[method] || method
@@ -614,18 +784,22 @@ const adicionarProduto = () => {
     product_id: '',
     quantity: 1,
     unit_price: 0,
-    total: 0
+    total: 0,
+    is_weight: false
   })
 }
 
 const removerProduto = (index) => {
-  formPedido.value.produtos.splice(index, 1)
+  if (formPedido.value.produtos.length > 1) {
+    formPedido.value.produtos.splice(index, 1)
+  }
 }
 
 const updatePriceItem = (index) => {
   const product = produtos.value.find(p => p.id === formPedido.value.produtos[index].product_id)
   if (product) {
     formPedido.value.produtos[index].unit_price = product.price
+    formPedido.value.produtos[index].is_weight = product.sold_by_weight || false
     calculateTotalItem(index)
   }
 }
@@ -633,6 +807,10 @@ const updatePriceItem = (index) => {
 const calculateTotalItem = (index) => {
   const item = formPedido.value.produtos[index]
   item.total = item.quantity * item.unit_price
+}
+
+const calculateExchangeTotal = () => {
+  formPedido.value.exchange_total = formPedido.value.exchange_quantity * formPedido.value.exchange_value
 }
 
 const loadPedidos = async () => {
@@ -779,18 +957,38 @@ const salvarNovoPedido = async () => {
   try {
     if (formPedido.value.produtos.length === 0) {
       alert('Adicione pelo menos um produto ao pedido')
-      return
-    }
-
-    if (formPedido.value.tem_troca && !formPedido.value.observacao_troca) {
-      alert('Descreva a troca que será realizada')
+      loading.value = false
       return
     }
 
     if (!formPedido.value.vendedor_id) {
       alert('Selecione o vendedor responsável pelo pedido')
+      loading.value = false
       return
     }
+
+    if (formPedido.value.is_event && !formPedido.value.event_name) {
+      alert('Informe o nome/tipo do evento')
+      loading.value = false
+      return
+    }
+
+    if (formPedido.value.has_exchange && !formPedido.value.exchange_product) {
+      alert('Descreva o produto da troca')
+      loading.value = false
+      return
+    }
+
+    const produtosData = formPedido.value.produtos.map(item => {
+      const product = produtos.value.find(p => p.id === item.product_id)
+      return {
+        id: item.product_id,
+        name: product?.name || '',
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.total
+      }
+    })
 
     const primeiroProduto = formPedido.value.produtos[0]
     
@@ -803,11 +1001,18 @@ const salvarNovoPedido = async () => {
       unit_price: primeiroProduto.unit_price,
       total: totalPedido.value,
       payment_method: formPedido.value.payment_method,
-      paid: false,
+      paid: formPedido.value.paid,
       notes: formPedido.value.notes,
+      order_status: formPedido.value.order_status,
       status_entrega: 'pendente',
-      tem_troca: formPedido.value.tem_troca,
-      observacao_troca: formPedido.value.observacao_troca,
+      is_event: formPedido.value.is_event,
+      event_name: formPedido.value.event_name || null,
+      has_exchange: formPedido.value.has_exchange,
+      exchange_product: formPedido.value.exchange_product || null,
+      exchange_quantity: formPedido.value.exchange_quantity || null,
+      exchange_value: formPedido.value.exchange_value || null,
+      exchange_total: formPedido.value.exchange_total || null,
+      products_data: JSON.stringify(produtosData),
       vendedor_id: formPedido.value.vendedor_id,
       created_by: authStore.user.id
     }
@@ -815,6 +1020,23 @@ const salvarNovoPedido = async () => {
     const { error } = await supabase.from('sales').insert([pedidoData])
 
     if (error) throw error
+
+    // Deduzir estoque
+    for (const item of formPedido.value.produtos) {
+      const { data: productData } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', item.product_id)
+        .single()
+      
+      if (productData) {
+        const newStock = (productData.stock_quantity || 0) - item.quantity
+        await supabase
+          .from('products')
+          .update({ stock_quantity: newStock })
+          .eq('id', item.product_id)
+      }
+    }
 
     alert('✅ Pedido criado com sucesso!')
     closeModalNovoPedido()
@@ -829,8 +1051,10 @@ const salvarNovoPedido = async () => {
 
 const closeModalNovoPedido = () => {
   showModalNovoPedido.value = false
+  document.body.classList.remove('modal-open')
+  
   formPedido.value = {
-    date: new Date().toLocaleDateString('en-CA'),
+    date: new Date().toISOString().split('T')[0],
     sale_type: 'retail',
     client_id: '',
     vendedor_id: '',
@@ -839,15 +1063,21 @@ const closeModalNovoPedido = () => {
         product_id: '',
         quantity: 1,
         unit_price: 0,
-        total: 0
+        total: 0,
+        is_weight: false
       }
     ],
-    payment_method: 'pendente',
+    payment_method: 'cash',
     paid: false,
     notes: '',
-    status_entrega: 'pendente',
-    tem_troca: false,
-    observacao_troca: ''
+    order_status: 'pendente',
+    is_event: false,
+    event_name: '',
+    has_exchange: false,
+    exchange_product: '',
+    exchange_quantity: 1,
+    exchange_value: 0,
+    exchange_total: 0
   }
 }
 
@@ -917,18 +1147,15 @@ const closeModalConsultaCliente = () => {
   historicoPedidosCliente.value = []
 }
 
-// FUNÇÃO GENERATE RECEIPT AJUSTADA - LOGO À ESQUERDA E INFO AO LADO
 const generateReceipt = async (pedido) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
   
-  // Faixa laranja no topo
   doc.setFillColor(...primaryColor)
   doc.rect(0, 0, 210, 35, 'F')
   
-  // Logo à esquerda (circular)
   try {
     const img = new Image()
     img.crossOrigin = 'Anonymous'
@@ -953,13 +1180,11 @@ const generateReceipt = async (pedido) => {
     ctx.drawImage(img, 0, 0, size, size)
     
     const circularImage = canvas.toDataURL('image/png')
-    // Logo à esquerda (x=15) e mais para cima (y=5)
     doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
   }
   
-  // Informações da empresa ao lado da logo (texto branco)
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
@@ -970,7 +1195,6 @@ const generateReceipt = async (pedido) => {
   doc.text('Juazeiro, Bahia, Brasil', 45, 23)
   doc.text('Tel: (87) 98864-1590', 45, 28)
   
-  // Número do recibo no canto direito (texto branco)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(pedido.id).slice(0, 8).toUpperCase()}`
@@ -979,18 +1203,15 @@ const generateReceipt = async (pedido) => {
   const saleTypeText = pedido.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
   doc.text(saleTypeText, 195, 18, { align: 'right' })
   
-  // Linha divisória
   doc.setTextColor(...darkGray)
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
   doc.line(15, 40, 195, 40)
   
-  // Título do documento
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
   doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
   
-  // Data, Vendedor e Status
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('DATA DO PEDIDO', 15, 60)
@@ -1003,7 +1224,6 @@ const generateReceipt = async (pedido) => {
   doc.text(getVendedorName(pedido.vendedor_id), 90, 67)
   doc.text(getStatusLabel(pedido.status_entrega), 150, 67)
   
-  // Dados do cliente
   doc.setFillColor(245, 245, 245)
   doc.rect(15, 73, 180, 30, 'F')
   doc.setTextColor(...darkGray)
@@ -1019,7 +1239,6 @@ const generateReceipt = async (pedido) => {
     doc.text(`Endereco: ${endereco}`, 20, 98)
   }
   
-  // Produtos do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('DETALHES DO PEDIDO', 15, 113)
@@ -1123,6 +1342,7 @@ onMounted(() => {
 
 .input-field {
   @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  font-size: 16px !important;
 }
 
 .btn-primary {
@@ -1135,5 +1355,136 @@ onMounted(() => {
 
 .btn-outline {
   @apply px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
+}
+
+/* 🔥 ESTILOS CRÍTICOS PARA O MODAL NO MOBILE */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.modal-overlay-fixed {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.modal-container-mobile {
+  background: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-header-mobile {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content-mobile {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #f8fafc;
+}
+
+.fixed-bottom-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 2px solid #e5e7eb;
+  padding: 1rem;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.modal-content-mobile {
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+  .modal-overlay-fixed {
+    padding: 2rem;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-container-mobile {
+    max-width: 48rem;
+    max-height: 90vh;
+    height: auto;
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .modal-header-mobile {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+  
+  .fixed-bottom-actions {
+    position: static;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: none;
+    padding: 1.5rem;
+  }
+  
+  .modal-content-mobile {
+    padding-bottom: 0;
+  }
+}
+
+.modal-container-mobile {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-container-mobile {
+    animation: scaleIn 0.3s ease-out;
+  }
+  
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 }
 </style>
