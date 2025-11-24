@@ -678,7 +678,7 @@ const lastSaleData = ref(null)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
 
-// ✅ PAGINAÇÃO
+// PAGINAÇÃO
 const currentPage = ref(1)
 const itemsPerPage = 15
 
@@ -716,7 +716,7 @@ const form = ref({
   exchange_total: 0
 })
 
-// ✅ COMPUTED PAGINAÇÃO
+// COMPUTED PAGINAÇÃO
 const totalPages = computed(() => {
   return Math.ceil(sales.value.length / itemsPerPage)
 })
@@ -981,7 +981,7 @@ const editSale = (sale) => {
 
 const loadSales = async () => {
   try {
-    // ✅ Resetar para página 1 quando filtrar
+    // Resetar para página 1 quando filtrar
     currentPage.value = 1
     
     let query = supabase
@@ -1131,7 +1131,7 @@ const deleteSale = async (id) => {
   }
 }
 
-// ✅ FUNÇÃO GENERATE RECEIPT CORRIGIDA
+// FUNÇÃO GENERATE RECEIPT SEM EMOJIS
 const generateReceipt = async (sale) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
@@ -1167,7 +1167,6 @@ const generateReceipt = async (sale) => {
     ctx.drawImage(img, 0, 0, size, size)
     
     const circularImage = canvas.toDataURL('image/png')
-    // Logo à esquerda (x=15) e mais para cima (y=5)
     doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
@@ -1213,7 +1212,15 @@ const generateReceipt = async (sale) => {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.text(formatDate(sale.date), 15, 67)
-  doc.text(getOrderStatusLabel(sale.order_status), 100, 67)
+  
+  // Status do pedido sem emoji
+  const statusLabels = {
+    pendente: 'Pendente',
+    em_rota: 'Em Rota',
+    entregue: 'Entregue',
+    cancelado: 'Cancelado'
+  }
+  doc.text(statusLabels[sale.order_status] || sale.order_status, 100, 67)
   
   if (sale.is_event) {
     doc.setFont('helvetica', 'bold')
