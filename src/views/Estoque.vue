@@ -25,16 +25,16 @@
         <div class="space-y-3 md:space-y-0 md:flex md:gap-4">
           <div class="flex-1">
             <label class="label text-xs md:text-sm">Filtrar por Produto</label>
-            <select v-model="filterProduct" @change="loadMovements" class="input-field text-sm">
+            <select v-model="filterProduct" @change="resetPagination" class="input-field text-sm">
               <option value="">Todos os produtos</option>
-              <option v-for="product in products" :key="product.id" :value="product.id">
+              <option v-for="product in allProducts" :key="product.id" :value="product.id">
                 {{ product.name }}
               </option>
             </select>
           </div>
           <div class="flex-1">
             <label class="label text-xs md:text-sm">Tipo</label>
-            <select v-model="filterType" @change="loadMovements" class="input-field text-sm">
+            <select v-model="filterType" @change="resetPagination" class="input-field text-sm">
               <option value="">Todos</option>
               <option value="entry">📥 Entradas</option>
               <option value="exit">📤 Saídas</option>
@@ -45,7 +45,7 @@
           </div>
           <div class="flex-1">
             <label class="label text-xs md:text-sm">Data</label>
-            <input v-model="filterDate" type="date" @change="loadMovements" class="input-field text-sm" />
+            <input v-model="filterDate" type="date" @change="resetPagination" class="input-field text-sm" />
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@
           <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex-1">
               <p class="text-xs md:text-sm text-blue-600 font-medium">Produtos</p>
-              <p class="text-xl md:text-3xl font-bold text-blue-900 mt-1">{{ products.length }}</p>
+              <p class="text-xl md:text-3xl font-bold text-blue-900 mt-1">{{ allProducts.length }}</p>
             </div>
             <div class="hidden md:flex w-12 h-12 bg-blue-500 rounded-xl items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,7 +109,7 @@
         </div>
       </div>
 
-      <!-- Estoque Atual - Cards no Mobile, Tabela no Desktop -->
+      <!-- Estoque Atual - COM PAGINAÇÃO -->
       <div class="card">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-base md:text-lg font-bold text-gray-900">Estoque Atual</h3>
@@ -122,7 +122,7 @@
 
         <!-- Mobile: Cards -->
         <div class="md:hidden space-y-3">
-          <div v-for="product in products" :key="product.id" 
+          <div v-for="product in paginatedProducts" :key="product.id" 
                class="p-3 rounded-lg border-2"
                :class="getStockBorderClass(product.stock_quantity)">
             <div class="flex items-center justify-between mb-2">
@@ -172,7 +172,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-              <tr v-for="product in products" :key="product.id" class="hover:bg-gray-50 transition-colors">
+              <tr v-for="product in paginatedProducts" :key="product.id" class="hover:bg-gray-50 transition-colors">
                 <td class="px-4 py-3">
                   <div class="font-semibold text-gray-900">{{ product.name }}</div>
                   <div class="text-xs text-gray-500">{{ product.unit }}</div>
@@ -202,9 +202,43 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Paginação do Estoque -->
+        <div v-if="allProducts.length > productsPerPage" class="flex items-center justify-between mt-4 pt-4 border-t">
+          <button 
+            @click="productPage--" 
+            :disabled="productPage === 1"
+            class="px-3 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span class="hidden sm:inline">Anterior</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-600">
+              Página <span class="font-bold">{{ productPage }}</span> de <span class="font-bold">{{ totalProductPages }}</span>
+            </span>
+            <span class="text-xs text-gray-500 hidden md:inline">
+              ({{ allProducts.length }} produtos)
+            </span>
+          </div>
+
+          <button 
+            @click="productPage++" 
+            :disabled="productPage === totalProductPages"
+            class="px-3 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <span class="hidden sm:inline">Próxima</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <!-- Histórico de Movimentações -->
+      <!-- Histórico de Movimentações - COM PAGINAÇÃO -->
       <div class="card">
         <h3 class="text-base md:text-lg font-bold text-gray-900 mb-4">Histórico de Movimentações</h3>
         
@@ -215,7 +249,7 @@
 
         <div v-else class="space-y-3">
           <div
-            v-for="movement in movements"
+            v-for="movement in paginatedMovements"
             :key="movement.id"
             class="p-3 md:p-4 rounded-lg border-2 transition-all hover:shadow-md"
             :class="getMovementBorderClass(movement.type)"
@@ -248,8 +282,8 @@
               <div class="flex items-center justify-between md:justify-end space-x-4 md:text-right pl-11 md:pl-0">
                 <div>
                   <div class="text-xs text-gray-600">Qtd</div>
-                  <div class="text-base md:text-lg font-bold" :class="movement.type === 'entry' ? 'text-green-600' : 'text-red-600'">
-                    {{ movement.type === 'entry' ? '+' : '-' }}{{ movement.quantity }}
+                  <div class="text-base md:text-lg font-bold" :class="getQuantityColor(movement.type, movement.quantity)">
+                    {{ formatQuantity(movement.type, movement.quantity) }}
                   </div>
                 </div>
                 <div v-if="movement.total_cost">
@@ -260,14 +294,49 @@
             </div>
           </div>
 
-          <div v-if="movements.length === 0" class="text-center py-12">
+          <div v-if="allMovements.length === 0" class="text-center py-12">
             <div class="text-4xl md:text-6xl mb-4">📦</div>
             <p class="text-gray-600 text-sm md:text-base">Nenhuma movimentação encontrada</p>
+          </div>
+
+          <!-- Paginação de Movimentações -->
+          <div v-if="allMovements.length > movementsPerPage" class="flex items-center justify-between pt-4 border-t">
+            <button 
+              @click="movementPage--" 
+              :disabled="movementPage === 1"
+              class="px-3 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              <span class="hidden sm:inline">Anterior</span>
+            </button>
+
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">
+                Página <span class="font-bold">{{ movementPage }}</span> de <span class="font-bold">{{ totalMovementPages }}</span>
+              </span>
+              <span class="text-xs text-gray-500 hidden md:inline">
+                ({{ allMovements.length }} movimentos)
+              </span>
+            </div>
+
+            <button 
+              @click="movementPage++" 
+              :disabled="movementPage === totalMovementPages"
+              class="px-3 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <span class="hidden sm:inline">Próxima</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Modal de Entrada - RESPONSIVO -->
+      <!-- Modais... (mantém os mesmos) -->
+      <!-- Modal de Entrada -->
       <div v-if="showEntryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeEntryModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -285,7 +354,7 @@
               <label class="label text-sm md:text-base">Produto *</label>
               <select v-model="entryForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
+                <option v-for="product in allProducts" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
                 </option>
               </select>
@@ -357,7 +426,7 @@
         </div>
       </div>
 
-      <!-- Modal de Saída Manual - RESPONSIVO -->
+      <!-- Modal de Saída Manual -->
       <div v-if="showExitModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeExitModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -375,7 +444,7 @@
               <label class="label text-sm md:text-base">Produto *</label>
               <select v-model="exitForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
+                <option v-for="product in allProducts" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
                 </option>
               </select>
@@ -427,7 +496,7 @@
         </div>
       </div>
 
-      <!-- Modal de Perda - RESPONSIVO -->
+      <!-- Modal de Perda -->
       <div v-if="showLossModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeLossModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -445,7 +514,7 @@
               <label class="label text-sm md:text-base">Produto *</label>
               <select v-model="lossForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
+                <option v-for="product in allProducts" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
                 </option>
               </select>
@@ -499,7 +568,7 @@
         </div>
       </div>
 
-      <!-- Modal de Editar Estoque - PERMITE ZERAR E RESPONSIVO -->
+      <!-- Modal de Editar Estoque -->
       <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeEditModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -581,8 +650,9 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
 
-const products = ref([])
-const movements = ref([])
+// Estados
+const allProducts = ref([])
+const allMovements = ref([])
 const loading = ref(false)
 const loadingEntry = ref(false)
 const loadingExit = ref(false)
@@ -596,10 +666,18 @@ const showEditModal = ref(false)
 
 const produtoEditando = ref(null)
 
+// Filtros
 const filterProduct = ref('')
 const filterType = ref('')
 const filterDate = ref('')
 
+// Paginação
+const productPage = ref(1)
+const movementPage = ref(1)
+const productsPerPage = 10
+const movementsPerPage = 10
+
+// Forms
 const entryForm = ref({
   date: new Date().toISOString().split('T')[0],
   product_id: '',
@@ -634,21 +712,70 @@ const editForm = ref({
 
 let realtimeChannel = null
 
-// Computed
+// ✅ Computed - Paginação de Produtos
+const paginatedProducts = computed(() => {
+  const start = (productPage.value - 1) * productsPerPage
+  const end = start + productsPerPage
+  return allProducts.value.slice(start, end)
+})
+
+const totalProductPages = computed(() => {
+  return Math.ceil(allProducts.value.length / productsPerPage)
+})
+
+// ✅ Computed - Paginação de Movimentações
+const paginatedMovements = computed(() => {
+  const start = (movementPage.value - 1) * movementsPerPage
+  const end = start + movementsPerPage
+  return allMovements.value.slice(start, end)
+})
+
+const totalMovementPages = computed(() => {
+  return Math.ceil(allMovements.value.length / movementsPerPage)
+})
+
+// Computed - Estatísticas
 const totalStockValue = computed(() => {
-  return products.value.reduce((sum, p) => {
+  return allProducts.value.reduce((sum, p) => {
     return sum + ((p.stock_quantity || 0) * (p.average_cost || 0))
   }, 0)
 })
 
 const lowStockProducts = computed(() => {
-  return products.value.filter(p => (p.stock_quantity || 0) < 10).length
+  return allProducts.value.filter(p => (p.stock_quantity || 0) < 10).length
 })
 
 const todayMovements = computed(() => {
   const today = new Date().toISOString().split('T')[0]
-  return movements.value.filter(m => m.date === today).length
+  return allMovements.value.filter(m => m.date === today).length
 })
+
+// ✅ Funções de formatação - Movimentações
+const getQuantityColor = (type, quantity) => {
+  // Ajustes podem ser positivos ou negativos
+  if (type === 'adjustment') {
+    return quantity >= 0 ? 'text-green-600' : 'text-red-600'
+  }
+  // Entradas são sempre positivas (verde)
+  if (type === 'entry') {
+    return 'text-green-600'
+  }
+  // Saídas, vendas e perdas são sempre negativas (vermelho)
+  return 'text-red-600'
+}
+
+const formatQuantity = (type, quantity) => {
+  // Ajustes mostram + ou - baseado no valor
+  if (type === 'adjustment') {
+    return quantity >= 0 ? `+${Math.abs(quantity)}` : `-${Math.abs(quantity)}`
+  }
+  // Entradas sempre com +
+  if (type === 'entry') {
+    return `+${quantity}`
+  }
+  // Saídas, vendas e perdas sempre com -
+  return `-${quantity}`
+}
 
 // Funções de utilidade
 const formatCurrency = (value, compact = false) => {
@@ -703,6 +830,12 @@ const onTipoAjusteChange = () => {
 
 const onQuantidadeChange = () => {
   editForm.value.new_quantity = Number(editForm.value.new_quantity)
+}
+
+const resetPagination = () => {
+  productPage.value = 1
+  movementPage.value = 1
+  loadMovements()
 }
 
 const getCategoryLabel = (category) => {
@@ -811,10 +944,9 @@ const loadProducts = async () => {
 
     if (error) throw error
     
-    // ✅ FORÇA ATUALIZAÇÃO REATIVA
-    products.value = [...(data || [])]
+    allProducts.value = [...(data || [])]
     
-    console.log('📦 Produtos carregados:', products.value.length)
+    console.log('📦 Produtos carregados:', allProducts.value.length)
   } catch (error) {
     console.error('Erro ao carregar produtos:', error)
   }
@@ -830,7 +962,6 @@ const loadMovements = async () => {
         products (name, unit)
       `)
       .order('created_at', { ascending: false })
-      .limit(50)
 
     if (filterProduct.value) {
       query = query.eq('product_id', filterProduct.value)
@@ -847,7 +978,7 @@ const loadMovements = async () => {
     const { data, error } = await query
 
     if (error) throw error
-    movements.value = [...(data || [])]
+    allMovements.value = [...(data || [])]
   } catch (error) {
     console.error('Erro ao carregar movimentações:', error)
   } finally {
@@ -994,7 +1125,6 @@ const saveLoss = async () => {
   }
 }
 
-// ✅ CORRIGIDO - Usa quantidade negativa para diminuição
 const saveEdit = async () => {
   if (!editForm.value.notes.trim()) {
     alert('⚠️ Por favor, descreva o motivo do ajuste.')
@@ -1019,7 +1149,6 @@ const saveEdit = async () => {
       return
     }
 
-    // Calcula a diferença (pode ser negativa ou positiva)
     const diferenca = novoEstoque - estoqueAtual
     
     if (diferenca === 0) {
@@ -1040,13 +1169,12 @@ const saveEdit = async () => {
     console.log('📝 Diferença:', diferenca)
     console.log('📋 Registrando movimentação...')
 
-    // ✅ INSERE MOVIMENTAÇÃO COM A DIFERENÇA (positiva ou negativa)
     const { error: movementError } = await supabase
       .from('stock_movements')
       .insert([{
         product_id: produtoEditando.value.id,
         type: 'adjustment',
-        quantity: diferenca, // ✅ Pode ser negativo!
+        quantity: diferenca,
         notes: `${descricaoAjuste}. Motivo: ${editForm.value.notes}`,
         date: new Date().toISOString().split('T')[0]
       }])
@@ -1148,59 +1276,6 @@ onUnmounted(() => {
   @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
 }
 
-@media (max-width: 640px) {
-  .card {
-    @apply p-3;
-  }
-  
-  .input-field {
-    @apply py-2 text-sm;
-  }
-}
-
-@media (max-width: 768px) {
-  .btn-primary, .btn-outline, .btn-secondary, .btn-warning {
-    @apply py-2 text-sm;
-  }
-}
-</style>
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.btn-primary {
-  @apply px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
-}
-
-.btn-secondary {
-  @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md;
-}
-
-.btn-warning {
-  @apply px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium shadow-md;
-}
-
-.btn-outline {
-  @apply px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
-}
-
-.card {
-  @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
-}
-
-.label {
-  @apply block text-sm font-medium text-gray-700 mb-2;
-}
-
-.input-field {
-  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
-}
-
-/* Melhorias de responsividade */
 @media (max-width: 640px) {
   .card {
     @apply p-3;
