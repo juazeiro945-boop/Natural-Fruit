@@ -1221,59 +1221,160 @@ const togglePaidStatus = async (sale) => {
 }
 
 const deleteSale = async (sale) => {
-  if (!confirm(`Tem certeza que deseja excluir PERMANENTEMENTE o pedido de ${sale.clients?.name}?\n\n⚠️ Esta ação não pode ser desfeita e o pedido será removido do banco de dados!`)) {
-    return
-  }
-
-  try {
-    console.log('🚨 INICIANDO EXCLUSÃO DEFINITIVA')
+  // Confirmação mais robusta
+  const confirmed = await new Promise((resolve) => {
+    const modal = document.createElement('div')
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'
+    modal.innerHTML = `
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 animate-fade-in">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Confirmar Exclusão</h3>
+          <p class="text-gray-600 text-sm">
+            Tem certeza que deseja excluir o pedido de <strong>${sale.clients?.name || 'Cliente'}</strong>?
+          </p>
+          <p class="text-red-600 text-xs mt-2 font-semibold">
+            ⚠️ Esta ação não pode ser desfeita!
+          </p>
+        </div>
+        <div class="flex flex-col gap-3">
+          <button id="confirm-delete" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition-colors">
+            Sim, Excluir Pedido
+          </button>
+          <button id="cancel-delete" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg font-bold transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    `
     
-    // 1. Restaurar estoque primeiro
+    document.body.appendChild(modal)
+    
+    // Event listeners para os botões
+    document.getElementById('confirm-delete').onclick = () => {
+      document.body.removeChild(modal)
+      resolve(true)
+    }
+    
+    document.getElementById('cancel-delete').onclick = () => {
+      document.body.removeChild(modal)
+      resolve(false)
+    }
+  })
+  
+  if (!confirmed) return
+  
+  // Loading state
+  const loadingToast = document.createElement('div')
+  loadingToast.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+  loadingToast.innerHTML = '🔄 Excluindo pedido...'
+  document.body.appendChild(loadingToast)
+  
+  try {
+    console.log('Iniciando exclusão do pedido:', sale.id)
+    
+    // 1. Primeiro, restaurar o estoque dos produtos
     const produtos = parseProducts(sale)
+    console.log('Produtos para restaurar estoque:', produtos)
+    
+    const stockUpdates = []
     
     for (const item of produtos) {
       const productId = item.id || sale.product_id
       if (productId) {
-        const { data: productData } = await supabase
+        console.log(`Restaurando estoque do produto ${productId}: ${item.quantity} unidades`)
+        
+        // Buscar estoque atual
+        const { data: productData, error: productError } = await supabase
           .from('products')
-          .select('stock_quantity')
+          .select('stock_quantity, name')
           .eq('id', productId)
           .single()
         
+        if (productError) {
+          console.error('Erro ao buscar produto:', productError)
+          continue
+        }
+        
         if (productData) {
           const newStock = (productData.stock_quantity || 0) + item.quantity
-          await supabase
+          console.log(`Estoque atual: ${productData.stock_quantity}, Novo estoque: ${newStock}`)
+          
+          const { error: updateError } = await supabase
             .from('products')
-            .update({ stock_quantity: newStock })
+            .update({ 
+              stock_quantity: newStock,
+              updated_at: new Date().toISOString()
+            })
             .eq('id', productId)
+          
+          if (updateError) {
+            console.error('Erro ao atualizar estoque:', updateError)
+            throw new Error(`Falha ao restaurar estoque do produto ${productData.name}`)
+          }
+          
+          stockUpdates.push({
+            product: productData.name,
+            quantity: item.quantity,
+            success: true
+          })
         }
       }
     }
-
-    // 2. EXCLUSÃO DIRETA E SIMPLES - SEM .select()
-    const { error } = await supabase
+    
+    console.log('Estoque restaurado com sucesso para', stockUpdates.length, 'produtos')
+    
+    // 2. Agora excluir a venda
+    console.log('Excluindo venda do banco de dados...')
+    const { data, error: deleteError } = await supabase
       .from('sales')
       .delete()
       .eq('id', sale.id)
-
-    if (error) {
-      console.error('ERRO SUPABASE:', error)
-      throw error
-    }
-
-    // 3. Remover da lista local IMEDIATAMENTE
-    sales.value = sales.value.filter(s => s.id !== sale.id)
+      .select()
     
-    // 4. Forçar recarregamento da lista do banco
+    if (deleteError) {
+      console.error('Erro ao excluir venda:', deleteError)
+      throw new Error(`Falha ao excluir pedido: ${deleteError.message}`)
+    }
+    
+    console.log('Venda excluída com sucesso:', data)
+    
+    // 3. Remover da lista local
+    const index = sales.value.findIndex(s => s.id === sale.id)
+    if (index !== -1) {
+      sales.value.splice(index, 1)
+      console.log('Venda removida da lista local')
+    }
+    
+    // 4. Atualizar a lista para garantir sincronização
     await loadSales()
-
-    alert('✅ Pedido excluído PERMANENTEMENTE com sucesso!')
-
-  } catch (error) {
-    console.error('ERRO CRÍTICO:', error)
-    alert('❌ Erro fatal ao excluir pedido: ' + error.message)
-  }
-}
+    
+    // 5. Feedback de sucesso
+    document.body.removeChild(loadingToast)
+    
+    const successToast = document.createElement('div')
+    successToast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
+    successToast.innerHTML = `
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        ✅ Pedido excluído com sucesso!
+      </div>
+      ${stockUpdates.length > 0 ? `<p class="text-xs mt-1">Estoque de ${stockUpdates.length} produto(s) restaurado</p>` : ''}
+    `
+    document.body.appendChild(successToast)
+    
+    // Auto-remover toast após 5 segundos
+    setTimeout(() => {
+      if (document.body.contains(successToast)) {
+        document.body.removeChild(successToast)
+      }
+    }, 5000)
     
   } catch (error) {
     console.error('Erro completo ao excluir pedido:', error)
