@@ -129,7 +129,7 @@
                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
-                  <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                  <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
                     <span class="text-lg">🗑️</span>
                   </button>
                 </div>
@@ -209,7 +209,7 @@
               <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
                 <span class="text-2xl">📄</span>
               </button>
-              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
+              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
                 <span class="text-2xl">🗑️</span>
               </button>
             </div>
@@ -342,6 +342,9 @@
                     </button>
                     <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg">📄</span>
+                    </button>
+                    <button v-if="authStore.canDeleteOrders" @click="deleteSale(pedido)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                      <span class="text-lg">🗑️</span>
                     </button>
                   </div>
                 </div>
@@ -1118,16 +1121,45 @@ const togglePaidStatus = async (sale) => {
   await loadSales()
 }
 
-const deleteSale = async (id) => {
+// FUNÇÃO DE EXCLUSÃO CORRIGIDA
+const deleteSale = async (sale) => {
   if (!confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')) return
+  
   try {
-    const { error } = await supabase.from('sales').delete().eq('id', id)
+    // Primeiro, restaurar o estoque dos produtos
+    if (!editingSale.value) {
+      const produtos = parseProducts(sale)
+      
+      for (const item of produtos) {
+        const { data: productData } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.id || sale.product_id)
+          .single()
+        
+        if (productData) {
+          const newStock = (productData.stock_quantity || 0) + item.quantity
+          await supabase
+            .from('products')
+            .update({ stock_quantity: newStock })
+            .eq('id', item.id || sale.product_id)
+        }
+      }
+    }
+    
+    // Agora excluir a venda
+    const { error } = await supabase
+      .from('sales')
+      .delete()
+      .eq('id', sale.id)
+    
     if (error) throw error
+    
     await loadSales()
-    alert('Pedido excluído com sucesso!')
+    alert('✅ Pedido excluído com sucesso! O estoque foi restaurado.')
   } catch (error) {
     console.error('Erro ao excluir pedido:', error)
-    alert('Erro ao excluir pedido: ' + error.message)
+    alert('❌ Erro ao excluir pedido: ' + error.message)
   }
 }
 
