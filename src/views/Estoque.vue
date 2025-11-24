@@ -673,22 +673,32 @@ const calculateEntryTotal = () => {
   entryForm.value.total_cost = entryForm.value.quantity * entryForm.value.unit_cost
 }
 
-// FUNÇÃO CORRIGIDA - PERMITE ZERAR COMPLETAMENTE
+// ✅ FUNÇÃO CORRIGIDA - Calcula o novo estoque baseado no tipo de ajuste
 const calcularNovoEstoque = () => {
-  const atual = produtoEditando.value?.stock_quantity || 0
-  const valor = editForm.value.new_quantity || 0
+  const atual = Number(produtoEditando.value?.stock_quantity || 0)
+  const valor = Number(editForm.value.new_quantity || 0)
   
-  if (editForm.value.tipo === 'set') return valor
-  if (editForm.value.tipo === 'add') return atual + valor
-  if (editForm.value.tipo === 'remove') {
-    const resultado = atual - valor
-    return Math.max(0, resultado) // Permite 0 mas não valores negativos
+  if (editForm.value.tipo === 'set') {
+    // Definir valor exato (aceita 0 para zerar)
+    return valor
   }
+  
+  if (editForm.value.tipo === 'add') {
+    // Adicionar quantidade
+    return atual + valor
+  }
+  
+  if (editForm.value.tipo === 'remove') {
+    // Remover quantidade (não permite negativos)
+    const resultado = atual - valor
+    return Math.max(0, resultado)
+  }
+  
   return atual
 }
 
 const onTipoAjusteChange = () => {
-  // Quando muda o tipo, reseta a quantidade para um valor padrão
+  // Quando muda o tipo, ajusta o valor inicial
   if (editForm.value.tipo === 'set') {
     editForm.value.new_quantity = produtoEditando.value?.stock_quantity || 0
   } else {
@@ -697,8 +707,8 @@ const onTipoAjusteChange = () => {
 }
 
 const onQuantidadeChange = () => {
-  // Força a atualização do resultado
-  // Esta função é chamada sempre que a quantidade muda
+  // Força reatividade
+  editForm.value.new_quantity = Number(editForm.value.new_quantity)
 }
 
 const getCategoryLabel = (category) => {
@@ -714,26 +724,30 @@ const getCategoryLabel = (category) => {
 }
 
 const getStockColorClass = (quantity) => {
-  if (quantity <= 0) return 'text-red-600'
-  if (quantity < 10) return 'text-orange-600'
+  const q = Number(quantity || 0)
+  if (q <= 0) return 'text-red-600'
+  if (q < 10) return 'text-orange-600'
   return 'text-green-600'
 }
 
 const getStockBadgeClass = (quantity) => {
-  if (quantity <= 0) return 'bg-red-100 text-red-700'
-  if (quantity < 10) return 'bg-orange-100 text-orange-700'
+  const q = Number(quantity || 0)
+  if (q <= 0) return 'bg-red-100 text-red-700'
+  if (q < 10) return 'bg-orange-100 text-orange-700'
   return 'bg-green-100 text-green-700'
 }
 
 const getStockBorderClass = (quantity) => {
-  if (quantity <= 0) return 'border-red-200 bg-red-50'
-  if (quantity < 10) return 'border-orange-200 bg-orange-50'
+  const q = Number(quantity || 0)
+  if (q <= 0) return 'border-red-200 bg-red-50'
+  if (q < 10) return 'border-orange-200 bg-orange-50'
   return 'border-green-200 bg-green-50'
 }
 
 const getStockStatus = (quantity) => {
-  if (quantity <= 0) return 'Esgotado'
-  if (quantity < 10) return 'Baixo'
+  const q = Number(quantity || 0)
+  if (q <= 0) return 'Esgotado'
+  if (q < 10) return 'Baixo'
   return 'OK'
 }
 
@@ -982,23 +996,33 @@ const saveLoss = async () => {
   }
 }
 
+// ✅ FUNÇÃO SAVEDIT CORRIGIDA
 const saveEdit = async () => {
+  if (!editForm.value.notes.trim()) {
+    alert('⚠️ Por favor, descreva o motivo do ajuste.')
+    return
+  }
+
   loadingEdit.value = true
   try {
+    const estoqueAtual = Number(produtoEditando.value?.stock_quantity || 0)
     const novoEstoque = calcularNovoEstoque()
-    const estoqueAtual = produtoEditando.value?.stock_quantity || 0
-    const diferenca = novoEstoque - estoqueAtual
-
-    console.log('Salvando ajuste:', {
+    
+    console.log('🔍 Debug - Salvando ajuste:', {
       produto: produtoEditando.value?.name,
-      estoqueAtual,
-      novoEstoque,
-      diferenca,
       tipo: editForm.value.tipo,
-      quantidade: editForm.value.new_quantity
+      valorInformado: editForm.value.new_quantity,
+      estoqueAtual,
+      novoEstoque
     })
 
-    // Atualiza o estoque do produto
+    // ✅ Validação: não permite estoque negativo
+    if (novoEstoque < 0) {
+      alert('⚠️ O estoque não pode ficar negativo!')
+      return
+    }
+
+    // ✅ Atualiza o estoque do produto
     const { error: updateError } = await supabase
       .from('products')
       .update({ 
@@ -1008,37 +1032,53 @@ const saveEdit = async () => {
       .eq('id', produtoEditando.value.id)
 
     if (updateError) {
-      console.error('Erro ao atualizar produto:', updateError)
+      console.error('❌ Erro ao atualizar produto:', updateError)
       throw updateError
     }
 
-    // Registra a movimentação apenas se houve alteração
+    console.log('✅ Produto atualizado com sucesso')
+
+    // ✅ Registra a movimentação
+    const diferenca = novoEstoque - estoqueAtual
+    
     if (diferenca !== 0) {
+      let descricaoAjuste = ''
+      
+      if (editForm.value.tipo === 'set') {
+        descricaoAjuste = `Estoque ajustado de ${estoqueAtual} para ${novoEstoque}`
+      } else if (editForm.value.tipo === 'add') {
+        descricaoAjuste = `Adicionado ${editForm.value.new_quantity} unidades`
+      } else if (editForm.value.tipo === 'remove') {
+        descricaoAjuste = `Removido ${editForm.value.new_quantity} unidades`
+      }
+
       const { error: movementError } = await supabase
         .from('stock_movements')
         .insert([{
           product_id: produtoEditando.value.id,
           type: 'adjustment',
           quantity: Math.abs(diferenca),
-          notes: `Ajuste manual (${editForm.value.tipo}): ${editForm.value.notes}`,
+          notes: `${descricaoAjuste}. Motivo: ${editForm.value.notes}`,
           date: new Date().toISOString().split('T')[0]
         }])
 
       if (movementError) {
-        console.error('Erro ao registrar movimentação:', movementError)
+        console.error('❌ Erro ao registrar movimentação:', movementError)
         throw movementError
       }
+
+      console.log('✅ Movimentação registrada')
     }
 
-    alert('✅ Estoque ajustado com sucesso!')
+    alert(`✅ Estoque ajustado com sucesso!\n\nEstoque anterior: ${estoqueAtual}\nNovo estoque: ${novoEstoque}`)
     
-    // Recarrega os dados para garantir que a interface esteja atualizada
+    // Recarrega os dados
     await Promise.all([loadProducts(), loadMovements()])
     
     closeEditModal()
   } catch (error) {
-    console.error('Erro ao ajustar estoque:', error)
-    alert('Erro ao ajustar estoque: ' + error.message)
+    console.error('❌ Erro ao ajustar estoque:', error)
+    alert('❌ Erro ao ajustar estoque: ' + error.message)
   } finally {
     loadingEdit.value = false
   }
@@ -1078,7 +1118,6 @@ onUnmounted(() => {
   }
 })
 </script>
-
 <style scoped>
 .line-clamp-2 {
   display: -webkit-box;
