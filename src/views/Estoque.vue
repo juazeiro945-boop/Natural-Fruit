@@ -1270,7 +1270,7 @@ const saveEdit = async () => {
   }
 }
 
-// 🔥 FUNÇÃO CORRIGIDA DE EXCLUSÃO
+// 🔥 FUNÇÃO DE EXCLUSÃO - AJUSTADA PARA HARD DELETE (Temporário para debug)
 const excluirProduto = async () => {
   if (!produtoExcluindo.value) return
   
@@ -1283,18 +1283,15 @@ const excluirProduto = async () => {
   try {
     console.log('🗑️ Desativando produto:', produtoId)
     
-    // ✅ SOFT DELETE - Mantém dados históricos
+    // ✅ HARD DELETE - Exclusão permanente
     const { error } = await supabase
       .from('products')
-      .update({ 
-        active: false,
-        deleted_at: new Date().toISOString()
-      })
+      .delete()
       .eq('id', produtoId)
 
     if (error) throw error
 
-    console.log('✅ Produto desativado!')
+    console.log('✅ Hard delete realizado com sucesso!')
     
     // Remove imediatamente da lista (UX melhor)
     allProducts.value = allProducts.value.filter(p => p.id !== produtoId)
@@ -1307,7 +1304,7 @@ const excluirProduto = async () => {
     closeDeleteModal()
     
     // ✅ USA A VARIÁVEL SALVA, não o objeto que já foi limpo
-    alert(`✅ Produto "${nomeProduto}" removido com sucesso!`)
+    alert(`✅ Produto "${nomeProduto}" excluído com sucesso!`)
     
     // Recarrega em background
     setTimeout(() => {
