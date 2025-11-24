@@ -134,7 +134,13 @@
                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
-                  <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                  <button 
+                    v-if="authStore.canDeleteOrders" 
+                    @click="deleteSale(sale)" 
+                    :disabled="loading"
+                    class="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                    title="Excluir"
+                  >
                     <span class="text-lg">🗑️</span>
                   </button>
                 </div>
@@ -214,7 +220,13 @@
               <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Gerar Recibo">
                 <span class="text-xl">📄</span>
               </button>
-              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-1 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100" title="Excluir">
+              <button 
+                v-if="authStore.canDeleteOrders" 
+                @click="deleteSale(sale)" 
+                :disabled="loading"
+                class="p-1 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed" 
+                title="Excluir"
+              >
                 <span class="text-xl">🗑️</span>
               </button>
             </div>
@@ -348,7 +360,13 @@
                     <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg md:text-xl">📄</span>
                     </button>
-                    <button v-if="authStore.canDeleteOrders" @click="deleteSale(pedido)" class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                    <button 
+                      v-if="authStore.canDeleteOrders" 
+                      @click="deleteSale(pedido)" 
+                      :disabled="loading"
+                      class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                      title="Excluir"
+                    >
                       <span class="text-lg md:text-xl">🗑️</span>
                     </button>
                   </div>
@@ -1084,7 +1102,7 @@ const editSale = (sale) => {
 
 const loadSales = async () => {
   try {
-    currentPage.value = 1
+    console.log('🔄 Carregando vendas...')
     
     let query = supabase
       .from('sales')
@@ -1100,9 +1118,12 @@ const loadSales = async () => {
     
     const { data, error } = await query
     if (error) throw error
+    
     sales.value = data || []
+    console.log(`✅ ${sales.value.length} vendas carregadas`)
+    
   } catch (error) {
-    console.error('Erro:', error)
+    console.error('❌ Erro ao carregar vendas:', error)
   }
 }
 
@@ -1221,7 +1242,7 @@ const togglePaidStatus = async (sale) => {
 }
 
 const deleteSale = async (sale) => {
-  // Confirmação mais robusta
+  // Confirmação robusta
   const confirmed = await new Promise((resolve) => {
     const modal = document.createElement('div')
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'
@@ -1254,7 +1275,6 @@ const deleteSale = async (sale) => {
     
     document.body.appendChild(modal)
     
-    // Event listeners para os botões
     document.getElementById('confirm-delete').onclick = () => {
       document.body.removeChild(modal)
       resolve(true)
@@ -1267,7 +1287,7 @@ const deleteSale = async (sale) => {
   })
   
   if (!confirmed) return
-  
+
   // Loading state
   const loadingToast = document.createElement('div')
   loadingToast.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
@@ -1275,18 +1295,18 @@ const deleteSale = async (sale) => {
   document.body.appendChild(loadingToast)
   
   try {
-    console.log('Iniciando exclusão do pedido:', sale.id)
+    console.log('🚀 INICIANDO EXCLUSÃO DO PEDIDO:', sale.id)
     
-    // 1. Primeiro, restaurar o estoque dos produtos
+    // 1. RESTAURAR ESTOQUE DOS PRODUTOS
     const produtos = parseProducts(sale)
-    console.log('Produtos para restaurar estoque:', produtos)
+    console.log('📦 Produtos para restaurar estoque:', produtos)
     
     const stockUpdates = []
     
     for (const item of produtos) {
       const productId = item.id || sale.product_id
       if (productId) {
-        console.log(`Restaurando estoque do produto ${productId}: ${item.quantity} unidades`)
+        console.log(`🔄 Restaurando estoque do produto ${productId}: ${item.quantity} unidades`)
         
         // Buscar estoque atual
         const { data: productData, error: productError } = await supabase
@@ -1296,13 +1316,13 @@ const deleteSale = async (sale) => {
           .single()
         
         if (productError) {
-          console.error('Erro ao buscar produto:', productError)
+          console.error('❌ Erro ao buscar produto:', productError)
           continue
         }
         
         if (productData) {
           const newStock = (productData.stock_quantity || 0) + item.quantity
-          console.log(`Estoque atual: ${productData.stock_quantity}, Novo estoque: ${newStock}`)
+          console.log(`📊 Estoque atual: ${productData.stock_quantity}, Novo estoque: ${newStock}`)
           
           const { error: updateError } = await supabase
             .from('products')
@@ -1313,7 +1333,7 @@ const deleteSale = async (sale) => {
             .eq('id', productId)
           
           if (updateError) {
-            console.error('Erro ao atualizar estoque:', updateError)
+            console.error('❌ Erro ao atualizar estoque:', updateError)
             throw new Error(`Falha ao restaurar estoque do produto ${productData.name}`)
           }
           
@@ -1326,32 +1346,37 @@ const deleteSale = async (sale) => {
       }
     }
     
-    console.log('Estoque restaurado com sucesso para', stockUpdates.length, 'produtos')
+    console.log('✅ Estoque restaurado com sucesso para', stockUpdates.length, 'produtos')
     
-    // 2. Agora excluir a venda
-    console.log('Excluindo venda do banco de dados...')
+    // 2. EXCLUIR A VENDA
+    console.log('🗑️ Excluindo venda do banco de dados...')
     const { data, error: deleteError } = await supabase
       .from('sales')
       .delete()
       .eq('id', sale.id)
-      .select()
     
     if (deleteError) {
-      console.error('Erro ao excluir venda:', deleteError)
+      console.error('❌ Erro ao excluir venda:', deleteError)
       throw new Error(`Falha ao excluir pedido: ${deleteError.message}`)
     }
     
-    console.log('Venda excluída com sucesso:', data)
+    console.log('✅ Venda excluída com sucesso do banco')
     
-    // 3. Remover da lista local
-    const index = sales.value.findIndex(s => s.id === sale.id)
-    if (index !== -1) {
-      sales.value.splice(index, 1)
-      console.log('Venda removida da lista local')
+    // 3. ATUALIZAÇÃO DE ESTADO OTIMIZADA - CORREÇÃO PRINCIPAL
+    console.log('🔄 Atualizando estado local...')
+    
+    // Remover da lista local de forma SÍNCRONA
+    const saleIndex = sales.value.findIndex(s => s.id === sale.id)
+    if (saleIndex !== -1) {
+      sales.value.splice(saleIndex, 1)
+      console.log('✅ Venda removida da lista local')
     }
     
-    // 4. Atualizar a lista para garantir sincronização
-    await loadSales()
+    // 4. CORREÇÃO DA PAGINAÇÃO - Resetar para página 1 se necessário
+    if (paginatedSales.value.length === 0 && currentPage.value > 1) {
+      console.log('📄 Ajustando paginação...')
+      currentPage.value = Math.max(1, currentPage.value - 1)
+    }
     
     // 5. Feedback de sucesso
     document.body.removeChild(loadingToast)
@@ -1377,7 +1402,7 @@ const deleteSale = async (sale) => {
     }, 5000)
     
   } catch (error) {
-    console.error('Erro completo ao excluir pedido:', error)
+    console.error('💥 ERRO COMPLETO AO EXCLUIR PEDIDO:', error)
     
     // Remover loading toast
     if (document.body.contains(loadingToast)) {
@@ -1404,6 +1429,9 @@ const deleteSale = async (sale) => {
         document.body.removeChild(errorToast)
       }
     }, 5000)
+    
+    // Recarregar dados em caso de erro para garantir consistência
+    await loadSales()
   }
 }
 
@@ -1642,6 +1670,19 @@ const closeModal = () => {
     exchange_quantity: 1,
     exchange_value: 0,
     exchange_total: 0
+  }
+}
+
+const refreshSalesData = async () => {
+  try {
+    await loadSales()
+    
+    // Correção adicional para garantir que a página atual seja válida
+    if (currentPage.value > totalPages.value && totalPages.value > 0) {
+      currentPage.value = totalPages.value
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar dados:', error)
   }
 }
 
@@ -1901,5 +1942,14 @@ body.modal-open {
 .confirm-modal {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+}
+
+/* Classes para desabilitar elementos */
+.disabled\:opacity-50:disabled {
+  opacity: 0.5;
+}
+
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
 }
 </style>
