@@ -1732,8 +1732,33 @@ body.modal-open {
 }
 
 .modal-content-inner {
-  @apply p-4 md:p-6 space-y-4;
-  padding-bottom: 12rem; /* Espaço extra no mobile para não ficar embaixo do footer */
+  padding: 16px;
+  padding-bottom: 350px !important; /* ✅ 350px é MUITO espaço */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .modal-content-inner {
+    padding: 24px;
+    padding-bottom: 24px !important;
+  }
+}
+  /* CRÍTICO: Garante scroll até o final */
+.modal-content {
+  flex: 1 1 auto !important;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  height: 100% !important;
+}
+
+.modal-form {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
 }
 
 @media (min-width: 768px) {
