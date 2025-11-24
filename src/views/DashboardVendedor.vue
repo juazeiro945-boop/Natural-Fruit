@@ -78,7 +78,6 @@
           </div>
 
           <div class="space-y-3 mb-4">
-            <!-- NOVO: Mostrar Vendedor -->
             <div v-if="pedido.vendedor_id" class="flex items-start space-x-2 bg-blue-50 p-2 rounded">
               <span class="text-lg">👤</span>
               <div class="flex-1">
@@ -268,7 +267,6 @@
                 <input v-model="formPedido.date" type="date" required class="input-field" />
               </div>
 
-              <!-- NOVO: Campo Vendedor -->
               <div>
                 <label class="label">Vendedor Responsável *</label>
                 <select v-model="formPedido.vendedor_id" required class="input-field">
@@ -302,7 +300,6 @@
               </select>
             </div>
 
-            <!-- Múltiplos Produtos -->
             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 space-y-4">
               <div class="flex justify-between items-center">
                 <label class="label mb-0">Produtos *</label>
@@ -363,7 +360,6 @@
               </select>
             </div>
 
-            <!-- Opção de Troca -->
             <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
               <div class="flex items-center space-x-3 mb-3">
                 <input v-model="formPedido.tem_troca" type="checkbox" id="tem-troca" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
@@ -423,7 +419,7 @@
         </div>
       </div>
 
-      <!-- Modal Consulta Cliente - APENAS PARA ADMIN -->
+      <!-- Modal Consulta Cliente -->
       <div v-if="showModalConsultaCliente && authStore.isAdmin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
@@ -921,15 +917,18 @@ const closeModalConsultaCliente = () => {
   historicoPedidosCliente.value = []
 }
 
+// FUNÇÃO GENERATE RECEIPT AJUSTADA - LOGO À ESQUERDA E INFO AO LADO
 const generateReceipt = async (pedido) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
   
+  // Faixa laranja no topo
   doc.setFillColor(...primaryColor)
-  doc.rect(0, 0, 210, 40, 'F')
+  doc.rect(0, 0, 210, 35, 'F')
   
+  // Logo à esquerda (circular)
   try {
     const img = new Image()
     img.crossOrigin = 'Anonymous'
@@ -954,98 +953,100 @@ const generateReceipt = async (pedido) => {
     ctx.drawImage(img, 0, 0, size, size)
     
     const circularImage = canvas.toDataURL('image/png')
-    doc.addImage(circularImage, 'PNG', 85, 5, 30, 30)
+    // Logo à esquerda (x=15) e mais para cima (y=5)
+    doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
   } catch (error) {
     console.error('Erro ao carregar logo:', error)
   }
   
-  doc.setTextColor(...darkGray)
-  doc.setFontSize(10)
+  // Informações da empresa ao lado da logo (texto branco)
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
-  doc.text('NATURAL FRUIT', 15, 50)
+  doc.text('NATURAL FRUIT', 45, 12)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text('CNPJ: 60.127.371/0001-60', 15, 56)
-  doc.text('Juazeiro, Bahia, Brasil', 15, 61)
-  doc.text('Telefone: (87) 98864-1590', 15, 66)
+  doc.setFontSize(8)
+  doc.text('CNPJ: 60.127.371/0001-60', 45, 18)
+  doc.text('Juazeiro, Bahia, Brasil', 45, 23)
+  doc.text('Tel: (87) 98864-1590', 45, 28)
   
+  // Número do recibo no canto direito (texto branco)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(pedido.id).slice(0, 8).toUpperCase()}`
-  doc.text(receiptNumber, 210 - 15, 50, { align: 'right' })
-  doc.setFontSize(10)
+  doc.text(receiptNumber, 195, 12, { align: 'right' })
+  doc.setFontSize(9)
   const saleTypeText = pedido.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
-  doc.text(saleTypeText, 210 - 15, 57, { align: 'right' })
+  doc.text(saleTypeText, 195, 18, { align: 'right' })
   
+  // Linha divisória
+  doc.setTextColor(...darkGray)
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
-  doc.line(15, 72, 195, 72)
+  doc.line(15, 40, 195, 40)
   
-  doc.setTextColor(...darkGray)
+  // Título do documento
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('RECIBO DE PEDIDO', 105, 82, { align: 'center' })
+  doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
   
+  // Data, Vendedor e Status
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('DATA DO PEDIDO', 15, 92)
-  doc.text('VENDEDOR', 100, 92)
+  doc.text('DATA DO PEDIDO', 15, 60)
+  doc.text('VENDEDOR', 90, 60)
+  doc.text('STATUS', 150, 60)
   
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(formatDate(pedido.date), 15, 99)
-  doc.text(getVendedorName(pedido.vendedor_id), 100, 99)
+  doc.text(formatDate(pedido.date), 15, 67)
+  doc.text(getVendedorName(pedido.vendedor_id), 90, 67)
+  doc.text(getStatusLabel(pedido.status_entrega), 150, 67)
   
-  doc.setFont('helvetica', 'bold')
-  doc.text('STATUS', 150, 92)
-  doc.setFont('helvetica', 'normal')
-  doc.text(getStatusLabel(pedido.status_entrega), 150, 99)
-  
+  // Dados do cliente
   doc.setFillColor(245, 245, 245)
-  doc.rect(15, 105, 180, 35, 'F')
+  doc.rect(15, 73, 180, 30, 'F')
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('DADOS DO CLIENTE', 20, 113)
+  doc.text('DADOS DO CLIENTE', 20, 81)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(`Nome: ${pedido.clients?.name || 'N/A'}`, 20, 120)
-  doc.text(`Telefone: ${pedido.clients?.phone || 'N/A'}`, 20, 125)
+  doc.text(`Nome: ${pedido.clients?.name || 'N/A'}`, 20, 88)
+  doc.text(`Telefone: ${pedido.clients?.phone || 'N/A'}`, 20, 93)
   if (pedido.clients?.address) {
-    const endereco = pedido.clients.address.substring(0, 60)
-    doc.text(`Endereco: ${endereco}`, 20, 130)
-    if (pedido.clients.address.length > 60) {
-      doc.text(pedido.clients.address.substring(60, 120), 20, 135)
-    }
+    const endereco = pedido.clients.address.substring(0, 70)
+    doc.text(`Endereco: ${endereco}`, 20, 98)
   }
   
+  // Produtos do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
-  doc.text('DETALHES DO PEDIDO', 15, 150)
+  doc.text('DETALHES DO PEDIDO', 15, 113)
   
   doc.setFillColor(...primaryColor)
-  doc.rect(15, 155, 180, 10, 'F')
+  doc.rect(15, 118, 180, 10, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
-  doc.text('PRODUTO', 20, 161)
-  doc.text('QTD', 120, 161)
-  doc.text('VALOR UNIT.', 145, 161)
-  doc.text('TOTAL', 190, 161, { align: 'right' })
+  doc.text('PRODUTO', 20, 124)
+  doc.text('QTD', 120, 124)
+  doc.text('VALOR UNIT.', 145, 124)
+  doc.text('TOTAL', 190, 124, { align: 'right' })
   
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
   const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 40)
-  doc.text(nomeProduto, 20, 171)
-  doc.text(String(pedido.quantity), 120, 171)
-  doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, 171)
-  doc.text(formatCurrency(pedido.total), 190, 171, { align: 'right' })
+  doc.text(nomeProduto, 20, 134)
+  doc.text(String(pedido.quantity), 120, 134)
+  doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, 134)
+  doc.text(formatCurrency(pedido.total), 190, 134, { align: 'right' })
   
   doc.setDrawColor(...lightGray)
   doc.setLineWidth(0.3)
-  doc.line(15, 175, 195, 175)
+  doc.line(15, 138, 195, 138)
   
-  const yTotal = 185
+  const yTotal = 148
   doc.setFillColor(...primaryColor)
   doc.rect(140, yTotal, 55, 12, 'F')
   doc.setTextColor(255, 255, 255)
