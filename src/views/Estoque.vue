@@ -463,7 +463,6 @@
               />
             </div>
 
-            <!-- NOVO: Categoria de Perda -->
             <div>
               <label class="label text-sm">Categoria de Perda *</label>
               <select v-model="lossForm.loss_category" required class="input-field text-sm">
@@ -500,7 +499,7 @@
         </div>
       </div>
 
-      <!-- Modal de Editar Estoque -->
+      <!-- Modal de Editar Estoque - PERMITE ZERAR -->
       <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeEditModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
@@ -535,7 +534,9 @@
                   step="0.01"
                   required
                   class="input-field text-sm"
+                  placeholder="Pode ser 0 (zero)"
                 />
+                <p class="text-xs text-gray-500 mt-1">💡 Você pode colocar zero para zerar o estoque</p>
               </div>
 
               <div class="bg-yellow-50 p-3 rounded-lg">
@@ -669,6 +670,7 @@ const calculateEntryTotal = () => {
   entryForm.value.total_cost = entryForm.value.quantity * entryForm.value.unit_cost
 }
 
+// FUNÇÃO CORRIGIDA - PERMITE ZERAR
 const calcularNovoEstoque = () => {
   const atual = produtoEditando.value?.stock_quantity || 0
   const valor = editForm.value.new_quantity || 0
