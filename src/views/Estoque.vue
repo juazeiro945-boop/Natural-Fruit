@@ -113,7 +113,7 @@
       <div class="card">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-base md:text-lg font-bold text-gray-900">Estoque Atual</h3>
-          <button @click="loadProducts" class="text-primary-600 hover:text-primary-700">
+          <button @click="loadProducts" class="text-primary-600 hover:text-primary-700 p-2 rounded-lg hover:bg-primary-50 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
@@ -131,7 +131,7 @@
                 <div class="text-xs text-gray-500">{{ product.unit }}</div>
               </div>
               <div class="flex gap-2">
-                <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800" title="Editar">
+                <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors" title="Editar">
                   ✏️
                 </button>
                 <span :class="getStockBadgeClass(product.stock_quantity)" class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
@@ -194,7 +194,7 @@
                   </span>
                 </td>
                 <td class="px-4 py-3 text-center">
-                  <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 font-semibold" title="Editar Estoque">
+                  <button @click="editarEstoque(product)" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors" title="Editar Estoque">
                     ✏️ Editar
                   </button>
                 </td>
@@ -267,8 +267,8 @@
         </div>
       </div>
 
-      <!-- Modal de Entrada - Mobile Friendly -->
-      <div v-if="showEntryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeEntryModal">
+      <!-- Modal de Entrada - RESPONSIVO -->
+      <div v-if="showEntryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeEntryModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
             <h3 class="text-lg md:text-xl font-bold">📥 Registrar Entrada</h3>
@@ -277,13 +277,13 @@
 
           <form @submit.prevent="saveEntry" class="p-4 md:p-6 space-y-4">
             <div>
-              <label class="label text-sm">Data *</label>
-              <input v-model="entryForm.date" type="date" required class="input-field text-sm" />
+              <label class="label text-sm md:text-base">Data *</label>
+              <input v-model="entryForm.date" type="date" required class="input-field text-sm md:text-base" />
             </div>
 
             <div>
-              <label class="label text-sm">Produto *</label>
-              <select v-model="entryForm.product_id" required class="input-field text-sm">
+              <label class="label text-sm md:text-base">Produto *</label>
+              <select v-model="entryForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
                 <option v-for="product in products" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
@@ -291,65 +291,65 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label class="label text-sm">Quantidade *</label>
+                <label class="label text-sm md:text-base">Quantidade *</label>
                 <input
                   v-model.number="entryForm.quantity"
                   type="number"
                   min="0.01"
                   step="0.01"
                   required
-                  class="input-field text-sm"
+                  class="input-field text-sm md:text-base"
                   @input="calculateEntryTotal"
                 />
               </div>
 
               <div>
-                <label class="label text-sm">Custo Unit. *</label>
+                <label class="label text-sm md:text-base">Custo Unit. *</label>
                 <input
                   v-model.number="entryForm.unit_cost"
                   type="number"
                   min="0"
                   step="0.01"
                   required
-                  class="input-field text-sm"
+                  class="input-field text-sm md:text-base"
                   @input="calculateEntryTotal"
                 />
               </div>
             </div>
 
             <div>
-              <label class="label text-sm">Custo Total</label>
+              <label class="label text-sm md:text-base">Custo Total</label>
               <input
                 v-model.number="entryForm.total_cost"
                 type="number"
                 step="0.01"
                 readonly
-                class="input-field bg-gray-100 font-bold text-sm"
+                class="input-field bg-gray-100 font-bold text-sm md:text-base"
               />
             </div>
 
             <div>
-              <label class="label text-sm">Fornecedor</label>
-              <input v-model="entryForm.supplier" class="input-field text-sm" placeholder="Nome do fornecedor" />
+              <label class="label text-sm md:text-base">Fornecedor</label>
+              <input v-model="entryForm.supplier" class="input-field text-sm md:text-base" placeholder="Nome do fornecedor" />
             </div>
 
             <div>
-              <label class="label text-sm">Observações</label>
+              <label class="label text-sm md:text-base">Observações</label>
               <textarea
                 v-model="entryForm.notes"
-                class="input-field text-sm"
+                class="input-field text-sm md:text-base"
                 rows="3"
                 placeholder="Notas sobre a entrada..."
               ></textarea>
             </div>
 
             <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeEntryModal" class="flex-1 btn-outline text-sm">
+              <button type="button" @click="closeEntryModal" class="flex-1 btn-outline text-sm md:text-base py-2 md:py-3">
                 Cancelar
               </button>
-              <button type="submit" :disabled="loadingEntry" class="flex-1 btn-primary text-sm">
+              <button type="submit" :disabled="loadingEntry" class="flex-1 btn-primary text-sm md:text-base py-2 md:py-3">
                 {{ loadingEntry ? 'Salvando...' : '💾 Salvar' }}
               </button>
             </div>
@@ -357,8 +357,8 @@
         </div>
       </div>
 
-      <!-- Modal de Saída Manual -->
-      <div v-if="showExitModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeExitModal">
+      <!-- Modal de Saída Manual - RESPONSIVO -->
+      <div v-if="showExitModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeExitModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
             <h3 class="text-lg md:text-xl font-bold">📤 Registrar Saída Manual</h3>
@@ -367,13 +367,13 @@
 
           <form @submit.prevent="saveExit" class="p-4 md:p-6 space-y-4">
             <div>
-              <label class="label text-sm">Data *</label>
-              <input v-model="exitForm.date" type="date" required class="input-field text-sm" />
+              <label class="label text-sm md:text-base">Data *</label>
+              <input v-model="exitForm.date" type="date" required class="input-field text-sm md:text-base" />
             </div>
 
             <div>
-              <label class="label text-sm">Produto *</label>
-              <select v-model="exitForm.product_id" required class="input-field text-sm">
+              <label class="label text-sm md:text-base">Produto *</label>
+              <select v-model="exitForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
                 <option v-for="product in products" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
@@ -382,20 +382,20 @@
             </div>
 
             <div>
-              <label class="label text-sm">Quantidade *</label>
+              <label class="label text-sm md:text-base">Quantidade *</label>
               <input
                 v-model.number="exitForm.quantity"
                 type="number"
                 min="0.01"
                 step="0.01"
                 required
-                class="input-field text-sm"
+                class="input-field text-sm md:text-base"
               />
             </div>
 
             <div>
-              <label class="label text-sm">Motivo da Saída *</label>
-              <select v-model="exitForm.reason" required class="input-field text-sm">
+              <label class="label text-sm md:text-base">Motivo da Saída *</label>
+              <select v-model="exitForm.reason" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
                 <option value="Doação">Doação</option>
                 <option value="Uso interno">Uso interno</option>
@@ -406,20 +406,20 @@
             </div>
 
             <div>
-              <label class="label text-sm">Observações</label>
+              <label class="label text-sm md:text-base">Observações</label>
               <textarea
                 v-model="exitForm.notes"
-                class="input-field text-sm"
+                class="input-field text-sm md:text-base"
                 rows="3"
                 placeholder="Detalhes sobre a saída..."
               ></textarea>
             </div>
 
             <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeExitModal" class="flex-1 btn-outline text-sm">
+              <button type="button" @click="closeExitModal" class="flex-1 btn-outline text-sm md:text-base py-2 md:py-3">
                 Cancelar
               </button>
-              <button type="submit" :disabled="loadingExit" class="flex-1 btn-warning text-sm">
+              <button type="submit" :disabled="loadingExit" class="flex-1 btn-warning text-sm md:text-base py-2 md:py-3">
                 {{ loadingExit ? 'Salvando...' : '💾 Salvar' }}
               </button>
             </div>
@@ -427,8 +427,8 @@
         </div>
       </div>
 
-      <!-- Modal de Perda -->
-      <div v-if="showLossModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeLossModal">
+      <!-- Modal de Perda - RESPONSIVO -->
+      <div v-if="showLossModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeLossModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
             <h3 class="text-lg md:text-xl font-bold">📉 Registrar Perda</h3>
@@ -437,13 +437,13 @@
 
           <form @submit.prevent="saveLoss" class="p-4 md:p-6 space-y-4">
             <div>
-              <label class="label text-sm">Data *</label>
-              <input v-model="lossForm.date" type="date" required class="input-field text-sm" />
+              <label class="label text-sm md:text-base">Data *</label>
+              <input v-model="lossForm.date" type="date" required class="input-field text-sm md:text-base" />
             </div>
 
             <div>
-              <label class="label text-sm">Produto *</label>
-              <select v-model="lossForm.product_id" required class="input-field text-sm">
+              <label class="label text-sm md:text-base">Produto *</label>
+              <select v-model="lossForm.product_id" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
                 <option v-for="product in products" :key="product.id" :value="product.id">
                   {{ product.name }} ({{ product.stock_quantity || 0 }} {{ product.unit }})
@@ -452,20 +452,20 @@
             </div>
 
             <div>
-              <label class="label text-sm">Quantidade *</label>
+              <label class="label text-sm md:text-base">Quantidade *</label>
               <input
                 v-model.number="lossForm.quantity"
                 type="number"
                 min="0.01"
                 step="0.01"
                 required
-                class="input-field text-sm"
+                class="input-field text-sm md:text-base"
               />
             </div>
 
             <div>
-              <label class="label text-sm">Categoria de Perda *</label>
-              <select v-model="lossForm.loss_category" required class="input-field text-sm">
+              <label class="label text-sm md:text-base">Categoria de Perda *</label>
+              <select v-model="lossForm.loss_category" required class="input-field text-sm md:text-base">
                 <option value="">Selecione</option>
                 <option value="vencimento">🗓️ Vencimento</option>
                 <option value="avaria">📦 Avaria/Danificado</option>
@@ -477,21 +477,21 @@
             </div>
 
             <div>
-              <label class="label text-sm">Descrição/Motivo *</label>
+              <label class="label text-sm md:text-base">Descrição/Motivo *</label>
               <textarea
                 v-model="lossForm.notes"
                 required
-                class="input-field text-sm"
+                class="input-field text-sm md:text-base"
                 rows="3"
                 placeholder="Descreva o motivo da perda..."
               ></textarea>
             </div>
 
             <div class="flex gap-3 pt-4">
-              <button type="button" @click="closeLossModal" class="flex-1 btn-outline text-sm">
+              <button type="button" @click="closeLossModal" class="flex-1 btn-outline text-sm md:text-base py-2 md:py-3">
                 Cancelar
               </button>
-              <button type="submit" :disabled="loadingLoss" class="flex-1 btn-secondary text-sm">
+              <button type="submit" :disabled="loadingLoss" class="flex-1 btn-secondary text-sm md:text-base py-2 md:py-3">
                 {{ loadingLoss ? 'Salvando...' : '💾 Salvar' }}
               </button>
             </div>
@@ -499,8 +499,8 @@
         </div>
       </div>
 
-      <!-- Modal de Editar Estoque - PERMITE ZERAR -->
-      <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" @click.self="closeEditModal">
+      <!-- Modal de Editar Estoque - PERMITE ZERAR E RESPONSIVO -->
+      <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50" @click.self="closeEditModal">
         <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between">
             <h3 class="text-lg md:text-xl font-bold">✏️ Editar Estoque</h3>
@@ -509,14 +509,14 @@
 
           <div class="p-4 md:p-6 space-y-4">
             <div class="bg-blue-50 p-4 rounded-lg">
-              <p class="font-bold text-gray-900">{{ produtoEditando?.name }}</p>
+              <p class="font-bold text-gray-900 text-sm md:text-base">{{ produtoEditando?.name }}</p>
               <p class="text-sm text-gray-600">Estoque atual: <span class="font-bold">{{ produtoEditando?.stock_quantity || 0 }} {{ produtoEditando?.unit }}</span></p>
             </div>
 
             <form @submit.prevent="saveEdit" class="space-y-4">
               <div>
-                <label class="label text-sm">Tipo de Ajuste *</label>
-                <select v-model="editForm.tipo" required class="input-field text-sm" @change="editForm.new_quantity = produtoEditando?.stock_quantity || 0">
+                <label class="label text-sm md:text-base">Tipo de Ajuste *</label>
+                <select v-model="editForm.tipo" required class="input-field text-sm md:text-base" @change="onTipoAjusteChange">
                   <option value="set">Definir Quantidade Exata</option>
                   <option value="add">Adicionar Quantidade</option>
                   <option value="remove">Remover Quantidade</option>
@@ -524,7 +524,7 @@
               </div>
 
               <div>
-                <label class="label text-sm">
+                <label class="label text-sm md:text-base">
                   {{ editForm.tipo === 'set' ? 'Nova Quantidade *' : editForm.tipo === 'add' ? 'Quantidade a Adicionar *' : 'Quantidade a Remover *' }}
                 </label>
                 <input
@@ -533,8 +533,9 @@
                   min="0"
                   step="0.01"
                   required
-                  class="input-field text-sm"
+                  class="input-field text-sm md:text-base"
                   placeholder="Digite 0 para zerar o estoque"
+                  @input="onQuantidadeChange"
                 />
                 <p class="text-xs text-gray-500 mt-1">💡 Digite 0 (zero) para zerar completamente o estoque</p>
               </div>
@@ -542,26 +543,28 @@
               <div class="bg-yellow-50 p-3 rounded-lg">
                 <p class="text-sm text-gray-700">
                   <strong>Resultado:</strong> 
-                  {{ calcularNovoEstoque() }} {{ produtoEditando?.unit }}
+                  <span class="font-bold" :class="getStockColorClass(calcularNovoEstoque())">
+                    {{ calcularNovoEstoque() }} {{ produtoEditando?.unit }}
+                  </span>
                 </p>
               </div>
 
               <div>
-                <label class="label text-sm">Motivo do Ajuste *</label>
+                <label class="label text-sm md:text-base">Motivo do Ajuste *</label>
                 <textarea
                   v-model="editForm.notes"
                   required
-                  class="input-field text-sm"
+                  class="input-field text-sm md:text-base"
                   rows="3"
                   placeholder="Explique o motivo deste ajuste..."
                 ></textarea>
               </div>
 
               <div class="flex gap-3 pt-4">
-                <button type="button" @click="closeEditModal" class="flex-1 btn-outline text-sm">
+                <button type="button" @click="closeEditModal" class="flex-1 btn-outline text-sm md:text-base py-2 md:py-3">
                   Cancelar
                 </button>
-                <button type="submit" :disabled="loadingEdit" class="flex-1 btn-primary text-sm">
+                <button type="submit" :disabled="loadingEdit" class="flex-1 btn-primary text-sm md:text-base py-2 md:py-3">
                   {{ loadingEdit ? 'Salvando...' : '💾 Salvar Ajuste' }}
                 </button>
               </div>
@@ -682,6 +685,20 @@ const calcularNovoEstoque = () => {
     return Math.max(0, resultado) // Permite 0 mas não valores negativos
   }
   return atual
+}
+
+const onTipoAjusteChange = () => {
+  // Quando muda o tipo, reseta a quantidade para um valor padrão
+  if (editForm.value.tipo === 'set') {
+    editForm.value.new_quantity = produtoEditando.value?.stock_quantity || 0
+  } else {
+    editForm.value.new_quantity = 0
+  }
+}
+
+const onQuantidadeChange = () => {
+  // Força a atualização do resultado
+  // Esta função é chamada sempre que a quantidade muda
 }
 
 const getCategoryLabel = (category) => {
@@ -972,29 +989,52 @@ const saveEdit = async () => {
     const estoqueAtual = produtoEditando.value?.stock_quantity || 0
     const diferenca = novoEstoque - estoqueAtual
 
+    console.log('Salvando ajuste:', {
+      produto: produtoEditando.value?.name,
+      estoqueAtual,
+      novoEstoque,
+      diferenca,
+      tipo: editForm.value.tipo,
+      quantidade: editForm.value.new_quantity
+    })
+
     // Atualiza o estoque do produto
     const { error: updateError } = await supabase
       .from('products')
-      .update({ stock_quantity: novoEstoque })
+      .update({ 
+        stock_quantity: novoEstoque,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', produtoEditando.value.id)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('Erro ao atualizar produto:', updateError)
+      throw updateError
+    }
 
-    // Registra a movimentação
-    const { error: movementError } = await supabase
-      .from('stock_movements')
-      .insert([{
-        product_id: produtoEditando.value.id,
-        type: 'adjustment',
-        quantity: Math.abs(diferenca),
-        notes: `Ajuste manual: ${editForm.value.notes}`,
-        date: new Date().toISOString().split('T')[0]
-      }])
+    // Registra a movimentação apenas se houve alteração
+    if (diferenca !== 0) {
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert([{
+          product_id: produtoEditando.value.id,
+          type: 'adjustment',
+          quantity: Math.abs(diferenca),
+          notes: `Ajuste manual (${editForm.value.tipo}): ${editForm.value.notes}`,
+          date: new Date().toISOString().split('T')[0]
+        }])
 
-    if (movementError) throw movementError
+      if (movementError) {
+        console.error('Erro ao registrar movimentação:', movementError)
+        throw movementError
+      }
+    }
 
     alert('✅ Estoque ajustado com sucesso!')
+    
+    // Recarrega os dados para garantir que a interface esteja atualizada
     await Promise.all([loadProducts(), loadMovements()])
+    
     closeEditModal()
   } catch (error) {
     console.error('Erro ao ajustar estoque:', error)
@@ -1072,6 +1112,23 @@ onUnmounted(() => {
 }
 
 .input-field {
-  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
+}
+
+/* Melhorias de responsividade */
+@media (max-width: 640px) {
+  .card {
+    @apply p-3;
+  }
+  
+  .input-field {
+    @apply py-2 text-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-primary, .btn-outline, .btn-secondary, .btn-warning {
+    @apply py-2 text-sm;
+  }
 }
 </style>
