@@ -360,7 +360,7 @@
               </p>
               <p class="text-red-600 text-xs mt-2">
                 ❗ Esta ação não pode ser desfeita.<br>
-                ❗ Todas as movimentações relacionadas serão mantidas para histórico.
+                ❗ O produto será desativado e não aparecerá mais na lista.
               </p>
             </div>
 
@@ -995,14 +995,14 @@ const loadProducts = async () => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('active', true) // ⚠️ CRÍTICO: Filtrar apenas produtos ativos
+      .eq('active', true)
       .order('name')
 
     if (error) throw error
     
     allProducts.value = [...(data || [])]
     
-    console.log('📦 Produtos ATIVOS carregados:', allProducts.value.length)
+    console.log('📦 Produtos carregados:', allProducts.value.length)
   } catch (error) {
     console.error('Erro ao carregar produtos:', error)
   }
@@ -1270,84 +1270,62 @@ const saveEdit = async () => {
   }
 }
 
-// 🔥 FUNÇÃO DE EXCLUSÃO CORRIGIDA
+// 🔥 FUNÇÃO CORRIGIDA DE EXCLUSÃO
 const excluirProduto = async () => {
   if (!produtoExcluindo.value) return
   
   loadingDelete.value = true
   
+  // ✅ SALVA O NOME ANTES para usar no alert depois
+  const nomeProduto = produtoExcluindo.value.name
+  const produtoId = produtoExcluindo.value.id
+  
   try {
-    console.log('🗑️ Iniciando exclusão do produto:', produtoExcluindo.value.id)
+    console.log('🗑️ Desativando produto:', produtoId)
     
-    // SOLUÇÃO DEFINITIVA: Hard Delete (exclusão permanente)
-    const { error: deleteError } = await supabase
+    // ✅ SOFT DELETE - Mantém dados históricos
+    const { error } = await supabase
       .from('products')
-      .delete()
-      .eq('id', produtoExcluindo.value.id)
+      .update({ 
+        active: false,
+        deleted_at: new Date().toISOString()
+      })
+      .eq('id', produtoId)
 
-    if (deleteError) {
-      console.error('❌ Erro no hard delete:', deleteError)
-      
-      // Se o hard delete falhar, tenta o soft delete
-      const { error: softDeleteError } = await supabase
-        .from('products')
-        .update({ 
-          active: false,
-          deleted_at: new Date().toISOString()
-        })
-        .eq('id', produtoExcluindo.value.id)
+    if (error) throw error
 
-      if (softDeleteError) {
-        console.error('❌ Erro no soft delete também:', softDeleteError)
-        throw softDeleteError
-      }
-      
-      console.log('✅ Soft delete realizado como fallback')
-    } else {
-      console.log('✅ Hard delete realizado com sucesso')
-    }
-
-    // Verifica se o produto realmente foi excluído/marcado como inativo
-    const { data: produtoVerificado } = await supabase
-      .from('products')
-      .select('id, active')
-      .eq('id', produtoExcluindo.value.id)
-      .single()
-
-    if (produtoVerificado && produtoVerificado.active !== false) {
-      throw new Error('Produto ainda está ativo após exclusão.')
-    }
-
-    console.log('✅ Produto excluído com sucesso!')
+    console.log('✅ Produto desativado!')
     
-    // Feedback visual
+    // Remove imediatamente da lista (UX melhor)
+    allProducts.value = allProducts.value.filter(p => p.id !== produtoId)
+    
+    // Ajusta paginação
+    if (paginatedProducts.value.length === 0 && productPage.value > 1) {
+      productPage.value--
+    }
+    
     closeDeleteModal()
     
-    // Toast de sucesso
+    // ✅ USA A VARIÁVEL SALVA, não o objeto que já foi limpo
+    alert(`✅ Produto "${nomeProduto}" removido com sucesso!`)
+    
+    // Recarrega em background
     setTimeout(() => {
-      alert(`✅ Produto "${produtoExcluindo.value.name}" excluído com sucesso!`)
-    }, 100)
-    
-    // Recarrega os dados IMEDIATAMENTE
-    await loadProducts()
-    await loadMovements()
-    
-    // Reseta a paginação se necessário
-    if (paginatedProducts.value.length === 0 && productPage.value > 1) {
-      productPage.value = Math.max(1, productPage.value - 1)
-    }
+      loadProducts()
+      loadMovements()
+    }, 500)
     
   } catch (error) {
-    console.error('❌ Erro ao excluir produto:', error)
+    console.error('❌ Erro:', error)
     
-    let mensagemErro = 'Erro ao excluir produto: '
+    let mensagemErro = 'Erro ao remover produto: '
     
-    if (error.message.includes('foreign key constraint')) {
+    if (error.code === '23503') {
       mensagemErro += 'Este produto possui movimentações vinculadas.'
-    } else if (error.message.includes('RLS')) {
-      mensagemErro += 'Sem permissão para excluir.'
+    } else if (error.message?.includes('RLS') || error.message?.includes('permission')) {
+      mensagemErro += 'Você não tem permissão para excluir produtos.'
     } else {
-      mensagemErro += error.message
+      mensagemErro += error.message || 'Erro desconhecido'
     }
     
     alert(`❌ ${mensagemErro}`)
@@ -1371,9 +1349,17 @@ const setupRealtime = () => {
     )
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'products' },
+      { event: 'UPDATE', schema: 'public', table: 'products' },
+      (payload) => {
+        console.log('🔄 Realtime: Produto atualizado', payload)
+        loadProducts()
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'products' },
       () => {
-        console.log('🔄 Realtime: Produto alterado')
+        console.log('🔄 Realtime: Produto excluído')
         loadProducts()
       }
     )
