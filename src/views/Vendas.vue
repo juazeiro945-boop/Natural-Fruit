@@ -1,9 +1,13 @@
 <template>
   <Layout>
     <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
+      <!-- Header -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas / Pedidos</h2>
-        <button @click="showModal = true" class="w-full md:w-auto btn-primary">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas / Pedidos</h2>
+          <p class="text-sm md:text-base text-gray-600 mt-1">Gerencie pedidos e vendas</p>
+        </div>
+        <button @click="showModal = true" class="w-full md:w-auto btn-primary text-sm md:text-base">
           <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
@@ -11,23 +15,24 @@
         </button>
       </div>
 
+      <!-- Filtros Responsivos -->
       <div class="card">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
-          <div>
-            <label class="label text-sm">Data</label>
-            <input v-model="filters.date" type="date" class="input-field text-base" @change="loadSales" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+          <div class="sm:col-span-2 lg:col-span-1">
+            <label class="label text-xs md:text-sm">Data</label>
+            <input v-model="filters.date" type="date" class="input-field text-sm md:text-base" @change="loadSales" />
           </div>
           <div>
-            <label class="label text-sm">Tipo de Venda</label>
-            <select v-model="filters.saleType" class="input-field text-base" @change="loadSales">
+            <label class="label text-xs md:text-sm">Tipo de Venda</label>
+            <select v-model="filters.saleType" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
               <option value="wholesale">🏭 Atacado</option>
               <option value="retail">🛒 Varejo</option>
             </select>
           </div>
           <div>
-            <label class="label text-sm">Forma de Pagamento</label>
-            <select v-model="filters.payment" class="input-field text-base" @change="loadSales">
+            <label class="label text-xs md:text-sm">Pagamento</label>
+            <select v-model="filters.payment" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todas</option>
               <option value="cash">💵 Dinheiro</option>
               <option value="pix">📱 PIX</option>
@@ -37,16 +42,16 @@
             </select>
           </div>
           <div>
-            <label class="label text-sm">Status Pagamento</label>
-            <select v-model="filters.status" class="input-field text-base" @change="loadSales">
+            <label class="label text-xs md:text-sm">Status Pgto</label>
+            <select v-model="filters.status" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
               <option value="paid">✅ Pago</option>
               <option value="pending">⏳ Pendente</option>
             </select>
           </div>
           <div>
-            <label class="label text-sm">Status Pedido</label>
-            <select v-model="filters.orderStatus" class="input-field text-base" @change="loadSales">
+            <label class="label text-xs md:text-sm">Status Pedido</label>
+            <select v-model="filters.orderStatus" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
               <option value="pendente">🕐 Pendente</option>
               <option value="em_rota">🚚 Em Rota</option>
@@ -63,14 +68,14 @@
           <button 
             @click="viewMode = 'pedidos'" 
             :class="viewMode === 'pedidos' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
-            class="px-6 py-2 rounded-lg font-semibold transition-colors"
+            class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
             📦 Por Pedido
           </button>
           <button 
             @click="viewMode = 'clientes'" 
             :class="viewMode === 'clientes' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
-            class="px-6 py-2 rounded-lg font-semibold transition-colors"
+            class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
             👥 Por Cliente
           </button>
@@ -144,7 +149,7 @@
             @click="previousPage" 
             :disabled="currentPage === 1"
             :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
-            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm"
           >
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -165,7 +170,7 @@
             @click="nextPage" 
             :disabled="currentPage === totalPages"
             :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
-            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm"
           >
             Próximo
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,31 +198,31 @@
                 <p class="text-xs text-gray-500">{{ formatDate(sale.date) }}</p>
                 <span :class="getSaleTypeBadge(sale.sale_type)" class="text-xs">{{ getSaleTypeLabel(sale.sale_type) }}</span>
               </div>
-              <h3 class="font-semibold text-gray-900 text-base truncate">{{ sale.clients?.name }}</h3>
-              <p class="text-sm text-primary-600 font-semibold">{{ getTotalItems(sale) }} itens</p>
+              <h3 class="font-semibold text-gray-900 text-sm truncate">{{ sale.clients?.name }}</h3>
+              <p class="text-xs text-primary-600 font-semibold">{{ getTotalItems(sale) }} itens</p>
             </div>
-            <div class="flex items-center space-x-2 flex-shrink-0 ml-2">
-              <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
-                <span class="text-2xl">👁️</span>
+            <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
+              <button @click="viewSaleDetails(sale)" class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Ver Detalhes">
+                <span class="text-xl">👁️</span>
               </button>
-              <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100">
-                <span class="text-2xl">✏️</span>
+              <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-1 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100" title="Editar Pedido">
+                <span class="text-xl">✏️</span>
               </button>
-              <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200">
-                <span class="text-2xl">{{ sale.paid ? '↩️' : '✅' }}</span>
+              <button @click="togglePaidStatus(sale)" class="p-1 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200" title="Alternar Status Pagamento">
+                <span class="text-xl">{{ sale.paid ? '↩️' : '✅' }}</span>
               </button>
-              <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100">
-                <span class="text-2xl">📄</span>
+              <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Gerar Recibo">
+                <span class="text-xl">📄</span>
               </button>
-              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100">
-                <span class="text-2xl">🗑️</span>
+              <button v-if="authStore.canDeleteOrders" @click="deleteSale(sale)" class="p-1 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100" title="Excluir">
+                <span class="text-xl">🗑️</span>
               </button>
             </div>
           </div>
-          <div class="space-y-2 text-sm">
+          <div class="space-y-2 text-xs">
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Total:</span>
-              <span class="font-semibold text-lg text-gray-900">{{ formatCurrency(sale.total) }}</span>
+              <span class="font-semibold text-base text-gray-900">{{ formatCurrency(sale.total) }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Status Pedido:</span>
@@ -225,7 +230,7 @@
             </div>
           </div>
           <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t">
-            <span :class="getPaymentBadge(sale.payment_method)">{{ getPaymentLabel(sale.payment_method) }}</span>
+            <span :class="getPaymentBadge(sale.payment_method)" class="text-xs">{{ getPaymentLabel(sale.payment_method) }}</span>
             <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
               {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
             </span>
@@ -242,9 +247,9 @@
               @click="previousPage" 
               :disabled="currentPage === 1"
               :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'"
-              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors"
+              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors text-sm"
             >
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
               Anterior
@@ -253,10 +258,10 @@
               @click="nextPage" 
               :disabled="currentPage === totalPages"
               :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'"
-              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors"
+              class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors text-sm"
             >
               Próximo
-              <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
             </button>
@@ -279,28 +284,28 @@
         <div v-for="cliente in clientesAgrupados" :key="cliente.id" class="card border-l-4 border-primary-500">
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
             <div class="flex-1">
-              <h3 class="font-bold text-xl md:text-2xl text-gray-900">{{ cliente.name }}</h3>
-              <div class="flex flex-wrap items-center gap-3 mt-2">
-                <p class="text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
-                <p class="text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
+              <h3 class="font-bold text-lg md:text-2xl text-gray-900">{{ cliente.name }}</h3>
+              <div class="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
+                <p class="text-xs md:text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
+                <p class="text-xs md:text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
               </div>
-              <div class="flex flex-wrap items-center gap-3 mt-2">
-                <span class="text-sm font-semibold text-primary-600">
+              <div class="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
+                <span class="text-xs md:text-sm font-semibold text-primary-600">
                   📦 {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
                 </span>
-                <span class="text-sm font-semibold text-blue-600">
+                <span class="text-xs md:text-sm font-semibold text-blue-600">
                   📊 {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
                 </span>
               </div>
             </div>
             <div class="text-left md:text-right">
-              <p class="text-sm text-gray-600 mb-1">Total Comprado</p>
-              <p class="font-bold text-2xl md:text-3xl text-primary-600">{{ formatCurrency(cliente.totalComprado) }}</p>
-              <div class="flex flex-wrap gap-2 mt-2 md:justify-end">
-                <span v-if="cliente.totalPago > 0" class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+              <p class="text-xs md:text-sm text-gray-600 mb-1">Total Comprado</p>
+              <p class="font-bold text-xl md:text-3xl text-primary-600">{{ formatCurrency(cliente.totalComprado) }}</p>
+              <div class="flex flex-wrap gap-1 md:gap-2 mt-2 md:justify-end">
+                <span v-if="cliente.totalPago > 0" class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
                   ✅ Pago: {{ formatCurrency(cliente.totalPago) }}
                 </span>
-                <span v-if="cliente.totalPendente > 0" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
+                <span v-if="cliente.totalPendente > 0" class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
                   ⏳ Pendente: {{ formatCurrency(cliente.totalPendente) }}
                 </span>
               </div>
@@ -308,16 +313,16 @@
           </div>
 
           <div class="space-y-2 pt-4 border-t">
-            <h4 class="font-semibold text-gray-700 mb-3">Histórico de Pedidos:</h4>
+            <h4 class="font-semibold text-gray-700 mb-3 text-sm md:text-base">Histórico de Pedidos:</h4>
             <div v-for="pedido in cliente.pedidos" :key="pedido.id" class="bg-gray-50 hover:bg-gray-100 p-3 md:p-4 rounded-lg transition-colors">
               <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div class="flex-1">
-                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <div class="flex flex-wrap items-center gap-1 md:gap-2 mb-2">
                     <p class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(0, 8) }}</p>
                     <span :class="getSaleTypeBadge(pedido.sale_type)" class="text-xs">{{ getSaleTypeLabel(pedido.sale_type) }}</span>
                     <span :class="getOrderStatusBadge(pedido.order_status)" class="text-xs">{{ getOrderStatusLabel(pedido.order_status) }}</span>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-2 text-xs md:text-sm">
                     <p class="text-gray-700">📅 {{ formatDate(pedido.date) }}</p>
                     <p class="text-gray-700">📦 {{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
                     <p class="text-gray-700">💳 {{ getPaymentLabel(pedido.payment_method) }}</p>
@@ -330,21 +335,21 @@
                 </div>
                 <div class="flex flex-row md:flex-col items-center md:items-end gap-2">
                   <div class="text-left md:text-right flex-1 md:flex-none">
-                    <p class="font-bold text-lg md:text-xl text-gray-900">{{ formatCurrency(pedido.total) }}</p>
+                    <p class="font-bold text-base md:text-xl text-gray-900">{{ formatCurrency(pedido.total) }}</p>
                     <span :class="pedido.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" 
                       class="text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap inline-block">
                       {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
                     </span>
                   </div>
                   <div class="flex items-center gap-1">
-                    <button @click="viewSaleDetails(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                      <span class="text-lg">👁️</span>
+                    <button @click="viewSaleDetails(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
+                      <span class="text-lg md:text-xl">👁️</span>
                     </button>
-                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
-                      <span class="text-lg">📄</span>
+                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
+                      <span class="text-lg md:text-xl">📄</span>
                     </button>
-                    <button v-if="authStore.canDeleteOrders" @click="deleteSale(pedido)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
-                      <span class="text-lg">🗑️</span>
+                    <button v-if="authStore.canDeleteOrders" @click="deleteSale(pedido)" class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                      <span class="text-lg md:text-xl">🗑️</span>
                     </button>
                   </div>
                 </div>
@@ -362,33 +367,36 @@
         </div>
       </div>
 
-      <!-- Modal Novo/Editar Pedido -->
+      <!-- Modal Novo/Editar Pedido - RESPONSIVO -->
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-3xl max-h-screen md:max-h-[95vh] flex flex-col">
+        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-3xl md:max-h-[95vh] flex flex-col">
+          <!-- Header do Modal -->
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
             <div>
               <h3 class="text-lg md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
-              <p v-if="form.produtos.length > 0" class="text-sm text-white opacity-90">
+              <p v-if="form.produtos.length > 0" class="text-xs md:text-sm text-white opacity-90">
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
             </div>
-            <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors">
+            <button @click="closeModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
           
+          <!-- Conteúdo do Modal -->
           <form @submit.prevent="saveSale" class="flex-1 overflow-y-auto">
             <div class="p-4 md:p-6 space-y-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Informações Básicas -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label class="label">Data *</label>
-                  <input v-model="form.date" type="date" required class="input-field text-base" />
+                  <label class="label text-sm md:text-base">Data *</label>
+                  <input v-model="form.date" type="date" required class="input-field text-sm md:text-base" />
                 </div>
                 <div>
-                  <label class="label">Tipo de Venda *</label>
-                  <select v-model="form.sale_type" required class="input-field text-base">
+                  <label class="label text-sm md:text-base">Tipo de Venda *</label>
+                  <select v-model="form.sale_type" required class="input-field text-sm md:text-base">
                     <option value="wholesale">🏭 Atacado</option>
                     <option value="retail">🛒 Varejo</option>
                   </select>
@@ -396,33 +404,33 @@
               </div>
 
               <div>
-                <label class="label">Cliente *</label>
-                <select v-model="form.client_id" required class="input-field text-base">
+                <label class="label text-sm md:text-base">Cliente *</label>
+                <select v-model="form.client_id" required class="input-field text-sm md:text-base">
                   <option value="">Selecione um cliente</option>
                   <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
                 </select>
               </div>
 
-              <!-- PRODUTOS -->
-              <div class="border-2 border-dashed border-primary-300 rounded-lg p-4 space-y-4 bg-primary-50">
+              <!-- PRODUTOS - RESPONSIVO -->
+              <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 bg-primary-50">
                 <div class="flex justify-between items-center">
-                  <label class="label mb-0 text-primary-700 font-bold">📦 Produtos do Pedido</label>
-                  <span class="text-sm font-semibold text-primary-600">
+                  <label class="label mb-0 text-primary-700 font-bold text-sm md:text-base">📦 Produtos do Pedido</label>
+                  <span class="text-xs md:text-sm font-semibold text-primary-600">
                     Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
                   </span>
                 </div>
                 
-                <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-4 rounded-lg shadow-sm space-y-3 border border-gray-200">
+                <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-3 md:p-4 rounded-lg shadow-sm space-y-2 md:space-y-3 border border-gray-200">
                   <div class="flex justify-between items-center">
-                    <span class="font-semibold text-sm text-gray-700">Produto {{ index + 1 }}</span>
-                    <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center">
+                    <span class="font-semibold text-xs md:text-sm text-gray-700">Produto {{ index + 1 }}</span>
+                    <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs md:text-sm flex items-center">
                       <span class="mr-1">🗑️</span> Remover
                     </button>
                   </div>
                   
                   <div>
-                    <label class="label text-sm">Produto *</label>
-                    <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
+                    <label class="label text-xs md:text-sm">Produto *</label>
+                    <select v-model="item.product_id" required class="input-field text-sm" @change="updatePriceItem(index)">
                       <option value="">Selecione um produto</option>
                       <option v-for="product in products" :key="product.id" :value="product.id">
                         {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
@@ -430,9 +438,9 @@
                     </select>
                   </div>
                   
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
                     <div>
-                      <label class="label text-sm">
+                      <label class="label text-xs md:text-sm">
                         {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
                       </label>
                       <input 
@@ -441,113 +449,123 @@
                         :step="item.is_weight ? '0.001' : '1'" 
                         :min="item.is_weight ? '0.001' : '1'" 
                         required 
-                        class="input-field" 
+                        class="input-field text-sm" 
                         @input="calculateTotalItem(index)" 
                         :inputmode="item.is_weight ? 'decimal' : 'numeric'" 
                       />
                     </div>
                     <div>
-                      <label class="label text-sm">Preço Unit. *</label>
-                      <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" inputmode="decimal" />
+                      <label class="label text-xs md:text-sm">Preço Unit. *</label>
+                      <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field text-sm" @input="calculateTotalItem(index)" inputmode="decimal" />
                     </div>
                     <div>
-                      <label class="label text-sm">Total</label>
-                      <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600" />
+                      <label class="label text-xs md:text-sm">Total</label>
+                      <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600 text-sm" />
                     </div>
                   </div>
                 </div>
 
-                <div class="sticky bottom-0 pt-2">
-                  <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="sticky bottom-0 pt-2 bg-primary-50">
+                  <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center text-sm md:text-base">
+                    <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     Adicionar Produto
                   </button>
                 </div>
 
-                <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 rounded-lg shadow-lg">
+                <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-3 md:p-4 rounded-lg shadow-lg">
                   <div class="flex justify-between items-center text-white">
-                    <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
-                    <span class="font-bold text-2xl">{{ formatCurrency(totalPedido) }}</span>
+                    <span class="font-bold text-base md:text-lg">TOTAL DO PEDIDO:</span>
+                    <span class="font-bold text-xl md:text-2xl">{{ formatCurrency(totalPedido) }}</span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label class="label">Forma de Pagamento *</label>
-                <select v-model="form.payment_method" required class="input-field text-base">
-                  <option value="cash">💵 Dinheiro</option>
-                  <option value="pix">📱 PIX</option>
-                  <option value="boleto">📄 Boleto</option>
-                  <option value="card">💳 Cartão</option>
-                  <option value="credito">💰 Crediário</option>
-                </select>
+              <!-- Informações Adicionais -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <div>
+                  <label class="label text-sm md:text-base">Forma de Pagamento *</label>
+                  <select v-model="form.payment_method" required class="input-field text-sm md:text-base">
+                    <option value="cash">💵 Dinheiro</option>
+                    <option value="pix">📱 PIX</option>
+                    <option value="boleto">📄 Boleto</option>
+                    <option value="card">💳 Cartão</option>
+                    <option value="credito">💰 Crediário</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="label text-sm md:text-base">Status do Pedido *</label>
+                  <select v-model="form.order_status" required class="input-field text-sm md:text-base">
+                    <option value="pendente">🕐 Pendente</option>
+                    <option value="em_rota">🚚 Em Rota</option>
+                    <option value="entregue">✅ Entregue</option>
+                    <option value="cancelado">❌ Cancelado</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label class="label">Status do Pedido *</label>
-                <select v-model="form.order_status" required class="input-field text-base">
-                  <option value="pendente">🕐 Pendente</option>
-                  <option value="em_rota">🚚 Em Rota</option>
-                  <option value="entregue">✅ Entregue</option>
-                  <option value="cancelado">❌ Cancelado</option>
-                </select>
-              </div>
-
-              <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
-                <div class="flex items-center space-x-3 mb-3">
-                  <input v-model="form.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                  <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
+              <!-- Evento -->
+              <div class="border-2 border-purple-200 rounded-lg p-3 md:p-4 bg-purple-50">
+                <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
+                  <input v-model="form.is_event" type="checkbox" id="is-event" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                  <label for="is-event" class="font-medium text-gray-700 text-sm md:text-base">🎉 Este pedido é para um evento?</label>
                 </div>
                 <div v-if="form.is_event">
-                  <label class="label text-sm">Nome/Tipo do Evento *</label>
-                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
+                  <label class="label text-xs md:text-sm">Nome/Tipo do Evento *</label>
+                  <input v-model="form.event_name" type="text" required class="input-field text-sm" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
                 </div>
               </div>
 
-              <div class="border-2 border-yellow-200 rounded-lg p-4 bg-yellow-50">
-                <div class="flex items-center space-x-3 mb-3">
-                  <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                  <label for="has-exchange" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
+              <!-- Troca -->
+              <div class="border-2 border-yellow-200 rounded-lg p-3 md:p-4 bg-yellow-50">
+                <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
+                  <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
+                  <label for="has-exchange" class="font-medium text-gray-700 text-sm md:text-base">🔄 Este pedido envolve troca?</label>
                 </div>
-                <div v-if="form.has_exchange" class="space-y-3">
+                <div v-if="form.has_exchange" class="space-y-2 md:space-y-3">
                   <div>
-                    <label class="label text-sm">Produto da Troca *</label>
-                    <input v-model="form.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
+                    <label class="label text-xs md:text-sm">Produto da Troca *</label>
+                    <input v-model="form.exchange_product" type="text" required class="input-field text-sm" placeholder="Ex: Caixas de polpa de acerola" />
                   </div>
-                  <div class="grid grid-cols-2 gap-3">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                     <div>
-                      <label class="label text-sm">Quantidade *</label>
-                      <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field" />
+                      <label class="label text-xs md:text-sm">Quantidade *</label>
+                      <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field text-sm" />
                     </div>
                     <div>
-                      <label class="label text-sm">Valor da Troca *</label>
-                      <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
+                      <label class="label text-xs md:text-sm">Valor da Troca *</label>
+                      <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field text-sm" @input="calculateExchangeTotal" />
                     </div>
                   </div>
                   <div>
-                    <label class="label text-sm">Total da Troca</label>
-                    <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
+                    <label class="label text-xs md:text-sm">Total da Troca</label>
+                    <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700 text-sm" />
                   </div>
                 </div>
               </div>
 
-              <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <label for="paid-checkbox" class="text-sm md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
+              <!-- Pagamento -->
+              <div class="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                <label for="paid-checkbox" class="text-xs md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
               </div>
 
+              <!-- Observações -->
               <div>
-                <label class="label">Observações</label>
-                <textarea v-model="form.notes" class="input-field text-base" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
+                <label class="label text-sm md:text-base">Observações</label>
+                <textarea v-model="form.notes" class="input-field text-sm md:text-base" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
               </div>
             </div>
 
-            <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-4 md:p-6">
-              <div class="flex flex-col md:flex-row gap-3">
-                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1">Cancelar</button>
-                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2">
+            <!-- Footer do Modal -->
+            <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-6">
+              <div class="flex flex-col md:flex-row gap-2 md:gap-3">
+                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 text-sm md:text-base py-2 md:py-3">
+                  Cancelar
+                </button>
+                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 text-sm md:text-base py-2 md:py-3">
                   {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
                 </button>
               </div>
@@ -556,104 +574,104 @@
         </div>
       </div>
 
-      <!-- Modal Ver Detalhes -->
-      <div v-if="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
-            <h3 class="text-xl font-bold text-white">Detalhes do Pedido</h3>
-            <button @click="closeDetailsModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors text-2xl">×</button>
+      <!-- Modal Ver Detalhes - RESPONSIVO -->
+      <div v-if="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
+            <h3 class="text-lg md:text-xl font-bold text-white">Detalhes do Pedido</h3>
+            <button @click="closeDetailsModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">×</button>
           </div>
           
-          <div v-if="selectedSale" class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="card bg-gray-50">
-                <p class="text-sm text-gray-600">Data</p>
-                <p class="font-semibold">{{ formatDate(selectedSale.date) }}</p>
+          <div v-if="selectedSale" class="p-4 md:p-6 space-y-3 md:space-y-4">
+            <div class="grid grid-cols-2 gap-3 md:gap-4">
+              <div class="card bg-gray-50 p-3 md:p-4">
+                <p class="text-xs md:text-sm text-gray-600">Data</p>
+                <p class="font-semibold text-sm md:text-base">{{ formatDate(selectedSale.date) }}</p>
               </div>
-              <div class="card bg-gray-50">
-                <p class="text-sm text-gray-600">Tipo</p>
-                <p class="font-semibold">{{ getSaleTypeLabel(selectedSale.sale_type) }}</p>
+              <div class="card bg-gray-50 p-3 md:p-4">
+                <p class="text-xs md:text-sm text-gray-600">Tipo</p>
+                <p class="font-semibold text-sm md:text-base">{{ getSaleTypeLabel(selectedSale.sale_type) }}</p>
               </div>
             </div>
 
-            <div class="card bg-blue-50">
-              <h4 class="font-bold mb-2 text-blue-900">👤 Cliente</h4>
-              <p class="font-semibold">{{ selectedSale.clients?.name }}</p>
-              <p class="text-sm text-gray-600">{{ selectedSale.clients?.phone }}</p>
+            <div class="card bg-blue-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-blue-900 text-sm md:text-base">👤 Cliente</h4>
+              <p class="font-semibold text-sm md:text-base">{{ selectedSale.clients?.name }}</p>
+              <p class="text-xs md:text-sm text-gray-600">{{ selectedSale.clients?.phone }}</p>
             </div>
 
-            <div class="card bg-green-50">
-              <h4 class="font-bold mb-3 text-green-900">📦 Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
+            <div class="card bg-green-50 p-3 md:p-4">
+              <h4 class="font-bold mb-2 md:mb-3 text-green-900 text-sm md:text-base">📦 Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
               <div class="space-y-2">
-                <div v-for="(item, index) in parseProducts(selectedSale)" :key="index" class="bg-white p-3 rounded-lg">
+                <div v-for="(item, index) in parseProducts(selectedSale)" :key="index" class="bg-white p-2 md:p-3 rounded-lg">
                   <div class="flex justify-between items-start">
                     <div class="flex-1">
-                      <p class="font-semibold">{{ item.name }}</p>
-                      <p class="text-sm text-gray-600">Qtd: {{ item.quantity }} × {{ formatCurrency(item.unit_price) }}</p>
+                      <p class="font-semibold text-sm md:text-base">{{ item.name }}</p>
+                      <p class="text-xs md:text-sm text-gray-600">Qtd: {{ item.quantity }} × {{ formatCurrency(item.unit_price) }}</p>
                     </div>
-                    <p class="font-bold text-green-700">{{ formatCurrency(item.total) }}</p>
+                    <p class="font-bold text-green-700 text-sm md:text-base">{{ formatCurrency(item.total) }}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div v-if="selectedSale.has_exchange" class="card bg-yellow-50">
-              <h4 class="font-bold mb-2 text-yellow-900">🔄 Troca</h4>
-              <p class="text-sm"><strong>Produto:</strong> {{ selectedSale.exchange_product }}</p>
-              <p class="text-sm"><strong>Quantidade:</strong> {{ selectedSale.exchange_quantity }}</p>
-              <p class="text-sm"><strong>Valor:</strong> {{ formatCurrency(selectedSale.exchange_total) }}</p>
+            <div v-if="selectedSale.has_exchange" class="card bg-yellow-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-yellow-900 text-sm md:text-base">🔄 Troca</h4>
+              <p class="text-xs md:text-sm"><strong>Produto:</strong> {{ selectedSale.exchange_product }}</p>
+              <p class="text-xs md:text-sm"><strong>Quantidade:</strong> {{ selectedSale.exchange_quantity }}</p>
+              <p class="text-xs md:text-sm"><strong>Valor:</strong> {{ formatCurrency(selectedSale.exchange_total) }}</p>
             </div>
 
-            <div v-if="selectedSale.is_event" class="card bg-purple-50">
-              <h4 class="font-bold mb-2 text-purple-900">🎉 Evento</h4>
-              <p class="font-semibold">{{ selectedSale.event_name }}</p>
+            <div v-if="selectedSale.is_event" class="card bg-purple-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-purple-900 text-sm md:text-base">🎉 Evento</h4>
+              <p class="font-semibold text-sm md:text-base">{{ selectedSale.event_name }}</p>
             </div>
 
-            <div class="card bg-gray-50">
-              <div class="grid grid-cols-2 gap-4">
+            <div class="card bg-gray-50 p-3 md:p-4">
+              <div class="grid grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <p class="text-sm text-gray-600">Forma de Pagamento</p>
-                  <p class="font-semibold">{{ getPaymentLabel(selectedSale.payment_method) }}</p>
+                  <p class="text-xs md:text-sm text-gray-600">Forma de Pagamento</p>
+                  <p class="font-semibold text-sm md:text-base">{{ getPaymentLabel(selectedSale.payment_method) }}</p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-600">Status Pedido</p>
-                  <p class="font-semibold">{{ getOrderStatusLabel(selectedSale.order_status) }}</p>
+                  <p class="text-xs md:text-sm text-gray-600">Status Pedido</p>
+                  <p class="font-semibold text-sm md:text-base">{{ getOrderStatusLabel(selectedSale.order_status) }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="card bg-primary-50 border-2 border-primary-300">
+            <div class="card bg-primary-50 border-2 border-primary-300 p-3 md:p-4">
               <div class="flex justify-between items-center">
-                <span class="font-bold text-lg">TOTAL:</span>
-                <span class="font-bold text-2xl text-primary-700">{{ formatCurrency(selectedSale.total) }}</span>
+                <span class="font-bold text-base md:text-lg">TOTAL:</span>
+                <span class="font-bold text-xl md:text-2xl text-primary-700">{{ formatCurrency(selectedSale.total) }}</span>
               </div>
             </div>
 
-            <button @click="closeDetailsModal" class="w-full btn-outline">Fechar</button>
+            <button @click="closeDetailsModal" class="w-full btn-outline text-sm md:text-base py-2 md:py-3">Fechar</button>
           </div>
         </div>
       </div>
 
       <!-- Modal Confirmação Recibo -->
       <div v-if="showReceiptConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 animate-fade-in">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-4 md:p-6 animate-fade-in">
+          <div class="text-center mb-4 md:mb-6">
+            <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+              <svg class="w-6 h-6 md:w-8 md:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">Pedido {{ editingSale ? 'Atualizado' : 'Registrado' }}!</h3>
-            <p class="text-gray-600 text-sm md:text-base">Deseja gerar o recibo agora?</p>
+            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-1 md:mb-2">Pedido {{ editingSale ? 'Atualizado' : 'Registrado' }}!</h3>
+            <p class="text-gray-600 text-xs md:text-sm">Deseja gerar o recibo agora?</p>
           </div>
-          <div class="flex flex-col gap-3">
-            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary">
-              <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex flex-col gap-2 md:gap-3">
+            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary text-sm md:text-base py-2 md:py-3">
+              <svg class="w-4 h-4 md:w-5 md:h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
               Gerar Recibo
             </button>
-            <button @click="closeReceiptConfirm" class="btn-outline">Agora Não</button>
+            <button @click="closeReceiptConfirm" class="btn-outline text-sm md:text-base py-2 md:py-3">Agora Não</button>
           </div>
         </div>
       </div>
@@ -1121,7 +1139,7 @@ const togglePaidStatus = async (sale) => {
   await loadSales()
 }
 
-// FUNÇÃO DE EXCLUSÃO CORRIGIDA - SEM VERIFICAÇÃO DE editingSale
+// FUNÇÃO DE EXCLUSÃO CORRIGIDA
 const deleteSale = async (sale) => {
   if (!confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')) return
   
@@ -1169,7 +1187,7 @@ const deleteSale = async (sale) => {
   }
 }
 
-// FUNÇÃO GENERATE RECEIPT SEM EMOJIS
+// FUNÇÃO GENERATE RECEIPT
 const generateReceipt = async (sale) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
@@ -1433,15 +1451,15 @@ onMounted(() => {
 }
 
 .input-field {
-  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
 }
 
 .btn-primary {
-  @apply px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
+  @apply px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md text-sm md:text-base;
 }
 
 .btn-outline {
-  @apply px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
+  @apply px-4 md:px-6 py-2 md:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm md:text-base;
 }
 
 .animate-fade-in {
@@ -1456,6 +1474,23 @@ onMounted(() => {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* Melhorias de responsividade */
+@media (max-width: 640px) {
+  .card {
+    @apply p-3;
+  }
+  
+  .input-field {
+    @apply py-2 text-sm;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-primary, .btn-outline {
+    @apply py-2 text-sm;
   }
 }
 </style>
