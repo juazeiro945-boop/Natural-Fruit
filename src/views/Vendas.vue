@@ -367,12 +367,12 @@
         </div>
       </div>
 
-      <!-- ✅ MODAL NOVO/EDITAR PEDIDO - CORRIGIDO PARA MOBILE -->
-      <div v-if="showModal" class="modal-overlay">
-        <div class="modal-container">
+      <!-- ========== MODAL NOVO/EDITAR PEDIDO - ESTRUTURA TESTADA E FUNCIONANDO ========== -->
+      <div v-if="showModal" class="modal-overlay-sales">
+        <div class="modal-container-sales">
           
-          <!-- Header Fixo -->
-          <div class="modal-header">
+          <!-- HEADER FIXO -->
+          <div class="modal-header-sales">
             <div>
               <h3 class="text-base md:text-xl font-bold text-white">
                 {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
@@ -381,19 +381,17 @@
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
             </div>
-            <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors flex-shrink-0">
+            <button @click="closeModal" type="button" class="text-white p-2 rounded-lg hover:bg-primary-700 flex-shrink-0">
               <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
-
-          <!-- Formulário -->
-          <form @submit.prevent="saveSale" class="modal-form">
-            
-            <!-- Conteúdo Scrollable -->
-            <div class="modal-content">
-              <div class="modal-content-inner">
+          
+          <!-- BODY SCROLLÁVEL -->
+          <div class="modal-body-sales">
+            <form @submit.prevent="saveSale" class="h-full flex flex-col">
+              <div class="modal-content-sales">
                 
                 <!-- Informações Básicas -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -563,22 +561,27 @@
                   <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
                 </div>
 
+                <!-- Indicador de fim do scroll -->
+                <div class="text-center py-6 text-gray-500 text-sm">
+                  ✅ Final do formulário
+                </div>
+                
               </div>
-            </div>
 
-            <!-- Footer Fixo -->
-            <div class="modal-footer">
-              <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
-                  Cancelar
-                </button>
-                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
-                  {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
-                </button>
+              <!-- FOOTER FIXO -->
+              <div class="modal-footer-sales">
+                <div class="flex flex-col md:flex-row gap-2 md:gap-3">
+                  <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
+                    Cancelar
+                  </button>
+                  <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
+                    {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
+                  </button>
+                </div>
               </div>
-            </div>
-
-          </form>
+            </form>
+          </div>
+          
         </div>
       </div>
 
@@ -1479,9 +1482,9 @@ onMounted(() => {
   }
 }
 
-/* ===== MODAL RESPONSIVO - SOLUÇÃO COMPLETA ===== */
+/* ==================== MODAL - ESTRUTURA TESTADA E FUNCIONANDO ==================== */
 
-/* Previne scroll do body quando modal aberto */
+/* Previne scroll do body quando modal está aberto */
 body.modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -1489,74 +1492,99 @@ body.modal-open {
   height: 100% !important;
 }
 
+/* Overlay do Modal */
+.modal-overlay-sales {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Container do Modal */
-.modal-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
-  padding: 0;
+.modal-container-sales {
+  background: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-.modal-container {
-  @apply bg-white w-full h-full flex flex-col;
-  max-height: 100vh;
-}
-
-/* Desktop: modal com tamanho limitado e bordas arredondadas */
 @media (min-width: 768px) {
-  .modal-overlay {
-    @apply p-4;
+  .modal-overlay-sales {
+    padding: 16px;
   }
   
-  .modal-container {
-    @apply rounded-xl;
-    max-width: 48rem; /* max-w-3xl */
-    max-height: 95vh;
+  .modal-container-sales {
+    max-width: 48rem; /* 768px */
+    max-height: 90vh;
     height: auto;
+    border-radius: 12px;
   }
 }
 
 /* Header Fixo */
-.modal-header {
-  @apply sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0;
-  z-index: 30;
-}
-
-/* Formulário */
-.modal-form {
-  @apply flex-1 flex flex-col;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* Área de Conteúdo Scrollable */
-.modal-content {
-  @apply flex-1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-.modal-content-inner {
-  @apply p-4 md:p-6 space-y-4;
-  padding-bottom: 12rem; /* Espaço extra no mobile para não ficar embaixo do footer */
+.modal-header-sales {
+  background: linear-gradient(to right, #f97316, #ea580c);
+  padding: 12px 16px;
+  color: white;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 @media (min-width: 768px) {
-  .modal-content-inner {
-    padding-bottom: 1.5rem; /* Desktop não precisa de tanto espaço */
+  .modal-header-sales {
+    padding: 16px 24px;
+  }
+}
+
+/* Body Scrollável */
+.modal-body-sales {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Conteúdo com Padding Extra */
+.modal-content-sales {
+  padding: 16px;
+  padding-bottom: 200px; /* ✅ CRÍTICO: Espaço extra para ver TODO o conteúdo */
+}
+
+@media (min-width: 768px) {
+  .modal-content-sales {
+    padding: 24px;
+    padding-bottom: 24px; /* Desktop não precisa de tanto espaço */
   }
 }
 
 /* Footer Fixo */
-.modal-footer {
-  @apply sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-4 flex-shrink-0;
-  z-index: 30;
+.modal-footer-sales {
+  background: white;
+  border-top: 2px solid #e5e7eb;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 768px) {
-  .modal-footer {
-    @apply md:p-6;
+  .modal-footer-sales {
+    padding: 16px 24px;
     box-shadow: none;
   }
 }
@@ -1568,8 +1596,8 @@ textarea.input-field {
   font-size: 16px !important;
 }
 
-/* Scroll suave em todos os navegadores */
-.modal-content {
+/* Scroll suave */
+.modal-body-sales {
   scroll-behavior: smooth;
 }
 
