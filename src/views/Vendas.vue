@@ -1121,20 +1121,21 @@ const togglePaidStatus = async (sale) => {
   await loadSales()
 }
 
-// FUNÇÃO DE EXCLUSÃO CORRIGIDA
+// FUNÇÃO DE EXCLUSÃO CORRIGIDA - SEM VERIFICAÇÃO DE editingSale
 const deleteSale = async (sale) => {
   if (!confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')) return
   
   try {
-    // Primeiro, restaurar o estoque dos produtos
-    if (!editingSale.value) {
-      const produtos = parseProducts(sale)
-      
-      for (const item of produtos) {
+    // Restaurar o estoque dos produtos
+    const produtos = parseProducts(sale)
+    
+    for (const item of produtos) {
+      const productId = item.id || sale.product_id
+      if (productId) {
         const { data: productData } = await supabase
           .from('products')
           .select('stock_quantity')
-          .eq('id', item.id || sale.product_id)
+          .eq('id', productId)
           .single()
         
         if (productData) {
@@ -1142,7 +1143,7 @@ const deleteSale = async (sale) => {
           await supabase
             .from('products')
             .update({ stock_quantity: newStock })
-            .eq('id', item.id || sale.product_id)
+            .eq('id', productId)
         }
       }
     }
@@ -1155,7 +1156,12 @@ const deleteSale = async (sale) => {
     
     if (error) throw error
     
-    await loadSales()
+    // Remover a venda da lista localmente para atualização imediata
+    const index = sales.value.findIndex(s => s.id === sale.id)
+    if (index !== -1) {
+      sales.value.splice(index, 1)
+    }
+    
     alert('✅ Pedido excluído com sucesso! O estoque foi restaurado.')
   } catch (error) {
     console.error('Erro ao excluir pedido:', error)
