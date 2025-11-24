@@ -360,7 +360,7 @@
               </p>
               <p class="text-red-600 text-xs mt-2">
                 ❗ Esta ação não pode ser desfeita.<br>
-                ❗ Todas as movimentações relacionadas serão mantidas para histórico.
+                ❗ O produto será desativado e não aparecerá mais na lista.
               </p>
             </div>
 
@@ -814,28 +814,22 @@ const todayMovements = computed(() => {
 
 // ✅ Funções de formatação - Movimentações
 const getQuantityColor = (type, quantity) => {
-  // Ajustes podem ser positivos ou negativos
   if (type === 'adjustment') {
     return quantity >= 0 ? 'text-green-600' : 'text-red-600'
   }
-  // Entradas são sempre positivas (verde)
   if (type === 'entry') {
     return 'text-green-600'
   }
-  // Saídas, vendas e perdas são sempre negativas (vermelho)
   return 'text-red-600'
 }
 
 const formatQuantity = (type, quantity) => {
-  // Ajustes mostram + ou - baseado no valor
   if (type === 'adjustment') {
     return quantity >= 0 ? `+${Math.abs(quantity)}` : `-${Math.abs(quantity)}`
   }
-  // Entradas sempre com +
   if (type === 'entry') {
     return `+${quantity}`
   }
-  // Saídas, vendas e perdas sempre com -
   return `-${quantity}`
 }
 
@@ -1276,95 +1270,57 @@ const saveEdit = async () => {
   }
 }
 
-// 🔥 FUNÇÃO PROFISSIONAL DE EXCLUSÃO
+// 🔥 FUNÇÃO CORRIGIDA DE EXCLUSÃO
 const excluirProduto = async () => {
   if (!produtoExcluindo.value) return
   
   loadingDelete.value = true
   
   try {
-    console.log('🗑️ Iniciando exclusão do produto:', produtoExcluindo.value.id)
+    console.log('🗑️ Desativando produto:', produtoExcluindo.value.id)
     
-    // SOLUÇÃO PROFISSIONAL: Exclusão em transação com fallback
-    let exclusaoBemSucedida = false
+    // ✅ SOFT DELETE - Mantém dados históricos
+    const { error } = await supabase
+      .from('products')
+      .update({ 
+        active: false,
+        deleted_at: new Date().toISOString()
+      })
+      .eq('id', produtoExcluindo.value.id)
+
+    if (error) throw error
+
+    console.log('✅ Produto desativado!')
     
-    // Tenta primeiro o soft delete (mais seguro)
-    try {
-      const { error: softDeleteError } = await supabase
-        .from('products')
-        .update({ 
-          active: false,
-          deleted_at: new Date().toISOString()
-        })
-        .eq('id', produtoExcluindo.value.id)
-
-      if (softDeleteError) throw softDeleteError
-      
-      exclusaoBemSucedida = true
-      console.log('✅ Soft delete realizado com sucesso')
-      
-    } catch (softError) {
-      console.warn('❌ Soft delete falhou, tentando hard delete:', softError)
-      
-      // Fallback para hard delete
-      const { error: hardDeleteError } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', produtoExcluindo.value.id)
-
-      if (hardDeleteError) throw hardDeleteError
-      
-      exclusaoBemSucedida = true
-      console.log('✅ Hard delete realizado com sucesso')
+    // Remove imediatamente da lista (UX melhor)
+    allProducts.value = allProducts.value.filter(p => p.id !== produtoExcluindo.value.id)
+    
+    // Ajusta paginação
+    if (paginatedProducts.value.length === 0 && productPage.value > 1) {
+      productPage.value--
     }
-
-    if (exclusaoBemSucedida) {
-      // Verifica se o produto realmente foi excluído
-      const { data: produtoVerificado } = await supabase
-        .from('products')
-        .select('id')
-        .eq('id', produtoExcluindo.value.id)
-        .single()
-
-      if (produtoVerificado) {
-        throw new Error('Produto ainda existe após exclusão. Possível problema de RLS ou constraints.')
-      }
-
-      console.log('✅ Produto excluído com sucesso!')
-      
-      // Feedback visual
-      closeDeleteModal()
-      
-      // Toast de sucesso (substitui alert)
-      setTimeout(() => {
-        // Você pode implementar um sistema de toast aqui
-        alert(`✅ Produto "${produtoExcluindo.value.name}" excluído com sucesso!`)
-      }, 100)
-      
-      // Recarrega os dados
-      await Promise.all([
-        loadProducts(),
-        loadMovements()
-      ])
-      
-      // Reseta a paginação se necessário
-      if (paginatedProducts.value.length === 0 && productPage.value > 1) {
-        productPage.value = Math.max(1, productPage.value - 1)
-      }
-    }
+    
+    closeDeleteModal()
+    
+    alert(`✅ Produto "${produtoExcluindo.value.name}" removido com sucesso!`)
+    
+    // Recarrega em background
+    setTimeout(() => {
+      loadProducts()
+      loadMovements()
+    }, 500)
     
   } catch (error) {
-    console.error('❌ Erro ao excluir produto:', error)
+    console.error('❌ Erro:', error)
     
-    // Tratamento específico de erros
-    let mensagemErro = 'Erro ao excluir produto: '
+    let mensagemErro = 'Erro ao remover produto: '
     
-    if (error.message.includes('foreign key constraint')) {
-      mensagemErro += 'Este produto possui movimentações vinculadas. Exclua as movimentações primeiro.'
-    } else if (error.message.includes('RLS')) {
-      mensagemErro += 'Sem permissão para excluir. Verifique as políticas RLS.'
+    if (error.code === '23503') {
+      mensagemErro += 'Este produto possui movimentações vinculadas.'
+    } else if (error.message?.includes('RLS') || error.message?.includes('permission')) {
+      mensagemErro += 'Você não tem permissão para excluir produtos.'
     } else {
-      mensagemErro += error.message
+      mensagemErro += error.message || 'Erro desconhecido'
     }
     
     alert(`❌ ${mensagemErro}`)
