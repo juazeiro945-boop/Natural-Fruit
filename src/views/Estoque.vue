@@ -534,9 +534,9 @@
                   step="0.01"
                   required
                   class="input-field text-sm"
-                  placeholder="Pode ser 0 (zero)"
+                  placeholder="Digite 0 para zerar o estoque"
                 />
-                <p class="text-xs text-gray-500 mt-1">💡 Você pode colocar zero para zerar o estoque</p>
+                <p class="text-xs text-gray-500 mt-1">💡 Digite 0 (zero) para zerar completamente o estoque</p>
               </div>
 
               <div class="bg-yellow-50 p-3 rounded-lg">
@@ -670,14 +670,17 @@ const calculateEntryTotal = () => {
   entryForm.value.total_cost = entryForm.value.quantity * entryForm.value.unit_cost
 }
 
-// FUNÇÃO CORRIGIDA - PERMITE ZERAR
+// FUNÇÃO CORRIGIDA - PERMITE ZERAR COMPLETAMENTE
 const calcularNovoEstoque = () => {
   const atual = produtoEditando.value?.stock_quantity || 0
   const valor = editForm.value.new_quantity || 0
   
   if (editForm.value.tipo === 'set') return valor
   if (editForm.value.tipo === 'add') return atual + valor
-  if (editForm.value.tipo === 'remove') return Math.max(0, atual - valor)
+  if (editForm.value.tipo === 'remove') {
+    const resultado = atual - valor
+    return Math.max(0, resultado) // Permite 0 mas não valores negativos
+  }
   return atual
 }
 
