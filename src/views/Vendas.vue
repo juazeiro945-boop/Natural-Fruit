@@ -7,7 +7,7 @@
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas / Pedidos</h2>
           <p class="text-sm md:text-base text-gray-600 mt-1">Gerencie pedidos e vendas</p>
         </div>
-        <button @click="showModal = true" class="w-full md:w-auto btn-primary text-sm md:text-base">
+        <button @click="openModal" class="w-full md:w-auto btn-primary text-sm md:text-base">
           <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
@@ -367,205 +367,205 @@
         </div>
       </div>
 
-      <!-- Modal Novo/Editar Pedido - RESPONSIVO -->
-      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 md:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-none md:rounded-xl w-full h-full md:h-auto md:max-w-3xl md:max-h-[95vh] flex flex-col">
-          <!-- Header do Modal -->
-          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
+      <!-- Modal Novo/Editar Pedido - CORRIGIDO MOBILE -->
+      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 z-50">
+        <div class="bg-white w-full h-full md:h-auto md:max-w-3xl md:rounded-xl md:max-h-[95vh] flex flex-col overflow-hidden">
+          <!-- Header do Modal - FIXO -->
+          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-20 flex-shrink-0">
             <div>
-              <h3 class="text-lg md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
+              <h3 class="text-base md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
               <p v-if="form.produtos.length > 0" class="text-xs md:text-sm text-white opacity-90">
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
             </div>
-            <button @click="closeModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button @click="closeModal" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors flex-shrink-0">
+              <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
           
-          <!-- Conteúdo do Modal -->
-          <form @submit.prevent="saveSale" class="flex-1 overflow-y-auto">
-            <div class="p-4 md:p-6 space-y-4">
-              <!-- Informações Básicas -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div>
-                  <label class="label text-sm md:text-base">Data *</label>
-                  <input v-model="form.date" type="date" required class="input-field text-sm md:text-base" />
-                </div>
-                <div>
-                  <label class="label text-sm md:text-base">Tipo de Venda *</label>
-                  <select v-model="form.sale_type" required class="input-field text-sm md:text-base">
-                    <option value="wholesale">🏭 Atacado</option>
-                    <option value="retail">🛒 Varejo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label class="label text-sm md:text-base">Cliente *</label>
-                <select v-model="form.client_id" required class="input-field text-sm md:text-base">
-                  <option value="">Selecione um cliente</option>
-                  <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
-                </select>
-              </div>
-
-              <!-- PRODUTOS - RESPONSIVO -->
-              <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 bg-primary-50">
-                <div class="flex justify-between items-center">
-                  <label class="label mb-0 text-primary-700 font-bold text-sm md:text-base">📦 Produtos do Pedido</label>
-                  <span class="text-xs md:text-sm font-semibold text-primary-600">
-                    Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
-                  </span>
-                </div>
-                
-                <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-3 md:p-4 rounded-lg shadow-sm space-y-2 md:space-y-3 border border-gray-200">
-                  <div class="flex justify-between items-center">
-                    <span class="font-semibold text-xs md:text-sm text-gray-700">Produto {{ index + 1 }}</span>
-                    <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs md:text-sm flex items-center">
-                      <span class="mr-1">🗑️</span> Remover
-                    </button>
-                  </div>
-                  
+          <!-- Conteúdo do Modal - SCROLLABLE -->
+          <form @submit.prevent="saveSale" class="flex-1 flex flex-col overflow-hidden">
+            <div class="flex-1 overflow-y-auto overscroll-contain">
+              <div class="p-4 md:p-6 space-y-4 pb-32 md:pb-6">
+                <!-- Informações Básicas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div>
-                    <label class="label text-xs md:text-sm">Produto *</label>
-                    <select v-model="item.product_id" required class="input-field text-sm" @change="updatePriceItem(index)">
-                      <option value="">Selecione um produto</option>
-                      <option v-for="product in products" :key="product.id" :value="product.id">
-                        {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
-                      </option>
+                    <label class="label text-sm md:text-base">Data *</label>
+                    <input v-model="form.date" type="date" required class="input-field" />
+                  </div>
+                  <div>
+                    <label class="label text-sm md:text-base">Tipo de Venda *</label>
+                    <select v-model="form.sale_type" required class="input-field">
+                      <option value="wholesale">🏭 Atacado</option>
+                      <option value="retail">🛒 Varejo</option>
                     </select>
                   </div>
-                  
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
-                    <div>
-                      <label class="label text-xs md:text-sm">
-                        {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
-                      </label>
-                      <input 
-                        v-model.number="item.quantity" 
-                        type="number" 
-                        :step="item.is_weight ? '0.001' : '1'" 
-                        :min="item.is_weight ? '0.001' : '1'" 
-                        required 
-                        class="input-field text-sm" 
-                        @input="calculateTotalItem(index)" 
-                        :inputmode="item.is_weight ? 'decimal' : 'numeric'" 
-                      />
-                    </div>
-                    <div>
-                      <label class="label text-xs md:text-sm">Preço Unit. *</label>
-                      <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field text-sm" @input="calculateTotalItem(index)" inputmode="decimal" />
-                    </div>
-                    <div>
-                      <label class="label text-xs md:text-sm">Total</label>
-                      <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600 text-sm" />
-                    </div>
-                  </div>
                 </div>
 
-                <div class="sticky bottom-0 pt-2 bg-primary-50">
-                  <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center text-sm md:text-base">
+                <div>
+                  <label class="label text-sm md:text-base">Cliente *</label>
+                  <select v-model="form.client_id" required class="input-field">
+                    <option value="">Selecione um cliente</option>
+                    <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                  </select>
+                </div>
+
+                <!-- PRODUTOS - RESPONSIVO -->
+                <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 bg-primary-50">
+                  <div class="flex justify-between items-center">
+                    <label class="label mb-0 text-primary-700 font-bold text-sm md:text-base">📦 Produtos do Pedido</label>
+                    <span class="text-xs md:text-sm font-semibold text-primary-600">
+                      Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                    </span>
+                  </div>
+                  
+                  <div v-for="(item, index) in form.produtos" :key="index" class="bg-white p-3 md:p-4 rounded-lg shadow-sm space-y-2 md:space-y-3 border border-gray-200">
+                    <div class="flex justify-between items-center">
+                      <span class="font-semibold text-xs md:text-sm text-gray-700">Produto {{ index + 1 }}</span>
+                      <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs md:text-sm flex items-center">
+                        <span class="mr-1">🗑️</span> Remover
+                      </button>
+                    </div>
+                    
+                    <div>
+                      <label class="label text-xs md:text-sm">Produto *</label>
+                      <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
+                        <option value="">Selecione um produto</option>
+                        <option v-for="product in products" :key="product.id" :value="product.id">
+                          {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
+                        </option>
+                      </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
+                      <div>
+                        <label class="label text-xs md:text-sm">
+                          {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
+                        </label>
+                        <input 
+                          v-model.number="item.quantity" 
+                          type="number" 
+                          :step="item.is_weight ? '0.001' : '1'" 
+                          :min="item.is_weight ? '0.001' : '1'" 
+                          required 
+                          class="input-field" 
+                          @input="calculateTotalItem(index)" 
+                          :inputmode="item.is_weight ? 'decimal' : 'numeric'" 
+                        />
+                      </div>
+                      <div>
+                        <label class="label text-xs md:text-sm">Preço Unit. *</label>
+                        <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" inputmode="decimal" />
+                      </div>
+                      <div>
+                        <label class="label text-xs md:text-sm">Total</label>
+                        <input v-model.number="item.total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-primary-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white py-2 md:py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center text-sm md:text-base">
                     <svg class="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     Adicionar Produto
                   </button>
-                </div>
 
-                <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-3 md:p-4 rounded-lg shadow-lg">
-                  <div class="flex justify-between items-center text-white">
-                    <span class="font-bold text-base md:text-lg">TOTAL DO PEDIDO:</span>
-                    <span class="font-bold text-xl md:text-2xl">{{ formatCurrency(totalPedido) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Informações Adicionais -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div>
-                  <label class="label text-sm md:text-base">Forma de Pagamento *</label>
-                  <select v-model="form.payment_method" required class="input-field text-sm md:text-base">
-                    <option value="cash">💵 Dinheiro</option>
-                    <option value="pix">📱 PIX</option>
-                    <option value="boleto">📄 Boleto</option>
-                    <option value="card">💳 Cartão</option>
-                    <option value="credito">💰 Crediário</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label class="label text-sm md:text-base">Status do Pedido *</label>
-                  <select v-model="form.order_status" required class="input-field text-sm md:text-base">
-                    <option value="pendente">🕐 Pendente</option>
-                    <option value="em_rota">🚚 Em Rota</option>
-                    <option value="entregue">✅ Entregue</option>
-                    <option value="cancelado">❌ Cancelado</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Evento -->
-              <div class="border-2 border-purple-200 rounded-lg p-3 md:p-4 bg-purple-50">
-                <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
-                  <input v-model="form.is_event" type="checkbox" id="is-event" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                  <label for="is-event" class="font-medium text-gray-700 text-sm md:text-base">🎉 Este pedido é para um evento?</label>
-                </div>
-                <div v-if="form.is_event">
-                  <label class="label text-xs md:text-sm">Nome/Tipo do Evento *</label>
-                  <input v-model="form.event_name" type="text" required class="input-field text-sm" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
-                </div>
-              </div>
-
-              <!-- Troca -->
-              <div class="border-2 border-yellow-200 rounded-lg p-3 md:p-4 bg-yellow-50">
-                <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
-                  <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                  <label for="has-exchange" class="font-medium text-gray-700 text-sm md:text-base">🔄 Este pedido envolve troca?</label>
-                </div>
-                <div v-if="form.has_exchange" class="space-y-2 md:space-y-3">
-                  <div>
-                    <label class="label text-xs md:text-sm">Produto da Troca *</label>
-                    <input v-model="form.exchange_product" type="text" required class="input-field text-sm" placeholder="Ex: Caixas de polpa de acerola" />
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
-                    <div>
-                      <label class="label text-xs md:text-sm">Quantidade *</label>
-                      <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field text-sm" />
-                    </div>
-                    <div>
-                      <label class="label text-xs md:text-sm">Valor da Troca *</label>
-                      <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field text-sm" @input="calculateExchangeTotal" />
+                  <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-3 md:p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-center text-white">
+                      <span class="font-bold text-base md:text-lg">TOTAL DO PEDIDO:</span>
+                      <span class="font-bold text-xl md:text-2xl">{{ formatCurrency(totalPedido) }}</span>
                     </div>
                   </div>
+                </div>
+
+                <!-- Informações Adicionais -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div>
-                    <label class="label text-xs md:text-sm">Total da Troca</label>
-                    <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700 text-sm" />
+                    <label class="label text-sm md:text-base">Forma de Pagamento *</label>
+                    <select v-model="form.payment_method" required class="input-field">
+                      <option value="cash">💵 Dinheiro</option>
+                      <option value="pix">📱 PIX</option>
+                      <option value="boleto">📄 Boleto</option>
+                      <option value="card">💳 Cartão</option>
+                      <option value="credito">💰 Crediário</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="label text-sm md:text-base">Status do Pedido *</label>
+                    <select v-model="form.order_status" required class="input-field">
+                      <option value="pendente">🕐 Pendente</option>
+                      <option value="em_rota">🚚 Em Rota</option>
+                      <option value="entregue">✅ Entregue</option>
+                      <option value="cancelado">❌ Cancelado</option>
+                    </select>
                   </div>
                 </div>
-              </div>
 
-              <!-- Pagamento -->
-              <div class="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
-                <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                <label for="paid-checkbox" class="text-xs md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
-              </div>
+                <!-- Evento -->
+                <div class="border-2 border-purple-200 rounded-lg p-3 md:p-4 bg-purple-50">
+                  <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
+                    <input v-model="form.is_event" type="checkbox" id="is-event" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                    <label for="is-event" class="font-medium text-gray-700 text-sm md:text-base">🎉 Este pedido é para um evento?</label>
+                  </div>
+                  <div v-if="form.is_event">
+                    <label class="label text-xs md:text-sm">Nome/Tipo do Evento *</label>
+                    <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
+                  </div>
+                </div>
 
-              <!-- Observações -->
-              <div>
-                <label class="label text-sm md:text-base">Observações</label>
-                <textarea v-model="form.notes" class="input-field text-sm md:text-base" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
+                <!-- Troca -->
+                <div class="border-2 border-yellow-200 rounded-lg p-3 md:p-4 bg-yellow-50">
+                  <div class="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
+                    <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
+                    <label for="has-exchange" class="font-medium text-gray-700 text-sm md:text-base">🔄 Este pedido envolve troca?</label>
+                  </div>
+                  <div v-if="form.has_exchange" class="space-y-2 md:space-y-3">
+                    <div>
+                      <label class="label text-xs md:text-sm">Produto da Troca *</label>
+                      <input v-model="form.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                      <div>
+                        <label class="label text-xs md:text-sm">Quantidade *</label>
+                        <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field" />
+                      </div>
+                      <div>
+                        <label class="label text-xs md:text-sm">Valor da Troca *</label>
+                        <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="label text-xs md:text-sm">Total da Troca</label>
+                      <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pagamento -->
+                <div class="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                  <input v-model="form.paid" type="checkbox" id="paid-checkbox" class="w-4 h-4 md:w-5 md:h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                  <label for="paid-checkbox" class="text-xs md:text-base font-medium text-gray-700">✅ Pagamento realizado</label>
+                </div>
+
+                <!-- Observações -->
+                <div>
+                  <label class="label text-sm md:text-base">Observações</label>
+                  <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
+                </div>
               </div>
             </div>
 
-            <!-- Footer do Modal -->
-            <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-6">
+            <!-- Footer do Modal - FIXO NO MOBILE -->
+            <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-6 flex-shrink-0 shadow-lg md:shadow-none z-10">
               <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 text-sm md:text-base py-2 md:py-3">
+                <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
                   Cancelar
                 </button>
-                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 text-sm md:text-base py-2 md:py-3">
+                <button type="submit" :disabled="loading" class="flex-1 btn-primary order-1 md:order-2 py-3">
                   {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
                 </button>
               </div>
@@ -647,7 +647,7 @@
               </div>
             </div>
 
-            <button @click="closeDetailsModal" class="w-full btn-outline text-sm md:text-base py-2 md:py-3">Fechar</button>
+            <button @click="closeDetailsModal" class="w-full btn-outline py-3">Fechar</button>
           </div>
         </div>
       </div>
@@ -665,13 +665,13 @@
             <p class="text-gray-600 text-xs md:text-sm">Deseja gerar o recibo agora?</p>
           </div>
           <div class="flex flex-col gap-2 md:gap-3">
-            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary text-sm md:text-base py-2 md:py-3">
+            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary py-3">
               <svg class="w-4 h-4 md:w-5 md:h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
               Gerar Recibo
             </button>
-            <button @click="closeReceiptConfirm" class="btn-outline text-sm md:text-base py-2 md:py-3">Agora Não</button>
+            <button @click="closeReceiptConfirm" class="btn-outline py-3">Agora Não</button>
           </div>
         </div>
       </div>
@@ -946,6 +946,13 @@ const closeDetailsModal = () => {
   selectedSale.value = null
 }
 
+const openModal = () => {
+  showModal.value = true
+  if (window.innerWidth < 768) {
+    document.body.classList.add('modal-open')
+  }
+}
+
 const editSale = (sale) => {
   editingSale.value = sale
   
@@ -997,12 +1004,11 @@ const editSale = (sale) => {
     exchange_total: sale.exchange_total || 0
   }
   
-  showModal.value = true
+  openModal()
 }
 
 const loadSales = async () => {
   try {
-    // Resetar para página 1 quando filtrar
     currentPage.value = 1
     
     let query = supabase
@@ -1139,12 +1145,10 @@ const togglePaidStatus = async (sale) => {
   await loadSales()
 }
 
-// FUNÇÃO DE EXCLUSÃO CORRIGIDA
 const deleteSale = async (sale) => {
   if (!confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.')) return
   
   try {
-    // Restaurar o estoque dos produtos
     const produtos = parseProducts(sale)
     
     for (const item of produtos) {
@@ -1166,7 +1170,6 @@ const deleteSale = async (sale) => {
       }
     }
     
-    // Agora excluir a venda
     const { error } = await supabase
       .from('sales')
       .delete()
@@ -1174,7 +1177,6 @@ const deleteSale = async (sale) => {
     
     if (error) throw error
     
-    // Remover a venda da lista localmente para atualização imediata
     const index = sales.value.findIndex(s => s.id === sale.id)
     if (index !== -1) {
       sales.value.splice(index, 1)
@@ -1187,18 +1189,15 @@ const deleteSale = async (sale) => {
   }
 }
 
-// FUNÇÃO GENERATE RECEIPT
 const generateReceipt = async (sale) => {
   const doc = new jsPDF()
   const primaryColor = [255, 140, 0]
   const darkGray = [60, 60, 60]
   const lightGray = [150, 150, 150]
   
-  // Faixa laranja no topo
   doc.setFillColor(...primaryColor)
   doc.rect(0, 0, 210, 35, 'F')
   
-  // Logo à esquerda
   try {
     const img = new Image()
     img.crossOrigin = 'Anonymous'
@@ -1228,7 +1227,6 @@ const generateReceipt = async (sale) => {
     console.error('Erro ao carregar logo:', error)
   }
   
-  // Informações da empresa ao lado da logo (texto branco)
   doc.setTextColor(255, 255, 255)
   doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
@@ -1239,7 +1237,6 @@ const generateReceipt = async (sale) => {
   doc.text('Juazeiro, Bahia, Brasil', 45, 23)
   doc.text('Tel: (87) 98864-1590', 45, 28)
   
-  // Número do recibo no canto direito (texto branco)
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
@@ -1248,18 +1245,15 @@ const generateReceipt = async (sale) => {
   const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
   doc.text(saleTypeText, 195, 18, { align: 'right' })
   
-  // Linha divisória
   doc.setTextColor(...darkGray)
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
   doc.line(15, 40, 195, 40)
   
-  // Título do documento
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
   doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
   
-  // Informações do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('DATA', 15, 60)
@@ -1269,7 +1263,6 @@ const generateReceipt = async (sale) => {
   doc.setFontSize(9)
   doc.text(formatDate(sale.date), 15, 67)
   
-  // Status do pedido sem emoji
   const statusLabels = {
     pendente: 'Pendente',
     em_rota: 'Em Rota',
@@ -1285,7 +1278,6 @@ const generateReceipt = async (sale) => {
     doc.text(sale.event_name || '', 150, 67)
   }
   
-  // Dados do cliente
   doc.setFillColor(245, 245, 245)
   doc.rect(15, 73, 180, 30, 'F')
   doc.setTextColor(...darkGray)
@@ -1300,7 +1292,6 @@ const generateReceipt = async (sale) => {
     doc.text(`Endereco: ${sale.clients.address.substring(0, 70)}`, 20, 98)
   }
   
-  // Produtos do pedido
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.text('PRODUTOS DO PEDIDO', 15, 113)
@@ -1407,6 +1398,8 @@ const closeReceiptConfirm = () => {
 const closeModal = () => {
   showModal.value = false
   editingSale.value = null
+  document.body.classList.remove('modal-open')
+  
   form.value = {
     date: new Date().toISOString().split('T')[0],
     sale_type: 'retail',
@@ -1451,15 +1444,15 @@ onMounted(() => {
 }
 
 .input-field {
-  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all text-sm md:text-base;
+  @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
 }
 
 .btn-primary {
-  @apply px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md text-sm md:text-base;
+  @apply px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
 }
 
 .btn-outline {
-  @apply px-4 md:px-6 py-2 md:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm md:text-base;
+  @apply px-4 md:px-6 py-2 md:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
 }
 
 .animate-fade-in {
@@ -1477,20 +1470,47 @@ onMounted(() => {
   }
 }
 
+/* ✅ CORREÇÕES PARA MODAL NO MOBILE */
+@media (max-width: 768px) {
+  /* Previne scroll do body quando modal está aberto */
+  body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Ajustes de scroll para iOS */
+  .overscroll-contain {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Garante que o conteúdo não fique embaixo do header/footer */
+  .pb-32 {
+    padding-bottom: 8rem;
+  }
+  
+  /* Previne zoom ao focar inputs no iOS */
+  .input-field {
+    font-size: 16px !important;
+  }
+  
+  select.input-field {
+    font-size: 16px !important;
+  }
+}
+
+/* Melhora a performance do scroll em mobile */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
 /* Melhorias de responsividade */
 @media (max-width: 640px) {
   .card {
     @apply p-3;
-  }
-  
-  .input-field {
-    @apply py-2 text-sm;
-  }
-}
-
-@media (max-width: 768px) {
-  .btn-primary, .btn-outline {
-    @apply py-2 text-sm;
   }
 }
 </style>
