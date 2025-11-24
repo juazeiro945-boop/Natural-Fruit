@@ -367,13 +367,16 @@
         </div>
       </div>
 
-      <!-- Modal Novo/Editar Pedido - CORRIGIDO MOBILE -->
-      <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-0 z-50">
-        <div class="bg-white w-full h-full md:h-auto md:max-w-3xl md:rounded-xl md:max-h-[95vh] flex flex-col overflow-hidden">
-          <!-- Header do Modal - FIXO -->
-          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-20 flex-shrink-0">
+      <!-- ✅ MODAL NOVO/EDITAR PEDIDO - CORRIGIDO PARA MOBILE -->
+      <div v-if="showModal" class="modal-overlay">
+        <div class="modal-container">
+          
+          <!-- Header Fixo -->
+          <div class="modal-header">
             <div>
-              <h3 class="text-base md:text-xl font-bold text-white">{{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}</h3>
+              <h3 class="text-base md:text-xl font-bold text-white">
+                {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
+              </h3>
               <p v-if="form.produtos.length > 0" class="text-xs md:text-sm text-white opacity-90">
                 📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }} no pedido
               </p>
@@ -384,11 +387,14 @@
               </svg>
             </button>
           </div>
-          
-          <!-- Conteúdo do Modal - SCROLLABLE -->
-          <form @submit.prevent="saveSale" class="flex-1 flex flex-col overflow-hidden">
-            <div class="flex-1 overflow-y-auto overscroll-contain">
-              <div class="p-4 md:p-6 space-y-4 pb-32 md:pb-6">
+
+          <!-- Formulário -->
+          <form @submit.prevent="saveSale" class="modal-form">
+            
+            <!-- Conteúdo Scrollable -->
+            <div class="modal-content">
+              <div class="modal-content-inner">
+                
                 <!-- Informações Básicas -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div>
@@ -412,7 +418,7 @@
                   </select>
                 </div>
 
-                <!-- PRODUTOS - RESPONSIVO -->
+                <!-- PRODUTOS -->
                 <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 bg-primary-50">
                   <div class="flex justify-between items-center">
                     <label class="label mb-0 text-primary-700 font-bold text-sm md:text-base">📦 Produtos do Pedido</label>
@@ -556,11 +562,12 @@
                   <label class="label text-sm md:text-base">Observações</label>
                   <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
                 </div>
+
               </div>
             </div>
 
-            <!-- Footer do Modal - FIXO NO MOBILE -->
-            <div class="sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-6 flex-shrink-0 shadow-lg md:shadow-none z-10">
+            <!-- Footer Fixo -->
+            <div class="modal-footer">
               <div class="flex flex-col md:flex-row gap-2 md:gap-3">
                 <button type="button" @click="closeModal" class="flex-1 btn-outline order-2 md:order-1 py-3">
                   Cancelar
@@ -570,6 +577,7 @@
                 </button>
               </div>
             </div>
+
           </form>
         </div>
       </div>
@@ -1445,6 +1453,7 @@ onMounted(() => {
 
 .input-field {
   @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+  font-size: 16px !important; /* Previne zoom no iOS */
 }
 
 .btn-primary {
@@ -1470,40 +1479,97 @@ onMounted(() => {
   }
 }
 
-/* ✅ CORREÇÕES PARA MODAL NO MOBILE */
-@media (max-width: 768px) {
-  /* Previne scroll do body quando modal está aberto */
-  body.modal-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
+/* ===== MODAL RESPONSIVO - SOLUÇÃO COMPLETA ===== */
+
+/* Previne scroll do body quando modal aberto */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Container do Modal */
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50;
+  padding: 0;
+}
+
+.modal-container {
+  @apply bg-white w-full h-full flex flex-col;
+  max-height: 100vh;
+}
+
+/* Desktop: modal com tamanho limitado e bordas arredondadas */
+@media (min-width: 768px) {
+  .modal-overlay {
+    @apply p-4;
   }
   
-  /* Ajustes de scroll para iOS */
-  .overscroll-contain {
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Garante que o conteúdo não fique embaixo do header/footer */
-  .pb-32 {
-    padding-bottom: 8rem;
-  }
-  
-  /* Previne zoom ao focar inputs no iOS */
-  .input-field {
-    font-size: 16px !important;
-  }
-  
-  select.input-field {
-    font-size: 16px !important;
+  .modal-container {
+    @apply rounded-xl;
+    max-width: 48rem; /* max-w-3xl */
+    max-height: 95vh;
+    height: auto;
   }
 }
 
-/* Melhora a performance do scroll em mobile */
-.overflow-y-auto {
+/* Header Fixo */
+.modal-header {
+  @apply sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between flex-shrink-0;
+  z-index: 30;
+}
+
+/* Formulário */
+.modal-form {
+  @apply flex-1 flex flex-col;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Área de Conteúdo Scrollable */
+.modal-content {
+  @apply flex-1;
+  overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.modal-content-inner {
+  @apply p-4 md:p-6 space-y-4;
+  padding-bottom: 12rem; /* Espaço extra no mobile para não ficar embaixo do footer */
+}
+
+@media (min-width: 768px) {
+  .modal-content-inner {
+    padding-bottom: 1.5rem; /* Desktop não precisa de tanto espaço */
+  }
+}
+
+/* Footer Fixo */
+.modal-footer {
+  @apply sticky bottom-0 bg-white border-t-2 border-gray-200 p-3 md:p-4 flex-shrink-0;
+  z-index: 30;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 768px) {
+  .modal-footer {
+    @apply md:p-6;
+    box-shadow: none;
+  }
+}
+
+/* Previne zoom no iOS em inputs e selects */
+input.input-field,
+select.input-field,
+textarea.input-field {
+  font-size: 16px !important;
+}
+
+/* Scroll suave em todos os navegadores */
+.modal-content {
   scroll-behavior: smooth;
 }
 
