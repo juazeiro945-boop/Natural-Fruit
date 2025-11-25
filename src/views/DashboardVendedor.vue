@@ -16,24 +16,6 @@
         </div>
       </div>
 
-      <div class="card"><template>
-  <Layout>
-    <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Pedidos para Entrega</h2>
-          <p class="text-gray-600 mt-1">Gerencie suas entregas e novos pedidos</p>
-        </div>
-        <div class="flex gap-2">
-          <button v-if="authStore.isAdmin" @click="showModalConsultaCliente = true" class="flex-1 md:flex-none btn-secondary">
-            🔍 Consultar Cliente
-          </button>
-          <button @click="showModalNovoPedido = true" class="flex-1 md:flex-none btn-primary">
-            ➕ Novo Pedido
-          </button>
-        </div>
-      </div>
-
       <div class="card">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
@@ -141,13 +123,13 @@
                   <div class="flex items-center gap-2">
                     <button @click="openDetailModal(pedido)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Visualizar Detalhes">
                       <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
                       </svg>
                     </button>
                     <button @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600" title="Gerar Recibo">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
                       </svg>
                     </button>
                   </div>
@@ -160,7 +142,7 @@
         <div v-if="pedidos.length === 0" class="text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
             </svg>
           </div>
           <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
@@ -205,7 +187,7 @@
         <div v-if="pedidos.length === 0" class="card text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
             </svg>
           </div>
           <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
@@ -370,7 +352,7 @@
             <div class="flex items-center space-x-3">
               <button @click="closeModalNovoPedido" class="text-white p-1 rounded-lg flex-shrink-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
                 </svg>
               </button>
               <div>
@@ -477,7 +459,7 @@
 
                 <button type="button" @click="adicionarProduto" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md flex items-center justify-center">
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" / />
                   </svg>
                   Adicionar Produto
                 </button>
