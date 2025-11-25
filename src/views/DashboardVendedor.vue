@@ -65,34 +65,59 @@
         </div>
       </div>
 
-     <!-- NOVO LAYOUT DOS CARDS - MAIS COMPACTO -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
-    <!-- ... CÓDIGO NOVO DOS CARDS ... -->
-            <div>
-              <span class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(0, 8) }}</span>
-              <p class="font-bold text-lg text-gray-900 mt-1">{{ pedido.clients?.name }}</p>
+      <!-- NOVO LAYOUT DOS CARDS - COMPACTO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-2 py-1 rounded-full font-semibold">
+                  {{ getStatusLabel(pedido.status_entrega) }}
+                </span>
+                <span class="text-xs text-gray-500">#{{ pedido.id.slice(0, 8) }}</span>
+              </div>
+              <p class="font-bold text-gray-900 truncate">{{ pedido.clients?.name }}</p>
             </div>
-            <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-3 py-1 rounded-full font-semibold">
-              {{ getStatusLabel(pedido.status_entrega) }}
-            </span>
+            <button 
+              @click="toggleDetalhesPedido(pedido.id)"
+              class="text-gray-500 hover:text-primary-600 transition-colors p-1"
+              :title="pedidoDetalhesAberto === pedido.id ? 'Ocultar detalhes' : 'Ver detalhes'"
+            >
+              <svg v-if="pedidoDetalhesAberto === pedido.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7-7"/>
+              </svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
           </div>
 
-          <div class="space-y-3 mb-4">
+          <div class="space-y-2 mb-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Produto:</span>
+              <span class="font-semibold truncate ml-2 max-w-[150px]">{{ pedido.products?.name }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Quantidade:</span>
+              <span class="font-semibold">{{ pedido.quantity }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Valor:</span>
+              <span class="font-bold text-primary-600">{{ formatCurrency(pedido.total) }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-gray-600">Pagamento:</span>
+              <span class="font-semibold">{{ getPaymentMethodLabel(pedido.payment_method) }}</span>
+            </div>
+          </div>
+
+          <!-- Detalhes expandidos -->
+          <div v-if="pedidoDetalhesAberto === pedido.id" class="border-t pt-3 mt-3 space-y-3">
             <div v-if="pedido.vendedor_id" class="flex items-start space-x-2 bg-blue-50 p-2 rounded">
               <span class="text-lg">👤</span>
               <div class="flex-1">
                 <p class="text-sm text-gray-600">Vendedor</p>
                 <p class="font-semibold text-blue-700">{{ getVendedorName(pedido.vendedor_id) }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">📦</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Produto</p>
-                <p class="font-semibold">{{ pedido.products?.name }}</p>
-                <p class="text-sm text-gray-600">Quantidade: {{ pedido.quantity }}</p>
               </div>
             </div>
 
@@ -109,29 +134,6 @@
               <div class="flex-1">
                 <p class="text-sm text-gray-600">Endereço</p>
                 <p class="font-semibold text-sm">{{ pedido.clients?.address || 'Não informado' }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">💰</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Valor</p>
-                <p class="font-bold text-lg text-primary-600">{{ formatCurrency(pedido.total) }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">💳</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Forma de Pagamento</p>
-                <p class="font-semibold">{{ getPaymentMethodLabel(pedido.payment_method) }}</p>
-                <button 
-                  v-if="authStore.isAdmin && pedido.status_entrega !== 'cancelado'" 
-                  @click="alterarFormaPagamento(pedido)"
-                  class="text-xs text-primary-600 hover:underline mt-1"
-                >
-                  Alterar
-                </button>
               </div>
             </div>
 
@@ -158,48 +160,55 @@
                 <p class="text-sm">{{ pedido.notes }}</p>
               </div>
             </div>
+
+            <div v-if="pedido.status_entrega !== 'pendente'" class="bg-gray-50 rounded-lg p-3">
+              <p class="text-xs text-gray-500 mb-1">
+                {{ pedido.status_entrega === 'entregue' ? '✅ Entregue em:' : '❌ Cancelado em:' }}
+              </p>
+              <p class="text-sm font-semibold">{{ formatDateTime(pedido.data_entrega) }}</p>
+              <p v-if="pedido.motivo_cancelamento" class="text-xs text-gray-600 mt-2">
+                <strong>Motivo:</strong> {{ pedido.motivo_cancelamento }}
+              </p>
+              <p v-if="pedido.observacao_entrega" class="text-xs text-gray-600 mt-1">
+                <strong>Obs:</strong> {{ pedido.observacao_entrega }}
+              </p>
+              <button 
+                v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
+                @click="desfazerEntrega(pedido)"
+                class="mt-2 text-xs text-red-600 hover:underline font-semibold"
+              >
+                ↩️ Desfazer Entrega
+              </button>
+            </div>
           </div>
 
-          <div v-if="pedido.status_entrega !== 'pendente'" class="bg-gray-50 rounded-lg p-3 mb-4">
-            <p class="text-xs text-gray-500 mb-1">
-              {{ pedido.status_entrega === 'entregue' ? '✅ Entregue em:' : '❌ Cancelado em:' }}
-            </p>
-            <p class="text-sm font-semibold">{{ formatDateTime(pedido.data_entrega) }}</p>
-            <p v-if="pedido.motivo_cancelamento" class="text-xs text-gray-600 mt-2">
-              <strong>Motivo:</strong> {{ pedido.motivo_cancelamento }}
-            </p>
-            <p v-if="pedido.observacao_entrega" class="text-xs text-gray-600 mt-1">
-              <strong>Obs:</strong> {{ pedido.observacao_entrega }}
-            </p>
-            <button 
-              v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
-              @click="desfazerEntrega(pedido)"
-              class="mt-2 text-xs text-red-600 hover:underline font-semibold"
-            >
-              ↩️ Desfazer Entrega
-            </button>
-          </div>
-
-          <div class="flex gap-2 flex-wrap">
+          <div class="flex gap-2 flex-wrap mt-3">
             <button 
               v-if="pedido.status_entrega === 'pendente'" 
               @click="confirmarEntrega(pedido)" 
-              class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors"
+              class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
             >
               ✅ Entregue
             </button>
             <button 
               v-if="pedido.status_entrega === 'pendente'" 
               @click="abrirModalCancelamento(pedido)" 
-              class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors"
+              class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
             >
               ❌ Cancelar
             </button>
             <button 
               @click="generateReceipt(pedido)" 
-              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
+              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
             >
               📄 Recibo
+            </button>
+            <button 
+              v-if="authStore.isAdmin && pedido.status_entrega !== 'cancelado'" 
+              @click="alterarFormaPagamento(pedido)"
+              class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 rounded-lg font-semibold transition-colors text-sm"
+            >
+              💳 Alterar
             </button>
           </div>
         </div>
@@ -635,7 +644,6 @@
 </template>
 
 <script setup>
-  const pedidoDetalhesAberto = ref(null)
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
@@ -659,6 +667,7 @@ const clientesEncontrados = ref([])
 const clienteSelecionadoConsulta = ref(null)
 const historicoPedidosCliente = ref([])
 const estatisticasCliente = ref({ totalComprado: 0, totalDevido: 0 })
+const pedidoDetalhesAberto = ref(null) // NOVA VARIÁVEL
 
 const filters = ref({
   date: '',
@@ -726,6 +735,15 @@ const stats = computed(() => {
 const totalPedido = computed(() => {
   return formPedido.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
 })
+
+// NOVA FUNÇÃO PARA EXPANDIR/RECOLHER DETALHES
+const toggleDetalhesPedido = (pedidoId) => {
+  if (pedidoDetalhesAberto.value === pedidoId) {
+    pedidoDetalhesAberto.value = null
+  } else {
+    pedidoDetalhesAberto.value = pedidoId
+  }
+}
 
 const getTotalItemsForm = () => {
   return formPedido.value.produtos.length
@@ -1323,13 +1341,7 @@ const generateReceipt = async (pedido) => {
   const fileName = `pedido-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
 }
-const toggleDetalhesPedido = (pedidoId) => {
-  if (pedidoDetalhesAberto.value === pedidoId) {
-    pedidoDetalhesAberto.value = null
-  } else {
-    pedidoDetalhesAberto.value = pedidoId
-  }
-}
+
 onMounted(() => {
   loadPedidos()
   loadClientes()
