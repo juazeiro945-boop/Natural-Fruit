@@ -16,6 +16,24 @@
         </div>
       </div>
 
+      <div class="card"><template>
+  <Layout>
+    <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Pedidos para Entrega</h2>
+          <p class="text-gray-600 mt-1">Gerencie suas entregas e novos pedidos</p>
+        </div>
+        <div class="flex gap-2">
+          <button v-if="authStore.isAdmin" @click="showModalConsultaCliente = true" class="flex-1 md:flex-none btn-secondary">
+            🔍 Consultar Cliente
+          </button>
+          <button @click="showModalNovoPedido = true" class="flex-1 md:flex-none btn-primary">
+            ➕ Novo Pedido
+          </button>
+        </div>
+      </div>
+
       <div class="card">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
@@ -65,153 +83,133 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
-          <div class="flex justify-between items-start mb-4 pb-3 border-b">
+      <!-- TABELA DESKTOP -->
+      <div class="hidden md:block card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Data</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Itens</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pagamento</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status Pedido</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status Pgto</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="pedido in pedidos" :key="pedido.id" class="hover:bg-gray-50">
+                <td class="px-4 py-4 text-sm text-gray-900 whitespace-nowrap">
+                  {{ formatDate(pedido.date) }}
+                </td>
+                <td class="px-4 py-4 text-sm">
+                  <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                    {{ pedido.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo' }}
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-900">
+                  <div class="font-semibold">{{ pedido.clients?.name }}</div>
+                  <div class="text-xs text-gray-500">{{ pedido.clients?.address || 'N/A' }}</div>
+                </td>
+                <td class="px-4 py-4 text-sm">
+                  <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                    3 itens
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm font-bold text-primary-600">
+                  {{ formatCurrency(pedido.total) }}
+                </td>
+                <td class="px-4 py-4 text-sm">
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    {{ getPaymentMethodLabel(pedido.payment_method) }}
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm">
+                  <span :class="getStatusBadge(pedido.status_entrega)" class="px-2 py-1 rounded-full text-xs font-medium">
+                    {{ getStatusLabel(pedido.status_entrega) }}
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm">
+                  <span :class="pedido.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="px-2 py-1 rounded-full text-xs font-medium">
+                    {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
+                  </span>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="flex items-center gap-2">
+                    <button @click="openDetailModal(pedido)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Visualizar Detalhes">
+                      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                    </button>
+                    <button @click="generateReceipt(pedido)" class="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600" title="Gerar Recibo">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="pedidos.length === 0" class="text-center py-12">
+          <div class="text-gray-400 mb-4">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+          </div>
+          <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
+          <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou aguarde novos pedidos</p>
+        </div>
+      </div>
+
+      <!-- CARDS MOBILE -->
+      <div class="md:hidden space-y-4">
+        <div v-for="pedido in pedidos" :key="pedido.id" class="card">
+          <div class="flex justify-between items-start mb-3">
             <div>
-              <span class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(0, 8) }}</span>
-              <p class="font-bold text-lg text-gray-900 mt-1">{{ pedido.clients?.name }}</p>
+              <p class="text-xs text-gray-500">{{ formatDate(pedido.date) }}</p>
+              <p class="font-bold text-gray-900">{{ pedido.clients?.name }}</p>
             </div>
-            <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-3 py-1 rounded-full font-semibold">
+            <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-2 py-1 rounded-full font-semibold">
               {{ getStatusLabel(pedido.status_entrega) }}
             </span>
           </div>
 
-          <div class="space-y-3 mb-4">
-            <div v-if="pedido.vendedor_id" class="flex items-start space-x-2 bg-blue-50 p-2 rounded">
-              <span class="text-lg">👤</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Vendedor</p>
-                <p class="font-semibold text-blue-700">{{ getVendedorName(pedido.vendedor_id) }}</p>
-              </div>
+          <div class="space-y-2 mb-4">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Total:</span>
+              <span class="font-bold text-primary-600">{{ formatCurrency(pedido.total) }}</span>
             </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">📦</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Produto</p>
-                <p class="font-semibold">{{ pedido.products?.name }}</p>
-                <p class="text-sm text-gray-600">Quantidade: {{ pedido.quantity }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">📞</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Telefone</p>
-                <p class="font-semibold">{{ pedido.clients?.phone || 'Não informado' }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">📍</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Endereço</p>
-                <p class="font-semibold text-sm">{{ pedido.clients?.address || 'Não informado' }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">💰</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Valor</p>
-                <p class="font-bold text-lg text-primary-600">{{ formatCurrency(pedido.total) }}</p>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">💳</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Forma de Pagamento</p>
-                <p class="font-semibold">{{ getPaymentMethodLabel(pedido.payment_method) }}</p>
-                <button 
-                  v-if="authStore.isAdmin && pedido.status_entrega !== 'cancelado'" 
-                  @click="alterarFormaPagamento(pedido)"
-                  class="text-xs text-primary-600 hover:underline mt-1"
-                >
-                  Alterar
-                </button>
-              </div>
-            </div>
-
-            <div class="flex items-start space-x-2">
-              <span class="text-lg">📅</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Data do Pedido</p>
-                <p class="font-semibold">{{ formatDate(pedido.date) }}</p>
-              </div>
-            </div>
-
-            <div v-if="pedido.tem_troca" class="flex items-start space-x-2 bg-yellow-50 p-2 rounded">
-              <span class="text-lg">🔄</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Troca</p>
-                <p class="text-sm font-semibold text-yellow-700">{{ pedido.observacao_troca }}</p>
-              </div>
-            </div>
-
-            <div v-if="pedido.notes" class="flex items-start space-x-2">
-              <span class="text-lg">📝</span>
-              <div class="flex-1">
-                <p class="text-sm text-gray-600">Observações</p>
-                <p class="text-sm">{{ pedido.notes }}</p>
-              </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Pagamento:</span>
+              <span class="font-semibold">{{ getPaymentMethodLabel(pedido.payment_method) }}</span>
             </div>
           </div>
 
-          <div v-if="pedido.status_entrega !== 'pendente'" class="bg-gray-50 rounded-lg p-3 mb-4">
-            <p class="text-xs text-gray-500 mb-1">
-              {{ pedido.status_entrega === 'entregue' ? '✅ Entregue em:' : '❌ Cancelado em:' }}
-            </p>
-            <p class="text-sm font-semibold">{{ formatDateTime(pedido.data_entrega) }}</p>
-            <p v-if="pedido.motivo_cancelamento" class="text-xs text-gray-600 mt-2">
-              <strong>Motivo:</strong> {{ pedido.motivo_cancelamento }}
-            </p>
-            <p v-if="pedido.observacao_entrega" class="text-xs text-gray-600 mt-1">
-              <strong>Obs:</strong> {{ pedido.observacao_entrega }}
-            </p>
-            <button 
-              v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
-              @click="desfazerEntrega(pedido)"
-              class="mt-2 text-xs text-red-600 hover:underline font-semibold"
-            >
-              ↩️ Desfazer Entrega
+          <div class="flex gap-2">
+            <button @click="openDetailModal(pedido)" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg text-sm font-semibold">
+              👁️ Detalhes
             </button>
-          </div>
-
-          <div class="flex gap-2 flex-wrap">
-            <button 
-              v-if="pedido.status_entrega === 'pendente'" 
-              @click="confirmarEntrega(pedido)" 
-              class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors"
-            >
-              ✅ Entregue
-            </button>
-            <button 
-              v-if="pedido.status_entrega === 'pendente'" 
-              @click="abrirModalCancelamento(pedido)" 
-              class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors"
-            >
-              ❌ Cancelar
-            </button>
-            <button 
-              @click="generateReceipt(pedido)" 
-              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
-            >
+            <button @click="generateReceipt(pedido)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold">
               📄 Recibo
             </button>
           </div>
         </div>
-      </div>
 
-      <div v-if="pedidos.length === 0" class="card text-center py-12">
-        <div class="text-gray-400 mb-4">
-          <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-          </svg>
+        <div v-if="pedidos.length === 0" class="card text-center py-12">
+          <div class="text-gray-400 mb-4">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+          </div>
+          <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
         </div>
-        <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
-        <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou aguarde novos pedidos</p>
       </div>
 
       <!-- Modal Cancelamento -->
@@ -250,6 +248,116 @@
               <button type="submit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold">Confirmar</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- MODAL DE DETALHES -->
+      <div v-if="showDetailModal && pedidoSelecionadoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
+          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
+            <h3 class="text-lg md:text-xl font-bold text-white">Detalhes do Pedido</h3>
+            <button @click="closeDetailModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">×</button>
+          </div>
+          
+          <div class="p-4 md:p-6 space-y-3 md:space-y-4">
+            <div class="grid grid-cols-2 gap-3 md:gap-4">
+              <div class="card bg-gray-50 p-3 md:p-4">
+                <p class="text-xs md:text-sm text-gray-600">Data</p>
+                <p class="font-semibold text-sm md:text-base">{{ formatDate(pedidoSelecionadoModal.date) }}</p>
+              </div>
+              <div class="card bg-gray-50 p-3 md:p-4">
+                <p class="text-xs md:text-sm text-gray-600">Tipo</p>
+                <p class="font-semibold text-sm md:text-base">{{ pedidoSelecionadoModal.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo' }}</p>
+              </div>
+            </div>
+
+            <div class="card bg-blue-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-blue-900 text-sm md:text-base">👤 Cliente</h4>
+              <p class="font-semibold text-sm md:text-base">{{ pedidoSelecionadoModal.clients?.name }}</p>
+              <p class="text-xs md:text-sm text-gray-600">{{ pedidoSelecionadoModal.clients?.phone }}</p>
+            </div>
+
+            <div v-if="pedidoSelecionadoModal.vendedor_id" class="card bg-purple-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-purple-900 text-sm md:text-base">🧑‍💼 Vendedor</h4>
+              <p class="font-semibold text-sm md:text-base">{{ getVendedorName(pedidoSelecionadoModal.vendedor_id) }}</p>
+            </div>
+
+            <div class="card bg-green-50 p-3 md:p-4">
+              <h4 class="font-bold mb-2 md:mb-3 text-green-900 text-sm md:text-base">📦 Produtos ({{ getTotalItems(pedidoSelecionadoModal) }} itens)</h4>
+              <div class="space-y-2">
+                <div v-for="(item, index) in parseProducts(pedidoSelecionadoModal)" :key="index" class="bg-white p-2 md:p-3 rounded-lg">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <p class="font-semibold text-sm md:text-base">{{ item.name }}</p>
+                      <p class="text-xs md:text-sm text-gray-600">Qtd: {{ item.quantity }} × {{ formatCurrency(item.unit_price) }}</p>
+                    </div>
+                    <p class="font-bold text-green-700 text-sm md:text-base">{{ formatCurrency(item.total) }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="pedidoSelecionadoModal.has_exchange || pedidoSelecionadoModal.tem_troca" class="card bg-yellow-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-yellow-900 text-sm md:text-base">🔄 Troca</h4>
+              <p class="text-xs md:text-sm"><strong>Produto:</strong> {{ pedidoSelecionadoModal.exchange_product || pedidoSelecionadoModal.observacao_troca }}</p>
+              <p v-if="pedidoSelecionadoModal.exchange_quantity" class="text-xs md:text-sm"><strong>Quantidade:</strong> {{ pedidoSelecionadoModal.exchange_quantity }}</p>
+              <p v-if="pedidoSelecionadoModal.exchange_total" class="text-xs md:text-sm"><strong>Valor:</strong> {{ formatCurrency(pedidoSelecionadoModal.exchange_total) }}</p>
+            </div>
+
+            <div v-if="pedidoSelecionadoModal.is_event" class="card bg-purple-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-purple-900 text-sm md:text-base">🎉 Evento</h4>
+              <p class="font-semibold text-sm md:text-base">{{ pedidoSelecionadoModal.event_name }}</p>
+            </div>
+
+            <div class="card bg-gray-50 p-3 md:p-4">
+              <div class="grid grid-cols-2 gap-3 md:gap-4">
+                <div>
+                  <p class="text-xs md:text-sm text-gray-600">Forma de Pagamento</p>
+                  <p class="font-semibold text-sm md:text-base">{{ getPaymentMethodLabel(pedidoSelecionadoModal.payment_method) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs md:text-sm text-gray-600">Status Pedido</p>
+                  <p class="font-semibold text-sm md:text-base">{{ getStatusLabel(pedidoSelecionadoModal.status_entrega) }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="pedidoSelecionadoModal.notes" class="card bg-gray-50 p-3 md:p-4">
+              <h4 class="font-bold mb-1 md:mb-2 text-gray-900 text-sm md:text-base">📝 Observações</h4>
+              <p class="text-xs md:text-sm text-gray-700">{{ pedidoSelecionadoModal.notes }}</p>
+            </div>
+
+            <div class="card bg-primary-50 border-2 border-primary-300 p-3 md:p-4">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-base md:text-lg">TOTAL:</span>
+                <span class="font-bold text-xl md:text-2xl text-primary-700">{{ formatCurrency(pedidoSelecionadoModal.total) }}</span>
+              </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="flex gap-2 flex-wrap pt-2">
+              <button 
+                v-if="pedidoSelecionadoModal.status_entrega === 'pendente'" 
+                @click="confirmarEntrega(pedidoSelecionadoModal); closeDetailModal()" 
+                class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold transition-colors text-sm md:text-base"
+              >
+                ✅ Entregue
+              </button>
+              <button 
+                v-if="pedidoSelecionadoModal.status_entrega === 'pendente'" 
+                @click="abrirModalCancelamento(pedidoSelecionadoModal); closeDetailModal()" 
+                class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold transition-colors text-sm md:text-base"
+              >
+                ❌ Cancelar
+              </button>
+              <button 
+                @click="generateReceipt(pedidoSelecionadoModal); closeDetailModal()" 
+                class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors text-sm md:text-base"
+              >
+                📄 Recibo
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -650,6 +758,8 @@ const showModalNovoPedido = ref(false)
 const showModalAlterarPagamento = ref(false)
 const showModalConsultaCliente = ref(false)
 const pedidoSelecionado = ref(null)
+const showDetailModal = ref(false)
+const pedidoSelecionadoModal = ref(null)
 const novaFormaPagamento = ref('')
 const loading = ref(false)
 const buscaCliente = ref('')
@@ -729,6 +839,39 @@ const getTotalItemsForm = () => {
   return formPedido.value.produtos.length
 }
 
+const getTotalItems = (pedido) => {
+  if (pedido.products_data) {
+    try {
+      const products = JSON.parse(pedido.products_data)
+      return products.length
+    } catch (e) {
+      return 1
+    }
+  }
+  return 1
+}
+
+const parseProducts = (pedido) => {
+  if (pedido.products_data) {
+    try {
+      return JSON.parse(pedido.products_data)
+    } catch (e) {
+      return [{
+        name: pedido.products?.name || 'Produto',
+        quantity: pedido.quantity,
+        unit_price: pedido.unit_price || (pedido.total / pedido.quantity),
+        total: pedido.total
+      }]
+    }
+  }
+  return [{
+    name: pedido.products?.name || 'Produto',
+    quantity: pedido.quantity,
+    unit_price: pedido.unit_price || (pedido.total / pedido.quantity),
+    total: pedido.total
+  }]
+}
+
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 }
@@ -777,6 +920,16 @@ const getVendedorName = (vendedorId) => {
   if (!vendedorId) return 'Não informado'
   const vendedor = vendedores.value.find(v => v.id === vendedorId)
   return vendedor?.name || 'Não informado'
+}
+
+const openDetailModal = (pedido) => {
+  pedidoSelecionadoModal.value = pedido
+  showDetailModal.value = true
+}
+
+const closeDetailModal = () => {
+  showDetailModal.value = false
+  pedidoSelecionadoModal.value = null
 }
 
 const adicionarProduto = () => {
@@ -1320,6 +1473,8 @@ const generateReceipt = async (pedido) => {
   
   const fileName = `pedido-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
+  
+  closeDetailModal()
 }
 
 onMounted(() => {
