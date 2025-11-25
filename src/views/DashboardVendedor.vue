@@ -65,9 +65,10 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
-          <div class="flex justify-between items-start mb-4 pb-3 border-b">
+     <!-- NOVO LAYOUT DOS CARDS - MAIS COMPACTO -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div v-for="pedido in pedidos" :key="pedido.id" class="card hover:shadow-xl transition-shadow">
+    <!-- ... CÓDIGO NOVO DOS CARDS ... -->
             <div>
               <span class="text-xs text-gray-500">Pedido #{{ pedido.id.slice(0, 8) }}</span>
               <p class="font-bold text-lg text-gray-900 mt-1">{{ pedido.clients?.name }}</p>
@@ -634,6 +635,7 @@
 </template>
 
 <script setup>
+  const pedidoDetalhesAberto = ref(null)
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
@@ -1321,7 +1323,13 @@ const generateReceipt = async (pedido) => {
   const fileName = `pedido-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
 }
-
+const toggleDetalhesPedido = (pedidoId) => {
+  if (pedidoDetalhesAberto.value === pedidoId) {
+    pedidoDetalhesAberto.value = null
+  } else {
+    pedidoDetalhesAberto.value = pedidoId
+  }
+}
 onMounted(() => {
   loadPedidos()
   loadClientes()
