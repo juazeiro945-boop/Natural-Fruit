@@ -118,6 +118,8 @@ export const useAuthStore = defineStore('auth', {
     async signUp(email, password, name, tipo_usuario = 'escritorio', telefone = '') {
       this.loading = true
       try {
+        console.log('🔵 Iniciando signUp:', { email, name, tipo_usuario })
+        
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -131,25 +133,38 @@ export const useAuthStore = defineStore('auth', {
         
         if (error) throw error
         
+        console.log('🔵 Auth user criado:', data.user.id)
+        
+        // Aguardar um pouco
         await new Promise(resolve => setTimeout(resolve, 1000))
         
+        // USAR UPSERT COM ID INCLUÍDO
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({ 
+          .upsert({ 
+            id: data.user.id,
             name, 
             email,
             tipo_usuario,
-            telefone,
+            telefone: telefone || null,
             ativo: true,
-            senha_temp: password
+            senha_temp: password,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
           })
-          .eq('id', data.user.id)
         
-        if (profileError) throw profileError
+        if (profileError) {
+          console.error('❌ Erro ao criar profile:', profileError)
+          throw profileError
+        }
+        
+        console.log('✅ Profile criado com sucesso!')
         
         return { success: true, userId: data.user.id }
       } catch (error) {
-        console.error('Erro no cadastro:', error)
+        console.error('❌ Erro no cadastro:', error)
         return { success: false, error: error.message }
       } finally {
         this.loading = false
