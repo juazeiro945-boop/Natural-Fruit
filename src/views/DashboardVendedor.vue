@@ -68,85 +68,63 @@
         </div>
       </div>
 
-      <!-- CARDS DE PEDIDOS - NOVO LAYOUT IGUAL AO DE VENDAS -->
-      <!-- Visualização Desktop -->
-      <div class="hidden md:block card overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Data</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Cliente</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Produto</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Qtd</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Total</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Pagamento</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Vendedor</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="pedido in pedidos" :key="pedido.id" class="border-t hover:bg-gray-50">
-              <td class="px-4 py-3 text-sm whitespace-nowrap">{{ formatDate(pedido.date) }}</td>
-              <td class="px-4 py-3 text-sm">{{ pedido.clients?.name }}</td>
-              <td class="px-4 py-3 text-sm">{{ pedido.products?.name }}</td>
-              <td class="px-4 py-3 text-sm">{{ pedido.quantity }}</td>
-              <td class="px-4 py-3 text-sm font-semibold">{{ formatCurrency(pedido.total) }}</td>
-              <td class="px-4 py-3 text-sm">
-                <span :class="getPaymentBadge(pedido.payment_method)">{{ getPaymentMethodLabel(pedido.payment_method) }}</span>
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <span :class="getStatusBadge(pedido.status_entrega)">{{ getStatusLabel(pedido.status_entrega) }}</span>
-              </td>
-              <td class="px-4 py-3 text-sm">{{ getVendedorName(pedido.vendedor_id) }}</td>
-              <td class="px-4 py-3 text-sm">
-                <div class="flex items-center space-x-2">
-                  <button 
-                    v-if="pedido.status_entrega === 'pendente'" 
-                    @click="confirmarEntrega(pedido)" 
-                    class="p-2 hover:bg-green-50 rounded-lg transition-colors" 
-                    title="Confirmar Entrega"
-                  >
-                    <span class="text-lg">✅</span>
-                  </button>
-                  <button 
-                    v-if="pedido.status_entrega === 'pendente'" 
-                    @click="abrirModalCancelamento(pedido)" 
-                    class="p-2 hover:bg-red-50 rounded-lg transition-colors" 
-                    title="Cancelar Pedido"
-                  >
-                    <span class="text-lg">❌</span>
-                  </button>
-                  <button 
-                    @click="generateReceipt(pedido)" 
-                    class="p-2 hover:bg-blue-50 rounded-lg transition-colors" 
-                    title="Gerar Recibo"
-                  >
-                    <span class="text-lg">📄</span>
-                  </button>
-                  <button 
-                    v-if="authStore.isAdmin && pedido.status_entrega !== 'cancelado'" 
-                    @click="alterarFormaPagamento(pedido)"
-                    class="p-2 hover:bg-purple-50 rounded-lg transition-colors" 
-                    title="Alterar Pagamento"
-                  >
-                    <span class="text-lg">💳</span>
-                  </button>
-                  <button 
-                    v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
-                    @click="desfazerEntrega(pedido)"
-                    class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" 
-                    title="Desfazer Entrega"
-                  >
-                    <span class="text-lg">↩️</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div v-if="pedidos.length === 0" class="text-center py-12">
+      <!-- CARDS DE PEDIDOS COMPACTOS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="pedido in pedidos" :key="pedido.id" class="card-pedido">
+          <!-- Header do Card -->
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-xs text-gray-500">{{ formatDate(pedido.date) }}</p>
+              <h3 class="font-bold text-gray-900 text-sm mt-1 truncate">{{ pedido.clients?.name }}</h3>
+            </div>
+            <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs px-2 py-1">
+              {{ getStatusLabel(pedido.status_entrega) }}
+            </span>
+          </div>
+
+          <!-- Informações Principais -->
+          <div class="space-y-2 mb-3">
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-600">Total:</span>
+              <span class="font-bold text-primary-600">{{ formatCurrency(pedido.total) }}</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-600">Pagamento:</span>
+              <span :class="getPaymentBadge(pedido.payment_method)" class="text-xs px-2 py-1">
+                {{ getPaymentMethodLabel(pedido.payment_method) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="flex gap-2">
+            <button 
+              @click="abrirDetalhes(pedido)" 
+              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-xs font-semibold transition-colors"
+            >
+              👁️ Detalhes
+            </button>
+            <button 
+              v-if="pedido.status_entrega === 'pendente'" 
+              @click="confirmarEntrega(pedido)" 
+              class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs transition-colors"
+              title="Confirmar Entrega"
+            >
+              ✅
+            </button>
+            <button 
+              v-if="pedido.status_entrega === 'pendente'" 
+              @click="abrirModalCancelamento(pedido)" 
+              class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs transition-colors"
+              title="Cancelar"
+            >
+              ❌
+            </button>
+          </div>
+        </div>
+
+        <!-- Mensagem quando vazio -->
+        <div v-if="pedidos.length === 0" class="col-span-full card text-center py-12">
           <div class="text-gray-400 mb-4">
             <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
@@ -157,106 +135,207 @@
         </div>
       </div>
 
-      <!-- Visualização Mobile -->
-      <div class="md:hidden space-y-3">
-        <div v-for="pedido in pedidos" :key="pedido.id" class="card p-4 space-y-3">
-          <div class="flex justify-between items-start">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center space-x-2 mb-1">
-                <p class="text-xs text-gray-500">{{ formatDate(pedido.date) }}</p>
-                <span :class="getStatusBadge(pedido.status_entrega)" class="text-xs">{{ getStatusLabel(pedido.status_entrega) }}</span>
+      <!-- MODAL DETALHES DO PEDIDO -->
+      <div v-if="showModalDetalhes" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <!-- Header -->
+          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
+            <div>
+              <h3 class="text-xl font-bold text-white">Detalhes do Pedido</h3>
+              <p class="text-sm text-white opacity-90">#{String(pedidoDetalhes?.id).slice(0, 8).toUpperCase()}</p>
+            </div>
+            <button @click="closeModalDetalhes" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors text-2xl">×</button>
+          </div>
+
+          <div class="p-6 space-y-6">
+            <!-- Informações do Cliente -->
+            <div class="card-detalhes bg-blue-50 border-blue-200">
+              <h4 class="font-bold text-blue-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">👤</span> Informações do Cliente
+              </h4>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Nome:</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ pedidoDetalhes?.clients?.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Telefone:</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ pedidoDetalhes?.clients?.phone || 'Não informado' }}</span>
+                </div>
+                <div v-if="pedidoDetalhes?.clients?.address" class="pt-2 border-t border-blue-200">
+                  <span class="text-sm text-gray-600 block mb-1">Endereço:</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ pedidoDetalhes?.clients?.address }}</span>
+                </div>
               </div>
-              <h3 class="font-semibold text-gray-900 text-sm truncate">{{ pedido.clients?.name }}</h3>
-              <p class="text-xs text-primary-600 font-semibold">{{ pedido.products?.name }}</p>
             </div>
-            <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
+
+            <!-- Informações do Pedido -->
+            <div class="card-detalhes bg-purple-50 border-purple-200">
+              <h4 class="font-bold text-purple-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">📋</span> Informações do Pedido
+              </h4>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <span class="text-xs text-gray-600 block">Data:</span>
+                  <span class="text-sm font-semibold">{{ formatDate(pedidoDetalhes?.date) }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-gray-600 block">Tipo:</span>
+                  <span class="text-sm font-semibold">{{ pedidoDetalhes?.sale_type === 'wholesale' ? '🏭 Atacado' : '🛒 Varejo' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-gray-600 block">Status:</span>
+                  <span :class="getStatusBadge(pedidoDetalhes?.status_entrega)" class="text-xs inline-block">
+                    {{ getStatusLabel(pedidoDetalhes?.status_entrega) }}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-xs text-gray-600 block">Pagamento:</span>
+                  <span :class="getPaymentBadge(pedidoDetalhes?.payment_method)" class="text-xs inline-block">
+                    {{ getPaymentMethodLabel(pedidoDetalhes?.payment_method) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vendedor -->
+            <div class="card-detalhes bg-green-50 border-green-200">
+              <h4 class="font-bold text-green-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">👨‍💼</span> Vendedor Responsável
+              </h4>
+              <p class="text-sm font-semibold text-gray-900">{{ getVendedorName(pedidoDetalhes?.vendedor_id) }}</p>
+            </div>
+
+            <!-- Produtos -->
+            <div class="card-detalhes bg-orange-50 border-orange-200">
+              <h4 class="font-bold text-orange-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">📦</span> Produtos do Pedido
+              </h4>
+              <div class="space-y-3">
+                <template v-if="pedidoDetalhes?.products_data">
+                  <div v-for="(produto, index) in getProdutosDetalhes(pedidoDetalhes)" :key="index" 
+                       class="bg-white p-3 rounded-lg border border-orange-200">
+                    <div class="flex justify-between items-start mb-2">
+                      <p class="font-semibold text-gray-900 text-sm">{{ produto.name }}</p>
+                      <span class="text-xs bg-orange-200 text-orange-800 px-2 py-1 rounded-full">
+                        Item {{ index + 1 }}
+                      </span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span class="text-gray-600 block">Quantidade:</span>
+                        <span class="font-semibold">{{ produto.quantity }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 block">Valor Unit.:</span>
+                        <span class="font-semibold">{{ formatCurrency(produto.unit_price) }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 block">Total:</span>
+                        <span class="font-semibold text-primary-600">{{ formatCurrency(produto.total) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="bg-white p-3 rounded-lg border border-orange-200">
+                    <p class="font-semibold text-gray-900 text-sm mb-2">{{ pedidoDetalhes?.products?.name }}</p>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span class="text-gray-600 block">Quantidade:</span>
+                        <span class="font-semibold">{{ pedidoDetalhes?.quantity }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 block">Valor Unit.:</span>
+                        <span class="font-semibold">{{ formatCurrency(pedidoDetalhes?.unit_price || pedidoDetalhes?.total / pedidoDetalhes?.quantity) }}</span>
+                      </div>
+                      <div>
+                        <span class="text-gray-600 block">Total:</span>
+                        <span class="font-semibold text-primary-600">{{ formatCurrency(pedidoDetalhes?.total) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Total Geral -->
+              <div class="mt-4 bg-gradient-to-r from-primary-500 to-primary-600 p-4 rounded-lg">
+                <div class="flex justify-between items-center text-white">
+                  <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
+                  <span class="font-bold text-2xl">{{ formatCurrency(pedidoDetalhes?.total) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Evento -->
+            <div v-if="pedidoDetalhes?.is_event" class="card-detalhes bg-purple-50 border-purple-200">
+              <h4 class="font-bold text-purple-900 mb-2 flex items-center">
+                <span class="text-xl mr-2">🎉</span> Evento
+              </h4>
+              <p class="text-sm font-semibold text-gray-900">{{ pedidoDetalhes?.event_name }}</p>
+            </div>
+
+            <!-- Troca -->
+            <div v-if="pedidoDetalhes?.has_exchange" class="card-detalhes bg-yellow-50 border-yellow-200">
+              <h4 class="font-bold text-yellow-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">🔄</span> Informações de Troca
+              </h4>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-xs text-gray-600 block">Produto da Troca:</span>
+                  <span class="text-sm font-semibold">{{ pedidoDetalhes?.exchange_product }}</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <span class="text-xs text-gray-600 block">Quantidade:</span>
+                    <span class="text-sm font-semibold">{{ pedidoDetalhes?.exchange_quantity }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-gray-600 block">Valor Unit.:</span>
+                    <span class="text-sm font-semibold">{{ formatCurrency(pedidoDetalhes?.exchange_value) }}</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-gray-600 block">Total Troca:</span>
+                    <span class="text-sm font-semibold text-yellow-700">{{ formatCurrency(pedidoDetalhes?.exchange_total) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observações -->
+            <div v-if="pedidoDetalhes?.notes" class="card-detalhes bg-gray-50 border-gray-200">
+              <h4 class="font-bold text-gray-900 mb-2 flex items-center">
+                <span class="text-xl mr-2">📝</span> Observações
+              </h4>
+              <p class="text-sm text-gray-700">{{ pedidoDetalhes?.notes }}</p>
+            </div>
+
+            <!-- Ações no Modal -->
+            <div class="flex flex-wrap gap-3">
               <button 
-                v-if="pedido.status_entrega === 'pendente'" 
-                @click="confirmarEntrega(pedido)" 
-                class="p-1 hover:bg-green-50 rounded-lg transition-colors active:bg-green-100" 
-                title="Confirmar Entrega"
+                @click="generateReceipt(pedidoDetalhes)" 
+                class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                <span class="text-xl">✅</span>
+                📄 Gerar Recibo
               </button>
               <button 
-                v-if="pedido.status_entrega === 'pendente'" 
-                @click="abrirModalCancelamento(pedido)" 
-                class="p-1 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100" 
-                title="Cancelar Pedido"
+                v-if="authStore.isAdmin && pedidoDetalhes?.status_entrega !== 'cancelado'" 
+                @click="alterarFormaPagamento(pedidoDetalhes)"
+                class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                <span class="text-xl">❌</span>
+                💳 Alterar Pagamento
               </button>
               <button 
-                @click="generateReceipt(pedido)" 
-                class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" 
-                title="Gerar Recibo"
+                v-if="authStore.isAdmin && pedidoDetalhes?.status_entrega === 'entregue'" 
+                @click="desfazerEntrega(pedidoDetalhes)"
+                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-semibold transition-colors"
               >
-                <span class="text-xl">📄</span>
-              </button>
-              <button 
-                v-if="authStore.isAdmin && pedido.status_entrega !== 'cancelado'" 
-                @click="alterarFormaPagamento(pedido)"
-                class="p-1 hover:bg-purple-50 rounded-lg transition-colors active:bg-purple-100" 
-                title="Alterar Pagamento"
-              >
-                <span class="text-xl">💳</span>
-              </button>
-              <button 
-                v-if="authStore.isAdmin && pedido.status_entrega === 'entregue'" 
-                @click="desfazerEntrega(pedido)"
-                class="p-1 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100" 
-                title="Desfazer Entrega"
-              >
-                <span class="text-xl">↩️</span>
+                ↩️ Desfazer Entrega
               </button>
             </div>
+
+            <button @click="closeModalDetalhes" class="w-full btn-outline">Fechar</button>
           </div>
-          <div class="space-y-2 text-xs">
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Produto:</span>
-              <span class="font-semibold">{{ pedido.products?.name }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Quantidade:</span>
-              <span class="font-semibold">{{ pedido.quantity }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Total:</span>
-              <span class="font-semibold text-base text-gray-900">{{ formatCurrency(pedido.total) }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Pagamento:</span>
-              <span :class="getPaymentBadge(pedido.payment_method)" class="text-xs">{{ getPaymentMethodLabel(pedido.payment_method) }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Vendedor:</span>
-              <span class="font-semibold text-xs">{{ getVendedorName(pedido.vendedor_id) }}</span>
-            </div>
-          </div>
-          <div v-if="pedido.tem_troca" class="flex items-start space-x-2 bg-yellow-50 p-2 rounded text-xs">
-            <span class="text-lg">🔄</span>
-            <div class="flex-1">
-              <p class="font-semibold text-yellow-700">Troca:</p>
-              <p class="text-yellow-600">{{ pedido.observacao_troca }}</p>
-            </div>
-          </div>
-          <div v-if="pedido.notes" class="flex items-start space-x-2 text-xs">
-            <span class="text-lg">📝</span>
-            <div class="flex-1">
-              <p class="text-gray-600">Observações:</p>
-              <p class="text-gray-700">{{ pedido.notes }}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div v-if="pedidos.length === 0" class="card text-center py-12">
-          <div class="text-gray-400 mb-4">
-            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-            </svg>
-          </div>
-          <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
-          <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou aguarde novos pedidos</p>
         </div>
       </div>
 
@@ -694,7 +773,9 @@ const showModalCancelamento = ref(false)
 const showModalNovoPedido = ref(false)
 const showModalAlterarPagamento = ref(false)
 const showModalConsultaCliente = ref(false)
+const showModalDetalhes = ref(false)
 const pedidoSelecionado = ref(null)
+const pedidoDetalhes = ref(null)
 const novaFormaPagamento = ref('')
 const loading = ref(false)
 const buscaCliente = ref('')
@@ -840,6 +921,27 @@ const getVendedorName = (vendedorId) => {
   return vendedor?.name || 'Não informado'
 }
 
+const getProdutosDetalhes = (pedido) => {
+  try {
+    if (pedido.products_data) {
+      return JSON.parse(pedido.products_data)
+    }
+  } catch (error) {
+    console.error('Erro ao parsear products_data:', error)
+  }
+  return []
+}
+
+const abrirDetalhes = (pedido) => {
+  pedidoDetalhes.value = pedido
+  showModalDetalhes.value = true
+}
+
+const closeModalDetalhes = () => {
+  showModalDetalhes.value = false
+  pedidoDetalhes.value = null
+}
+
 const adicionarProduto = () => {
   formPedido.value.produtos.push({
     product_id: '',
@@ -969,6 +1071,7 @@ const desfazerEntrega = async (pedido) => {
     if (error) throw error
 
     alert('↩️ Entrega desfeita! Pedido voltou para PENDENTE.')
+    closeModalDetalhes()
     await loadPedidos()
   } catch (error) {
     console.error('Erro:', error)
@@ -1146,6 +1249,7 @@ const alterarFormaPagamento = (pedido) => {
   pedidoSelecionado.value = pedido
   novaFormaPagamento.value = pedido.payment_method
   showModalAlterarPagamento.value = true
+  closeModalDetalhes()
 }
 
 const confirmarAlteracaoPagamento = async () => {
@@ -1381,6 +1485,7 @@ const generateReceipt = async (pedido) => {
   
   const fileName = `pedido-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
   doc.save(fileName)
+  closeModalDetalhes()
 }
 
 onMounted(() => {
@@ -1395,6 +1500,14 @@ onMounted(() => {
 <style scoped>
 .card {
   @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
+}
+
+.card-pedido {
+  @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-4 border border-gray-100;
+}
+
+.card-detalhes {
+  @apply p-4 rounded-lg border-2;
 }
 
 .label {
