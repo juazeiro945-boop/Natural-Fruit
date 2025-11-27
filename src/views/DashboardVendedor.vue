@@ -73,17 +73,6 @@
     <div class="text-sm text-gray-600">Cancelados</div>
   </div>
 </div>
-        <div class="card text-center">
-          <div class="text-3xl mb-2">✅</div>
-          <div class="text-2xl font-bold text-green-600">{{ stats.entregues }}</div>
-          <div class="text-sm text-gray-600">Entregues</div>
-        </div>
-        <div class="card text-center">
-          <div class="text-3xl mb-2">❌</div>
-          <div class="text-2xl font-bold text-red-600">{{ stats.cancelados }}</div>
-          <div class="text-sm text-gray-600">Cancelados</div>
-        </div>
-      </div>
 
       <!-- CARDS DE PEDIDOS COMPACTOS -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
