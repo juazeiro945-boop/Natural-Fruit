@@ -18,22 +18,62 @@
       </div>
 
       <!-- Filtros -->
-      <div class="card">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <div>
-            <label class="label text-xs md:text-sm">Data</label>
-            <input v-model="filters.date" type="date" class="input-field text-sm md:text-base" @change="loadPedidos" />
-          </div>
-          <div>
-            <label class="label text-xs md:text-sm">Status</label>
-            <select v-model="filters.status" class="input-field text-sm md:text-base" @change="loadPedidos">
-              <option value="pendente">🕐 Pendentes</option>
-              <option value="entregue">✅ Entregues</option>
-              <option value="cancelado">❌ Cancelados</option>
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div>
+     <!-- Filtros -->
+<div class="card">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div>
+      <label class="label text-xs md:text-sm">Data</label>
+      <input v-model="filters.date" type="date" class="input-field text-sm md:text-base" @change="loadPedidos" />
+    </div>
+    <div>
+      <label class="label text-xs md:text-sm">Status</label>
+      <select v-model="filters.status" class="input-field text-sm md:text-base" @change="loadPedidos">
+        <option value="pendente">🕐 Pendentes</option>
+        <option value="em_rota">🚚 Em Rota</option>
+        <option value="entregue">✅ Entregues</option>
+        <option value="cancelado">❌ Cancelados</option>
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div>
+      <label class="label text-xs md:text-sm">Cliente</label>
+      <input v-model="filters.cliente" type="text" class="input-field text-sm md:text-base" placeholder="Buscar cliente..." @input="loadPedidos" />
+    </div>
+    <div v-if="authStore.isAdmin">
+      <label class="label text-xs md:text-sm">Vendedor</label>
+      <select v-model="filters.vendedor" class="input-field text-sm md:text-base" @change="loadPedidos">
+        <option value="">Todos</option>
+        <option v-for="vendedor in vendedores" :key="vendedor.id" :value="vendedor.id">
+          {{ vendedor.name }}
+        </option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-4 gap-3 md:gap-4">
+  <div class="card text-center">
+    <div class="text-3xl mb-2">🕐</div>
+    <div class="text-2xl font-bold text-yellow-600">{{ stats.pendentes }}</div>
+    <div class="text-sm text-gray-600">Pendentes</div>
+  </div>
+  <div class="card text-center">
+    <div class="text-3xl mb-2">🚚</div>
+    <div class="text-2xl font-bold text-blue-600">{{ stats.emRota }}</div>
+    <div class="text-sm text-gray-600">Em Rota</div>
+  </div>
+  <div class="card text-center">
+    <div class="text-3xl mb-2">✅</div>
+    <div class="text-2xl font-bold text-green-600">{{ stats.entregues }}</div>
+    <div class="text-sm text-gray-600">Entregues</div>
+  </div>
+  <div class="card text-center">
+    <div class="text-3xl mb-2">❌</div>
+    <div class="text-2xl font-bold text-red-600">{{ stats.cancelados }}</div>
+    <div class="text-sm text-gray-600">Cancelados</div>
+  </div>
+</div>
             <label class="label text-xs md:text-sm">Cliente</label>
             <input v-model="filters.cliente" type="text" class="input-field text-sm md:text-base" placeholder="Buscar cliente..." @input="loadPedidos" />
           </div>
@@ -885,6 +925,7 @@ const orderStatuses = [
 const stats = computed(() => {
   return {
     pendentes: pedidos.value.filter(p => p.status_entrega === 'pendente').length,
+    emRota: pedidos.value.filter(p => p.status_entrega === 'em_rota').length,
     entregues: pedidos.value.filter(p => p.status_entrega === 'entregue').length,
     cancelados: pedidos.value.filter(p => p.status_entrega === 'cancelado').length
   }
