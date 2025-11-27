@@ -352,7 +352,6 @@
             </select>
           </div>
 
-          <!-- NOVO: Restrição de Horário -->
           <div class="border-2 border-orange-200 rounded-lg p-4 bg-orange-50">
             <div class="flex items-center space-x-3 mb-3">
               <input 
@@ -583,6 +582,7 @@ const carregarUsuarios = async () => {
     
     if (error) throw error
     
+    console.log('✅ Usuários carregados:', data?.length)
     usuarios.value = data || []
   } catch (error) {
     console.error('Erro:', error)
@@ -590,17 +590,12 @@ const carregarUsuarios = async () => {
   }
 }
 
-// ============================================
-// FUNÇÕES DE GERENCIAMENTO DE PERMISSÕES
-// ============================================
-
 const gerenciarPermissoes = async (usuario) => {
   usuarioPermissoes.value = usuario
   showModalPermissoes.value = true
   loadingPermissoes.value = true
   
   try {
-    // Carregar páginas disponíveis
     const { data: paginas, error: errorPaginas } = await supabase
       .from('system_pages')
       .select('*')
@@ -611,7 +606,6 @@ const gerenciarPermissoes = async (usuario) => {
     
     paginasDisponiveis.value = paginas || []
     
-    // Carregar permissões do usuário
     const { data: permissoes, error: errorPermissoes } = await supabase
       .from('user_page_permissions')
       .select('*')
@@ -639,13 +633,11 @@ const togglePermissao = async (pagina) => {
     const permissaoAtual = temPermissao(pagina.id)
     const novaPermissao = !permissaoAtual
     
-    // Verificar se página requer admin e usuário não é admin
     if (pagina.requer_admin && usuarioPermissoes.value.tipo_usuario !== 'administrador') {
       alert('❌ Esta página só pode ser acessada por administradores')
       return
     }
     
-    // Atualizar ou inserir permissão
     const { error } = await supabase
       .from('user_page_permissions')
       .upsert({
@@ -658,7 +650,6 @@ const togglePermissao = async (pagina) => {
     
     if (error) throw error
     
-    // Atualizar lista local
     const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
     if (index >= 0) {
       permissoesUsuario.value[index].pode_acessar = novaPermissao
@@ -682,10 +673,6 @@ const closeModalPermissoes = () => {
   paginasDisponiveis.value = []
   permissoesUsuario.value = []
 }
-
-// ============================================
-// FUNÇÕES EXISTENTES
-// ============================================
 
 const toggleSenhaVisivel = (usuarioId) => {
   senhasVisiveis[usuarioId] = !senhasVisiveis[usuarioId]
@@ -797,7 +784,6 @@ const salvarUsuario = async () => {
   loadingSave.value = true
   try {
     if (editandoUsuario.value) {
-      // Atualizar perfil
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -814,9 +800,8 @@ const salvarUsuario = async () => {
       
       if (profileError) throw profileError
 
-      // Se o email foi alterado, atualizar no auth
       const usuarioOriginal = usuarios.value.find(u => u.id === formUsuario.value.id)
-      if (usuarioOriginal.email !== formUsuario.value.email) {
+      if (usuarioOriginal && usuarioOriginal.email !== formUsuario.value.email) {
         const { error: authError } = await supabase.functions.invoke('update-user-email', {
           body: {
             userId: formUsuario.value.id,
@@ -829,6 +814,8 @@ const salvarUsuario = async () => {
       
       alert('✅ Usuário atualizado!')
     } else {
+      console.log('🔵 Criando usuário...')
+      
       const result = await authStore.signUp(
         formUsuario.value.email,
         formUsuario.value.password,
@@ -837,27 +824,36 @@ const salvarUsuario = async () => {
         formUsuario.value.telefone
       )
       
+      console.log('🔵 Resultado:', result)
+      
       if (!result.success) throw new Error(result.error)
 
-      // Atualizar com configurações de horário
       await supabase
         .from('profiles')
         .update({
           horario_restrito: formUsuario.value.horario_restrito,
           horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
-          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null
+          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null,
+          senha_temp: formUsuario.value.password
         })
         .eq('id', result.userId)
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado com permissões padrão!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!`)
+      alert(`✅ Usuário criado!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!`)
     }
     
     closeModalUsuario()
-    await carregarUsuarios()
+    
+    // AGUARDAR 1 SEGUNDO E RECARREGAR
+    console.log('🔵 Aguardando para recarregar...')
+    setTimeout(async () => {
+      console.log('🔵 Recarregando usuários...')
+      await carregarUsuarios()
+    }, 1000)
+    
   } catch (error) {
-    console.error('Erro:', error)
+    console.error('❌ Erro:', error)
     alert('❌ Erro: ' + error.message)
   } finally {
     loadingSave.value = false
