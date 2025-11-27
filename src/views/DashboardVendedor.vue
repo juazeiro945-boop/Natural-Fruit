@@ -313,6 +313,12 @@
             <!-- Ações no Modal -->
             <div class="flex flex-wrap gap-3">
               <button 
+                @click="abrirModalAlterarStatus(pedidoDetalhes)"
+                class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-lg font-semibold transition-colors"
+              >
+                🔄 Alterar Status
+              </button>
+              <button 
                 @click="generateReceipt(pedidoDetalhes)" 
                 class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold transition-colors"
               >
@@ -325,17 +331,52 @@
               >
                 💳 Alterar Pagamento
               </button>
-              <button 
-                v-if="authStore.isAdmin && pedidoDetalhes?.status_entrega === 'entregue'" 
-                @click="desfazerEntrega(pedidoDetalhes)"
-                class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-lg font-semibold transition-colors"
-              >
-                ↩️ Desfazer Entrega
-              </button>
             </div>
 
             <button @click="closeModalDetalhes" class="w-full btn-outline">Fechar</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal Alterar Status -->
+      <div v-if="showModalAlterarStatus" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Alterar Status do Pedido</h3>
+            <button @click="showModalAlterarStatus = false" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          </div>
+
+          <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+            <p class="text-sm text-gray-700"><strong>Cliente:</strong> {{ pedidoSelecionado?.clients?.name }}</p>
+            <p class="text-sm text-gray-700"><strong>Status Atual:</strong> {{ getStatusLabel(pedidoSelecionado?.status_entrega) }}</p>
+          </div>
+
+          <form @submit.prevent="confirmarAlteracaoStatus" class="space-y-4">
+            <div>
+              <label class="label">Novo Status *</label>
+              <div class="space-y-2">
+                <label 
+                  v-for="status in orderStatuses" 
+                  :key="status.value"
+                  :class="novoStatus === status.value ? status.selectedClass : 'bg-white border-gray-300 hover:bg-gray-50'"
+                  class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all"
+                >
+                  <input 
+                    v-model="novoStatus" 
+                    :value="status.value" 
+                    type="radio" 
+                    class="mr-3"
+                  />
+                  <span class="font-medium">{{ status.label }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button type="button" @click="showModalAlterarStatus = false" class="flex-1 btn-outline">Cancelar</button>
+              <button type="submit" class="flex-1 btn-primary">Confirmar</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -543,11 +584,11 @@
                       v-model="formPedido.order_status" 
                       :value="status.value" 
                       type="radio" 
-                      :id="status.value" 
+                      :id="'new-' + status.value" 
                       class="hidden"
                     />
                     <label 
-                      :for="status.value" 
+                      :for="'new-' + status.value" 
                       :class="formPedido.order_status === status.value 
                         ? status.selectedClass 
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
@@ -655,7 +696,7 @@
       </div>
 
       <!-- Modal Alterar Forma de Pagamento -->
-      <div v-if="showModalAlterarPagamento" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div v-if="showModalAlterarPagamento" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
         <div class="bg-white rounded-xl max-w-md w-full p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900">Alterar Forma de Pagamento</h3>
@@ -774,9 +815,11 @@ const showModalNovoPedido = ref(false)
 const showModalAlterarPagamento = ref(false)
 const showModalConsultaCliente = ref(false)
 const showModalDetalhes = ref(false)
+const showModalAlterarStatus = ref(false)
 const pedidoSelecionado = ref(null)
 const pedidoDetalhes = ref(null)
 const novaFormaPagamento = ref('')
+const novoStatus = ref('')
 const loading = ref(false)
 const buscaCliente = ref('')
 const clientesEncontrados = ref([])
@@ -798,7 +841,7 @@ const formCancelamento = ref({
 
 const formPedido = ref({
   date: new Date().toISOString().split('T')[0],
-  sale_type: 'retail',
+  sale_type: 'wholesale', // ✅ MUDADO PARA ATACADO POR PADRÃO
   client_id: '',
   vendedor_id: '',
   produtos: [
@@ -876,6 +919,7 @@ const formatDateTime = (date) => {
 const getStatusLabel = (status) => {
   const labels = {
     'pendente': 'Pendente',
+    'em_rota': 'Em Rota',
     'entregue': 'Entregue',
     'cancelado': 'Cancelado'
   }
@@ -885,6 +929,7 @@ const getStatusLabel = (status) => {
 const getStatusBadge = (status) => {
   const badges = {
     'pendente': 'bg-yellow-100 text-yellow-700',
+    'em_rota': 'bg-blue-100 text-blue-700',
     'entregue': 'bg-green-100 text-green-700',
     'cancelado': 'bg-red-100 text-red-700'
   }
@@ -940,6 +985,48 @@ const abrirDetalhes = (pedido) => {
 const closeModalDetalhes = () => {
   showModalDetalhes.value = false
   pedidoDetalhes.value = null
+}
+
+// ✅ NOVA FUNÇÃO PARA ABRIR MODAL DE ALTERAR STATUS
+const abrirModalAlterarStatus = (pedido) => {
+  pedidoSelecionado.value = pedido
+  novoStatus.value = pedido.status_entrega
+  showModalAlterarStatus.value = true
+}
+
+// ✅ NOVA FUNÇÃO PARA CONFIRMAR ALTERAÇÃO DE STATUS
+const confirmarAlteracaoStatus = async () => {
+  try {
+    const updateData = {
+      status_entrega: novoStatus.value
+    }
+
+    // Se mudou para entregue, marca data de entrega e paid = true
+    if (novoStatus.value === 'entregue') {
+      updateData.data_entrega = new Date().toISOString()
+      updateData.paid = true
+    }
+
+    // Se mudou para cancelado, marca data de entrega
+    if (novoStatus.value === 'cancelado') {
+      updateData.data_entrega = new Date().toISOString()
+    }
+
+    const { error } = await supabase
+      .from('sales')
+      .update(updateData)
+      .eq('id', pedidoSelecionado.value.id)
+
+    if (error) throw error
+
+    alert('✅ Status alterado com sucesso!')
+    showModalAlterarStatus.value = false
+    closeModalDetalhes()
+    await loadPedidos()
+  } catch (error) {
+    console.error('Erro:', error)
+    alert('Erro ao alterar status: ' + error.message)
+  }
 }
 
 const adicionarProduto = () => {
@@ -1050,35 +1137,6 @@ const confirmarEntrega = async (pedido) => {
   }
 }
 
-const desfazerEntrega = async (pedido) => {
-  if (!authStore.isAdmin) {
-    alert('Apenas administradores podem desfazer entregas')
-    return
-  }
-
-  if (!confirm('Tem certeza que deseja desfazer esta entrega? O pedido voltará para status PENDENTE.')) return
-
-  try {
-    const { error } = await supabase
-      .from('sales')
-      .update({
-        status_entrega: 'pendente',
-        data_entrega: null,
-        paid: false
-      })
-      .eq('id', pedido.id)
-
-    if (error) throw error
-
-    alert('↩️ Entrega desfeita! Pedido voltou para PENDENTE.')
-    closeModalDetalhes()
-    await loadPedidos()
-  } catch (error) {
-    console.error('Erro:', error)
-    alert('Erro ao desfazer entrega: ' + error.message)
-  }
-}
-
 const abrirModalCancelamento = (pedido) => {
   pedidoSelecionado.value = pedido
   formCancelamento.value = {
@@ -1168,7 +1226,7 @@ const salvarNovoPedido = async () => {
       paid: formPedido.value.paid,
       notes: formPedido.value.notes,
       order_status: formPedido.value.order_status,
-      status_entrega: 'pendente',
+      status_entrega: formPedido.value.order_status, // ✅ Usa o status selecionado
       is_event: formPedido.value.is_event,
       event_name: formPedido.value.event_name || null,
       has_exchange: formPedido.value.has_exchange,
@@ -1219,7 +1277,7 @@ const closeModalNovoPedido = () => {
   
   formPedido.value = {
     date: new Date().toISOString().split('T')[0],
-    sale_type: 'retail',
+    sale_type: 'wholesale', // ✅ MANTÉM ATACADO COMO PADRÃO
     client_id: '',
     vendedor_id: '',
     produtos: [
@@ -1249,7 +1307,6 @@ const alterarFormaPagamento = (pedido) => {
   pedidoSelecionado.value = pedido
   novaFormaPagamento.value = pedido.payment_method
   showModalAlterarPagamento.value = true
-  closeModalDetalhes()
 }
 
 const confirmarAlteracaoPagamento = async () => {
