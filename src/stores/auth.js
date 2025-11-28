@@ -161,6 +161,7 @@ export const useAuthStore = defineStore('auth', {
         }
         
         console.log('✅ Profile criado com sucesso!')
+        console.log('✅ Trigger vai criar permissões automaticamente!')
         
         return { success: true, userId: data.user.id }
       } catch (error) {
@@ -218,17 +219,82 @@ export const useAuthStore = defineStore('auth', {
     },
     
     async fetchUserPermissions() {
-      if (!this.user) return
+      if (!this.user) {
+        console.log('⚠️ Sem usuário logado, não carrega permissões')
+        return
+      }
       
       try {
+        console.log('🔵 Buscando permissões para:', this.user.id)
+        
         const { data, error } = await supabase
           .rpc('get_user_permissions', { user_uuid: this.user.id })
         
-        if (error) throw error
+        if (error) {
+          console.error('❌ Erro ao buscar permissões:', error)
+          // Se der erro, tenta buscar permissões manualmente
+          return await this.fetchUserPermissionsManual()
+        }
         
+        console.log('✅ Permissões carregadas:', data?.length)
         this.userPermissions = data || []
       } catch (error) {
-        console.error('Erro ao buscar permissões:', error)
+        console.error('❌ Erro ao buscar permissões:', error)
+        // Fallback: buscar manualmente
+        await this.fetchUserPermissionsManual()
+      }
+    },
+    
+    // Método alternativo caso a função RPC falhe
+    async fetchUserPermissionsManual() {
+      if (!this.user) return
+      
+      try {
+        console.log('🔵 Buscando permissões manualmente...')
+        
+        // Se for admin, retorna todas as páginas
+        if (this.userProfile?.tipo_usuario === 'administrador') {
+          const { data: pages, error } = await supabase
+            .from('system_pages')
+            .select('*')
+            .eq('ativo', true)
+            .order('ordem')
+          
+          if (error) throw error
+          
+          this.userPermissions = pages.map(p => ({ ...p, pode_acessar: true }))
+          console.log('✅ Admin: todas as páginas permitidas')
+          return
+        }
+        
+        // Para outros usuários, busca permissões específicas
+        const { data: pages, error: pagesError } = await supabase
+          .from('system_pages')
+          .select('*')
+          .eq('ativo', true)
+          .order('ordem')
+        
+        if (pagesError) throw pagesError
+        
+        const { data: permissions, error: permError } = await supabase
+          .from('user_page_permissions')
+          .select('*')
+          .eq('user_id', this.user.id)
+        
+        if (permError) throw permError
+        
+        // Combinar páginas com permissões
+        this.userPermissions = pages.map(page => {
+          const perm = permissions.find(p => p.page_id === page.id)
+          return {
+            ...page,
+            pode_acessar: perm?.pode_acessar || false
+          }
+        })
+        
+        console.log('✅ Permissões carregadas manualmente:', this.userPermissions.length)
+      } catch (error) {
+        console.error('❌ Erro ao buscar permissões manualmente:', error)
         this.userPermissions = []
       }
     },
@@ -274,6 +340,7 @@ export const useAuthStore = defineStore('auth', {
     },
     
     async reloadPermissions() {
+      console.log('🔄 Recarregando permissões...')
       await this.fetchUserPermissions()
     }
   }
