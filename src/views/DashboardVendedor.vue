@@ -1481,19 +1481,38 @@ const generateReceipt = async (pedido) => {
   doc.text('VALOR UNIT.', 145, 124)
   doc.text('TOTAL', 190, 124, { align: 'right' })
   
-  doc.setTextColor(...darkGray)
-  doc.setFont('helvetica', 'normal')
-  const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 40)
-  doc.text(nomeProduto, 20, 134)
-  doc.text(String(pedido.quantity), 120, 134)
-  doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, 134)
-  doc.text(formatCurrency(pedido.total), 190, 134, { align: 'right' })
-  
-  doc.setDrawColor(...lightGray)
-  doc.setLineWidth(0.3)
-  doc.line(15, 138, 195, 138)
-  
-  const yTotal = 148
+// Listar TODOS os produtos
+doc.setTextColor(...darkGray)
+doc.setFont('helvetica', 'normal')
+
+let yProduto = 128
+const produtos = getProdutosDetalhes(pedido)
+
+if (produtos && produtos.length > 0) {
+  // Se tem products_data, mostrar todos
+  for (const prod of produtos) {
+    const nomeProduto = (prod.name || 'Produto').substring(0, 35)
+    doc.text(nomeProduto, 20, yProduto)
+    doc.text(String(prod.quantity), 120, yProduto)
+    doc.text(formatCurrency(prod.unit_price), 145, yProduto)
+    doc.text(formatCurrency(prod.total), 190, yProduto, { align: 'right' })
+    yProduto += 6
+  }
+} else {
+  // Fallback para pedidos antigos
+  const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 35)
+  doc.text(nomeProduto, 20, yProduto)
+  doc.text(String(pedido.quantity), 120, yProduto)
+  doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, yProduto)
+  doc.text(formatCurrency(pedido.total), 190, yProduto, { align: 'right' })
+  yProduto += 6
+}
+
+doc.setDrawColor(...lightGray)
+doc.setLineWidth(0.3)
+doc.line(15, yProduto + 2, 195, yProduto + 2)
+
+const yTotal = yProduto + 10
   doc.setFillColor(...primaryColor)
   doc.rect(140, yTotal, 55, 12, 'F')
   doc.setTextColor(255, 255, 255)
