@@ -1481,6 +1481,8 @@ const generateReceipt = async (pedido) => {
   doc.text('VALOR UNIT.', 145, 124)
   doc.text('TOTAL', 190, 124, { align: 'right' })
   
+ doc.text('TOTAL', 190, 124, { align: 'right' })
+  
 // Listar TODOS os produtos
 doc.setTextColor(...darkGray)
 doc.setFont('helvetica', 'normal')
