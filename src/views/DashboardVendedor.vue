@@ -148,7 +148,7 @@
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
             <div>
               <h3 class="text-xl font-bold text-white">Detalhes do Pedido</h3>
-              <p class="text-sm text-white opacity-90">#{String(pedidoDetalhes?.id).slice(0, 8).toUpperCase()}</p>
+              <p class="text-sm text-white opacity-90">#{{ String(pedidoDetalhes?.id).slice(0, 8).toUpperCase() }}</p>
             </div>
             <button @click="closeModalDetalhes" class="text-white hover:bg-primary-700 p-2 rounded-lg transition-colors text-2xl">×</button>
           </div>
@@ -1476,28 +1476,24 @@ const generateReceipt = async (pedido) => {
   doc.text('VALOR UNIT.', 145, 124)
   doc.text('TOTAL', 190, 124, { align: 'right' })
   
-  // ✅ CORREÇÃO: LISTAR TODOS OS PRODUTOS
+  // ✅ AJUSTE: Posição inicial dos produtos ajustada para não sobrepor o cabeçalho
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
 
-  let yProduto = 128
+  let yProduto = 133  // ✅ Alterado de 128 para 133 para dar mais espaço
   const produtos = getProdutosDetalhes(pedido)
   
-  // ✅ CALCULAR O TOTAL REAL BASEADO EM TODOS OS PRODUTOS
   let totalRealPedido = 0
 
   if (produtos && produtos.length > 0) {
-    // Se tem products_data, mostrar todos os produtos
     for (const prod of produtos) {
       const nomeProduto = (prod.name || 'Produto').substring(0, 35)
       
-      // Verificar se ainda cabe na página
       if (yProduto > 250) {
         doc.addPage()
         yProduto = 20
         
-        // Cabeçalho da nova página
         doc.setFillColor(...primaryColor)
         doc.rect(15, yProduto - 10, 180, 10, 'F')
         doc.setTextColor(255, 255, 255)
@@ -1522,7 +1518,6 @@ const generateReceipt = async (pedido) => {
       yProduto += 6
     }
   } else {
-    // Fallback para pedidos antigos (apenas um produto)
     const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 35)
     doc.text(nomeProduto, 20, yProduto)
     doc.text(String(pedido.quantity), 120, yProduto)
@@ -1541,7 +1536,6 @@ const generateReceipt = async (pedido) => {
 
   const yTotal = yProduto + 10
   
-  // ✅ USAR O TOTAL CALCULADO BASEADO NOS PRODUTOS
   const totalFinal = totalRealPedido > 0 ? totalRealPedido : pedido.total
   
   doc.setFillColor(...primaryColor)
@@ -1562,7 +1556,6 @@ const generateReceipt = async (pedido) => {
   
   let yPos = yTotal + 35
   
-  // ✅ CORREÇÃO: VERIFICAR CORRETAMENTE SE TEM TROCA
   if (pedido.has_exchange && pedido.exchange_product) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
@@ -1581,7 +1574,6 @@ const generateReceipt = async (pedido) => {
     yPos += 10
   }
   
-  // ✅ CORREÇÃO: VERIFICAR SE É EVENTO
   if (pedido.is_event && pedido.event_name) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
