@@ -847,7 +847,7 @@ const formCancelamento = ref({
 
 const formPedido = ref({
   date: new Date().toISOString().split('T')[0],
-  sale_type: 'wholesale', // ✅ MUDADO PARA ATACADO POR PADRÃO
+  sale_type: 'wholesale',
   client_id: '',
   vendedor_id: '',
   produtos: [
@@ -872,7 +872,6 @@ const formPedido = ref({
   exchange_total: 0
 })
 
-// CONSTANTES PARA OS RADIO BUTTONS
 const paymentMethods = [
   { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
   { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
@@ -896,6 +895,7 @@ const stats = computed(() => {
     cancelados: pedidos.value.filter(p => p.status_entrega === 'cancelado').length
   }
 })
+
 const totalPedido = computed(() => {
   return formPedido.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
 })
@@ -993,27 +993,23 @@ const closeModalDetalhes = () => {
   pedidoDetalhes.value = null
 }
 
-// ✅ NOVA FUNÇÃO PARA ABRIR MODAL DE ALTERAR STATUS
 const abrirModalAlterarStatus = (pedido) => {
   pedidoSelecionado.value = pedido
   novoStatus.value = pedido.status_entrega
   showModalAlterarStatus.value = true
 }
 
-// ✅ NOVA FUNÇÃO PARA CONFIRMAR ALTERAÇÃO DE STATUS
 const confirmarAlteracaoStatus = async () => {
   try {
     const updateData = {
       status_entrega: novoStatus.value
     }
 
-    // Se mudou para entregue, marca data de entrega e paid = true
     if (novoStatus.value === 'entregue') {
       updateData.data_entrega = new Date().toISOString()
       updateData.paid = true
     }
 
-    // Se mudou para cancelado, marca data de entrega
     if (novoStatus.value === 'cancelado') {
       updateData.data_entrega = new Date().toISOString()
     }
@@ -1232,7 +1228,7 @@ const salvarNovoPedido = async () => {
       paid: formPedido.value.paid,
       notes: formPedido.value.notes,
       order_status: formPedido.value.order_status,
-      status_entrega: formPedido.value.order_status, // ✅ Usa o status selecionado
+      status_entrega: formPedido.value.order_status,
       is_event: formPedido.value.is_event,
       event_name: formPedido.value.event_name || null,
       has_exchange: formPedido.value.has_exchange,
@@ -1249,7 +1245,6 @@ const salvarNovoPedido = async () => {
 
     if (error) throw error
 
-    // Deduzir estoque
     for (const item of formPedido.value.produtos) {
       const { data: productData } = await supabase
         .from('products')
@@ -1283,7 +1278,7 @@ const closeModalNovoPedido = () => {
   
   formPedido.value = {
     date: new Date().toISOString().split('T')[0],
-    sale_type: 'wholesale', // ✅ MANTÉM ATACADO COMO PADRÃO
+    sale_type: 'wholesale',
     client_id: '',
     vendedor_id: '',
     produtos: [
@@ -1481,47 +1476,81 @@ const generateReceipt = async (pedido) => {
   doc.text('VALOR UNIT.', 145, 124)
   doc.text('TOTAL', 190, 124, { align: 'right' })
   
- doc.text('TOTAL', 190, 124, { align: 'right' })
+  // ✅ CORREÇÃO: LISTAR TODOS OS PRODUTOS
+  doc.setTextColor(...darkGray)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+
+  let yProduto = 128
+  const produtos = getProdutosDetalhes(pedido)
   
-// Listar TODOS os produtos
-doc.setTextColor(...darkGray)
-doc.setFont('helvetica', 'normal')
+  // ✅ CALCULAR O TOTAL REAL BASEADO EM TODOS OS PRODUTOS
+  let totalRealPedido = 0
 
-let yProduto = 128
-const produtos = getProdutosDetalhes(pedido)
-
-if (produtos && produtos.length > 0) {
-  // Se tem products_data, mostrar todos
-  for (const prod of produtos) {
-    const nomeProduto = (prod.name || 'Produto').substring(0, 35)
+  if (produtos && produtos.length > 0) {
+    // Se tem products_data, mostrar todos os produtos
+    for (const prod of produtos) {
+      const nomeProduto = (prod.name || 'Produto').substring(0, 35)
+      
+      // Verificar se ainda cabe na página
+      if (yProduto > 250) {
+        doc.addPage()
+        yProduto = 20
+        
+        // Cabeçalho da nova página
+        doc.setFillColor(...primaryColor)
+        doc.rect(15, yProduto - 10, 180, 10, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text('PRODUTO', 20, yProduto - 4)
+        doc.text('QTD', 120, yProduto - 4)
+        doc.text('VALOR UNIT.', 145, yProduto - 4)
+        doc.text('TOTAL', 190, yProduto - 4, { align: 'right' })
+        
+        doc.setTextColor(...darkGray)
+        doc.setFont('helvetica', 'normal')
+        yProduto += 10
+      }
+      
+      doc.text(nomeProduto, 20, yProduto)
+      doc.text(String(prod.quantity), 120, yProduto)
+      doc.text(formatCurrency(prod.unit_price), 145, yProduto)
+      doc.text(formatCurrency(prod.total), 190, yProduto, { align: 'right' })
+      
+      totalRealPedido += prod.total
+      yProduto += 6
+    }
+  } else {
+    // Fallback para pedidos antigos (apenas um produto)
+    const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 35)
     doc.text(nomeProduto, 20, yProduto)
-    doc.text(String(prod.quantity), 120, yProduto)
-    doc.text(formatCurrency(prod.unit_price), 145, yProduto)
-    doc.text(formatCurrency(prod.total), 190, yProduto, { align: 'right' })
+    doc.text(String(pedido.quantity), 120, yProduto)
+    
+    const unitPrice = pedido.unit_price || (pedido.total / pedido.quantity)
+    doc.text(formatCurrency(unitPrice), 145, yProduto)
+    doc.text(formatCurrency(pedido.total), 190, yProduto, { align: 'right' })
+    
+    totalRealPedido = pedido.total
     yProduto += 6
   }
-} else {
-  // Fallback para pedidos antigos
-  const nomeProduto = (pedido.products?.name || 'Produto').substring(0, 35)
-  doc.text(nomeProduto, 20, yProduto)
-  doc.text(String(pedido.quantity), 120, yProduto)
-  doc.text(formatCurrency(pedido.unit_price || pedido.total / pedido.quantity), 145, yProduto)
-  doc.text(formatCurrency(pedido.total), 190, yProduto, { align: 'right' })
-  yProduto += 6
-}
 
-doc.setDrawColor(...lightGray)
-doc.setLineWidth(0.3)
-doc.line(15, yProduto + 2, 195, yProduto + 2)
+  doc.setDrawColor(...lightGray)
+  doc.setLineWidth(0.3)
+  doc.line(15, yProduto + 2, 195, yProduto + 2)
 
-const yTotal = yProduto + 10
+  const yTotal = yProduto + 10
+  
+  // ✅ USAR O TOTAL CALCULADO BASEADO NOS PRODUTOS
+  const totalFinal = totalRealPedido > 0 ? totalRealPedido : pedido.total
+  
   doc.setFillColor(...primaryColor)
   doc.rect(140, yTotal, 55, 12, 'F')
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('TOTAL:', 145, yTotal + 8)
-  doc.text(formatCurrency(pedido.total), 190, yTotal + 8, { align: 'right' })
+  doc.text(formatCurrency(totalFinal), 190, yTotal + 8, { align: 'right' })
   
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'bold')
@@ -1533,37 +1562,57 @@ const yTotal = yProduto + 10
   
   let yPos = yTotal + 35
   
-  if (pedido.tem_troca) {
+  // ✅ CORREÇÃO: VERIFICAR CORRETAMENTE SE TEM TROCA
+  if (pedido.has_exchange && pedido.exchange_product) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
-    doc.text('TROCA', 15, yPos)
+    doc.text('INFORMAÇÕES DE TROCA', 15, yPos)
     yPos += 7
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
-    const splitTroca = doc.splitTextToSize(pedido.observacao_troca || '', 180)
-    doc.text(splitTroca, 15, yPos)
-    yPos += splitTroca.length * 5 + 5
+    
+    doc.text(`Produto da Troca: ${pedido.exchange_product}`, 15, yPos)
+    yPos += 5
+    doc.text(`Quantidade: ${pedido.exchange_quantity}`, 15, yPos)
+    yPos += 5
+    doc.text(`Valor Unitário: ${formatCurrency(pedido.exchange_value)}`, 15, yPos)
+    yPos += 5
+    doc.text(`Total da Troca: ${formatCurrency(pedido.exchange_total)}`, 15, yPos)
+    yPos += 10
+  }
+  
+  // ✅ CORREÇÃO: VERIFICAR SE É EVENTO
+  if (pedido.is_event && pedido.event_name) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('EVENTO', 15, yPos)
+    yPos += 7
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Tipo: ${pedido.event_name}`, 15, yPos)
+    yPos += 10
   }
   
   if (pedido.notes) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
-    doc.text('OBSERVACOES', 15, yPos)
+    doc.text('OBSERVAÇÕES', 15, yPos)
     yPos += 7
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9)
     const splitNotes = doc.splitTextToSize(pedido.notes, 180)
     doc.text(splitNotes, 15, yPos)
+    yPos += splitNotes.length * 5 + 5
   }
   
-  const footerY = 270
+  const footerY = Math.min(yPos + 20, 270)
   doc.setDrawColor(...primaryColor)
   doc.setLineWidth(0.5)
   doc.line(15, footerY, 195, footerY)
   doc.setTextColor(...lightGray)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'italic')
-  doc.text('Obrigado pela preferencia!', 105, footerY + 7, { align: 'center' })
+  doc.text('Obrigado pela preferência!', 105, footerY + 7, { align: 'center' })
   doc.text('Natural Fruit - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
   doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
   
