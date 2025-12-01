@@ -86,6 +86,13 @@
                     >
                       {{ usuario.ativo ? '🔒' : '🔓' }}
                     </button>
+                    <button 
+                      @click="debugUsuario(usuario)" 
+                      class="text-gray-600 hover:text-gray-800"
+                      title="Debug"
+                    >
+                      🐛
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -227,7 +234,12 @@
               Usuário: <strong>{{ usuarioPermissoes?.name }}</strong> ({{ getTipoLabel(usuarioPermissoes?.tipo_usuario) }})
             </p>
           </div>
-          <button @click="closeModalPermissoes" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          <div class="flex space-x-2">
+            <button @click="debugPermissoes" class="text-gray-500 hover:text-gray-700 p-2" title="Debug">
+              🐛
+            </button>
+            <button @click="closeModalPermissoes" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+          </div>
         </div>
 
         <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -513,6 +525,18 @@ const formUsuario = ref({
   horario_fim: '18:00'
 })
 
+// Funções de Debug
+const debugPermissoes = () => {
+  console.log('🔍 DEBUG Permissões:')
+  console.log('Usuário:', usuarioPermissoes.value)
+  console.log('Páginas disponíveis:', paginasDisponiveis.value)
+  console.log('Permissões atuais:', permissoesUsuario.value)
+}
+
+const debugUsuario = (usuario) => {
+  console.log('🔍 DEBUG Usuário:', usuario)
+}
+
 const loadProfile = () => {
   profile.value = {
     name: authStore.userProfile?.name || '',
@@ -590,6 +614,23 @@ const carregarUsuarios = async () => {
   }
 }
 
+const carregarPermissoesUsuario = async (usuarioId) => {
+  try {
+    const { data: permissoes, error } = await supabase
+      .from('user_page_permissions')
+      .select('*')
+      .eq('user_id', usuarioId)
+    
+    if (error) throw error
+    
+    console.log('✅ Permissões carregadas:', permissoes)
+    return permissoes || []
+  } catch (error) {
+    console.error('❌ Erro ao carregar permissões:', error)
+    return []
+  }
+}
+
 const gerenciarPermissoes = async (usuario) => {
   usuarioPermissoes.value = usuario
   showModalPermissoes.value = true
@@ -606,14 +647,7 @@ const gerenciarPermissoes = async (usuario) => {
     
     paginasDisponiveis.value = paginas || []
     
-    const { data: permissoes, error: errorPermissoes } = await supabase
-      .from('user_page_permissions')
-      .select('*')
-      .eq('user_id', usuario.id)
-    
-    if (errorPermissoes) throw errorPermissoes
-    
-    permissoesUsuario.value = permissoes || []
+    permissoesUsuario.value = await carregarPermissoesUsuario(usuario.id)
     
   } catch (error) {
     console.error('Erro:', error)
@@ -633,37 +667,69 @@ const togglePermissao = async (pagina) => {
     const permissaoAtual = temPermissao(pagina.id)
     const novaPermissao = !permissaoAtual
     
-    if (pagina.requer_admin && usuarioPermissoes.value.tipo_usuario !== 'administrador') {
+    // Verifica se é uma página que requer admin
+    if (pagina.requer_admin && usuarioPermissoes.value?.tipo_usuario !== 'administrador') {
       alert('❌ Esta página só pode ser acessada por administradores')
       return
     }
     
-    const { error } = await supabase
+    console.log('🔵 Alterando permissão:', {
+      usuario: usuarioPermissoes.value?.name,
+      pagina: pagina.nome,
+      novaPermissao: novaPermissao
+    })
+    
+    // Remove primeiro qualquer permissão existente
+    const { error: deleteError } = await supabase
       .from('user_page_permissions')
-      .upsert({
-        user_id: usuarioPermissoes.value.id,
-        page_id: pagina.id,
-        pode_acessar: novaPermissao
-      }, {
-        onConflict: 'user_id,page_id'
-      })
+      .delete()
+      .eq('user_id', usuarioPermissoes.value.id)
+      .eq('page_id', pagina.id)
     
-    if (error) throw error
+    if (deleteError) {
+      console.error('❌ Erro ao remover permissão:', deleteError)
+      throw deleteError
+    }
     
+    // Se a nova permissão for true, insere
+    if (novaPermissao) {
+      const { error: insertError } = await supabase
+        .from('user_page_permissions')
+        .insert({
+          user_id: usuarioPermissoes.value.id,
+          page_id: pagina.id,
+          pode_acessar: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+      
+      if (insertError) {
+        console.error('❌ Erro ao inserir permissão:', insertError)
+        throw insertError
+      }
+    }
+    
+    // Atualiza a lista local de permissões
     const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
     if (index >= 0) {
-      permissoesUsuario.value[index].pode_acessar = novaPermissao
-    } else {
+      if (novaPermissao) {
+        permissoesUsuario.value[index].pode_acessar = true
+      } else {
+        permissoesUsuario.value.splice(index, 1)
+      }
+    } else if (novaPermissao) {
       permissoesUsuario.value.push({
         user_id: usuarioPermissoes.value.id,
         page_id: pagina.id,
-        pode_acessar: novaPermissao
+        pode_acessar: true
       })
     }
     
+    console.log('✅ Permissão atualizada com sucesso')
+    
   } catch (error) {
-    console.error('Erro:', error)
-    alert('❌ Erro ao alterar permissão')
+    console.error('❌ Erro completo ao alterar permissão:', error)
+    alert('❌ Erro ao alterar permissão: ' + error.message)
   }
 }
 
@@ -784,6 +850,9 @@ const salvarUsuario = async () => {
   loadingSave.value = true
   try {
     if (editandoUsuario.value) {
+      console.log('🔵 Editando usuário:', formUsuario.value)
+
+      // Primeiro, atualiza o perfil
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -794,22 +863,28 @@ const salvarUsuario = async () => {
           ativo: formUsuario.value.ativo,
           horario_restrito: formUsuario.value.horario_restrito,
           horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
-          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null
+          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', formUsuario.value.id)
       
       if (profileError) throw profileError
 
+      // Verifica se o email foi alterado
       const usuarioOriginal = usuarios.value.find(u => u.id === formUsuario.value.id)
       if (usuarioOriginal && usuarioOriginal.email !== formUsuario.value.email) {
-        const { error: authError } = await supabase.functions.invoke('update-user-email', {
-          body: {
-            userId: formUsuario.value.id,
-            newEmail: formUsuario.value.email
-          }
-        })
+        console.log('🔵 Atualizando email do usuário...')
         
-        if (authError) throw authError
+        // Atualiza o email no Auth usando admin API
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          formUsuario.value.id,
+          { email: formUsuario.value.email }
+        )
+        
+        if (authError) {
+          console.error('❌ Erro ao atualizar email:', authError)
+          throw new Error('Erro ao atualizar email: ' + authError.message)
+        }
       }
       
       alert('✅ Usuário atualizado!')
@@ -845,7 +920,7 @@ const salvarUsuario = async () => {
     
     closeModalUsuario()
     
-    // AGUARDAR 1 SEGUNDO E RECARREGAR
+    // Aguarda um pouco e recarrega
     console.log('🔵 Aguardando para recarregar...')
     setTimeout(async () => {
       console.log('🔵 Recarregando usuários...')
@@ -853,7 +928,7 @@ const salvarUsuario = async () => {
     }, 1000)
     
   } catch (error) {
-    console.error('❌ Erro:', error)
+    console.error('❌ Erro completo:', error)
     alert('❌ Erro: ' + error.message)
   } finally {
     loadingSave.value = false
@@ -869,7 +944,10 @@ const toggleStatusUsuario = async (usuario) => {
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({ ativo: novoStatus })
+      .update({ 
+        ativo: novoStatus,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', usuario.id)
     
     if (error) throw error
