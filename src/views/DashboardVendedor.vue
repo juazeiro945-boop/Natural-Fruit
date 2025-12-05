@@ -718,6 +718,7 @@
             <div>
               <label class="label">Nova Forma de Pagamento *</label>
               <select v-model="novaFormaPagamento" required class="input-field">
+                <option value="pendente">⏳ Pendente</option>
                 <option value="cash">💵 Dinheiro</option>
                 <option value="pix">📱 PIX</option>
                 <option value="boleto">📄 Boleto</option>
@@ -859,7 +860,7 @@ const formPedido = ref({
       is_weight: false
     }
   ],
-  payment_method: 'cash',
+  payment_method: 'pendente',
   paid: false,
   notes: '',
   order_status: 'pendente',
@@ -873,6 +874,7 @@ const formPedido = ref({
 })
 
 const paymentMethods = [
+  { value: 'pendente', label: '⏳ Pendente', selectedClass: 'bg-gray-500 text-white border-gray-600' },
   { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
   { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
   { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
@@ -956,12 +958,12 @@ const getPaymentMethodLabel = (method) => {
 
 const getPaymentBadge = (method) => {
   const badges = {
+    pendente: 'bg-gray-100 text-gray-600',
     cash: 'bg-green-100 text-green-600',
     pix: 'bg-purple-100 text-purple-600',
     boleto: 'bg-blue-100 text-blue-600',
     card: 'bg-pink-100 text-pink-600',
-    credito: 'bg-orange-100 text-orange-600',
-    pendente: 'bg-gray-100 text-gray-600'
+    credito: 'bg-orange-100 text-orange-600'
   }
   return `${badges[method] || 'bg-gray-100 text-gray-600'} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
 }
@@ -1007,7 +1009,7 @@ const confirmarAlteracaoStatus = async () => {
 
     if (novoStatus.value === 'entregue') {
       updateData.data_entrega = new Date().toISOString()
-      updateData.paid = true
+      // Não marca como pago automaticamente
     }
 
     if (novoStatus.value === 'cancelado') {
@@ -1117,21 +1119,21 @@ const loadVendedores = async () => {
 }
 
 const confirmarEntrega = async (pedido) => {
-  if (!confirm('Confirmar entrega do pedido? Ele será automaticamente registrado em VENDAS.')) return
+  if (!confirm('Confirmar entrega do pedido?')) return
 
   try {
     const { error: updateError } = await supabase
       .from('sales')
       .update({
         status_entrega: 'entregue',
-        data_entrega: new Date().toISOString(),
-        paid: true
+        data_entrega: new Date().toISOString()
+        // Não marca como pago automaticamente
       })
       .eq('id', pedido.id)
 
     if (updateError) throw updateError
 
-    alert('✅ Pedido entregue e registrado em vendas!')
+    alert('✅ Pedido marcado como entregue!')
     await loadPedidos()
   } catch (error) {
     console.error('Erro:', error)
@@ -1216,6 +1218,9 @@ const salvarNovoPedido = async () => {
 
     const primeiroProduto = formPedido.value.produtos[0]
     
+    // Define se está pago baseado na forma de pagamento
+    const isPaid = formPedido.value.payment_method !== 'pendente'
+    
     const pedidoData = {
       date: formPedido.value.date,
       sale_type: formPedido.value.sale_type,
@@ -1225,7 +1230,7 @@ const salvarNovoPedido = async () => {
       unit_price: primeiroProduto.unit_price,
       total: totalPedido.value,
       payment_method: formPedido.value.payment_method,
-      paid: formPedido.value.paid,
+      paid: isPaid,
       notes: formPedido.value.notes,
       order_status: formPedido.value.order_status,
       status_entrega: formPedido.value.order_status,
@@ -1290,7 +1295,7 @@ const closeModalNovoPedido = () => {
         is_weight: false
       }
     ],
-    payment_method: 'cash',
+    payment_method: 'pendente',
     paid: false,
     notes: '',
     order_status: 'pendente',
@@ -1312,9 +1317,15 @@ const alterarFormaPagamento = (pedido) => {
 
 const confirmarAlteracaoPagamento = async () => {
   try {
+    // Define se está pago baseado na nova forma de pagamento
+    const isPaid = novaFormaPagamento.value !== 'pendente'
+    
     const { error } = await supabase
       .from('sales')
-      .update({ payment_method: novaFormaPagamento.value })
+      .update({ 
+        payment_method: novaFormaPagamento.value,
+        paid: isPaid
+      })
       .eq('id', pedidoSelecionado.value.id)
 
     if (error) throw error
@@ -1476,12 +1487,11 @@ const generateReceipt = async (pedido) => {
   doc.text('VALOR UNIT.', 145, 124)
   doc.text('TOTAL', 190, 124, { align: 'right' })
   
-  // ✅ AJUSTE: Posição inicial dos produtos ajustada para não sobrepor o cabeçalho
   doc.setTextColor(...darkGray)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
 
-  let yProduto = 133  // ✅ Alterado de 128 para 133 para dar mais espaço
+  let yProduto = 133
   const produtos = getProdutosDetalhes(pedido)
   
   let totalRealPedido = 0
@@ -1656,7 +1666,6 @@ onMounted(() => {
   @apply px-4 md:px-6 py-2 md:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
 }
 
-/* 🔥 ESTILOS CRÍTICOS PARA O MODAL NO MOBILE */
 body.modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -1787,7 +1796,6 @@ body.modal-open {
   }
 }
 
-/* Animações */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -1803,7 +1811,6 @@ body.modal-open {
   }
 }
 
-/* Classes para desabilitar elementos */
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
 }
@@ -1812,14 +1819,12 @@ body.modal-open {
   cursor: not-allowed;
 }
 
-/* Melhorias de responsividade */
 @media (max-width: 640px) {
   .card {
     @apply p-3;
   }
 }
 
-/* Melhorias de toque para mobile */
 @media (max-width: 768px) {
   .input-field, 
   select.input-field, 
@@ -1837,7 +1842,6 @@ body.modal-open {
   }
 }
 
-/* Animações suaves */
 .transition-all {
   transition: all 0.3s ease;
 }
