@@ -1129,28 +1129,35 @@ const excluirUsuario = async (usuario) => {
     
     if (profileError) throw profileError
     
-    // 3. Tentar remover do Auth (opcional)
+    // 3. Tentar remover do Auth (CORRIGIDO)
     try {
       const { data, error: authError } = await supabase.functions.invoke('delete-user', {
         body: { userId: usuario.id }
       })
       
       if (authError) {
-        console.warn('⚠️ Usuário removido do banco, mas permanece no Auth:', authError)
+        console.warn('⚠️ Usuário removido do banco, mas erro no Auth:', authError)
+        showToast('warning', 'Usuário removido do sistema, mas pode permanecer no login. Contate o administrador.')
+      } else if (data?.warning) {
+        // Se tiver warning (ex: 403 Forbidden)
+        showToast('warning', `${data.warning}. O usuário foi removido do banco.`)
+      } else {
+        showToast('success', '✅ Usuário excluído completamente do sistema!')
       }
+      
     } catch (edgeError) {
-      console.warn('⚠️ Função edge não disponível, removendo apenas do banco:', edgeError)
+      console.warn('⚠️ Edge Function não disponível:', edgeError)
+      showToast('warning', 'Usuário removido do banco. Função de exclusão indisponível.')
     }
     
-    showToast('success', 'Usuário excluído com sucesso!')
+    // 4. Recarregar lista
     await carregarUsuarios()
     
   } catch (error) {
     console.error('❌ Erro ao excluir usuário:', error)
-    showToast('error', error.message)
+    showToast('error', `Erro: ${error.message}`)
   }
 }
-
 const closeModalUsuario = () => {
   showModalUsuario.value = false
   editandoUsuario.value = false
