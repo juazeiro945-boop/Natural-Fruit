@@ -17,7 +17,7 @@
 
       <!-- Modal de Registro - Responsivo -->
       <div v-if="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 md:p-4">
-        <div class="bg-white rounded-none md:rounded-2xl shadow-2xl w-full h-full md:h-auto md:max-w-2xl md:max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-none md:rounded-2xl shadow-2xl w-full h-full md:h-auto md:max-w-3xl md:max-h-[90vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-red-500 to-red-600 px-4 md:px-6 py-4 flex items-center justify-between z-10">
             <h3 class="text-lg md:text-xl font-bold text-white">Registrar Perda</h3>
             <button @click="closeForm" class="text-white hover:bg-red-700 p-2 rounded-lg transition-colors">
@@ -28,19 +28,53 @@
           </div>
 
           <form @submit.prevent="submitForm" class="p-4 md:p-6 space-y-4">
-            <div>
-              <label class="label">Produto *</label>
-              <select v-model="form.product_id" required class="input-field text-base">
-                <option value="">Selecione o produto</option>
-                <option v-for="product in products" :key="product.id" :value="product.id">
-                  {{ product.name }}
-                </option>
-              </select>
-            </div>
+            <!-- Lista de Produtos -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="label">Produtos *</label>
+                <button type="button" @click="addProductLine" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Adicionar Produto
+                </button>
+              </div>
 
-            <div>
-              <label class="label">Quantidade *</label>
-              <input v-model.number="form.quantity" type="number" min="1" required class="input-field text-base" placeholder="Ex: 10" inputmode="numeric">
+              <!-- Linhas de Produtos -->
+              <div v-for="(item, index) in form.items" :key="index" class="bg-gray-50 p-3 md:p-4 rounded-xl space-y-3">
+                <div class="flex items-start gap-2">
+                  <div class="flex-1 space-y-3">
+                    <div>
+                      <label class="text-xs text-gray-600 mb-1 block">Produto</label>
+                      <select v-model="item.product_id" required class="input-field text-base">
+                        <option value="">Selecione o produto</option>
+                        <option v-for="product in products" :key="product.id" :value="product.id">
+                          {{ product.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="text-xs text-gray-600 mb-1 block">Quantidade</label>
+                        <input v-model.number="item.quantity" type="number" min="1" required class="input-field text-base" placeholder="Ex: 10" inputmode="numeric">
+                      </div>
+                      <div>
+                        <label class="text-xs text-gray-600 mb-1 block">Valor</label>
+                        <div class="input-field bg-gray-100 text-base font-semibold text-gray-900">
+                          {{ formatCurrency(getItemValue(item)) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button v-if="form.items.length > 1" type="button" @click="removeProductLine(index)" class="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors mt-6">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -62,7 +96,7 @@
 
             <div class="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-xl border-2 border-red-200">
               <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-                <span class="text-gray-700 font-medium text-sm md:text-base">Valor da Perda:</span>
+                <span class="text-gray-700 font-medium text-sm md:text-base">Valor Total da Perda:</span>
                 <span class="text-2xl md:text-3xl font-bold text-red-600">{{ formatCurrency(calculatedValue) }}</span>
               </div>
             </div>
@@ -238,8 +272,7 @@ const products = ref([])
 const losses = ref([])
 
 const form = ref({
-  product_id: '',
-  quantity: null,
+  items: [{ product_id: '', quantity: null }],
   reason: '',
   notes: ''
 })
@@ -251,13 +284,27 @@ const summary = computed(() => {
   }
 })
 
-const calculatedValue = computed(() => {
-  const product = products.value.find(p => p.id === form.value.product_id)
-  if (product && form.value.quantity) {
-    return product.price * form.value.quantity
+const getItemValue = (item) => {
+  const product = products.value.find(p => p.id === item.product_id)
+  if (product && item.quantity) {
+    return product.price * item.quantity
   }
   return 0
+}
+
+const calculatedValue = computed(() => {
+  return form.value.items.reduce((total, item) => {
+    return total + getItemValue(item)
+  }, 0)
 })
+
+const addProductLine = () => {
+  form.value.items.push({ product_id: '', quantity: null })
+}
+
+const removeProductLine = (index) => {
+  form.value.items.splice(index, 1)
+}
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -298,13 +345,16 @@ const loadLosses = async () => {
 const submitForm = async () => {
   loading.value = true
   
-  const { error } = await supabase.from('losses').insert({
-    product_id: form.value.product_id,
-    quantity: form.value.quantity,
+  // Inserir todos os produtos
+  const lossesData = form.value.items.map(item => ({
+    product_id: item.product_id,
+    quantity: item.quantity,
     reason: form.value.reason,
     notes: form.value.notes,
-    value: calculatedValue.value
-  })
+    value: getItemValue(item)
+  }))
+
+  const { error } = await supabase.from('losses').insert(lossesData)
 
   loading.value = false
 
@@ -313,7 +363,7 @@ const submitForm = async () => {
     return
   }
 
-  alert('Perda registrada com sucesso!')
+  alert('Perdas registradas com sucesso!')
   closeForm()
   loadLosses()
 }
@@ -337,8 +387,7 @@ const deleteLoss = async (id) => {
 const closeForm = () => {
   showForm.value = false
   form.value = {
-    product_id: '',
-    quantity: null,
+    items: [{ product_id: '', quantity: null }],
     reason: '',
     notes: ''
   }
