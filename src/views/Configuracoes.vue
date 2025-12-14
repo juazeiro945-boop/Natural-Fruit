@@ -6,100 +6,164 @@
       <!-- Gerenciamento de Usuários (Somente Administrador) -->
       <div v-if="authStore.isAdmin" class="card">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-lg font-bold">Gerenciamento de Usuários</h3>
+          <div>
+            <h3 class="text-lg font-bold">Gerenciamento de Usuários</h3>
+            <p class="text-sm text-gray-600 mt-1">Total: {{ usuarios.length }} usuários</p>
+          </div>
           <button @click="openModalNovoUsuario" class="btn-primary">
             ➕ Novo Usuário
           </button>
         </div>
 
+        <!-- Filtros e Busca -->
+        <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="label">Buscar</label>
+            <input 
+              v-model="filtroBusca" 
+              type="text" 
+              placeholder="Nome ou email..." 
+              class="input-field"
+            />
+          </div>
+          <div>
+            <label class="label">Tipo</label>
+            <select v-model="filtroTipo" class="input-field">
+              <option value="">Todos os tipos</option>
+              <option value="administrador">Administrador</option>
+              <option value="escritorio">Escritório</option>
+              <option value="vendedor">Vendedor</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Status</label>
+            <select v-model="filtroStatus" class="input-field">
+              <option value="">Todos</option>
+              <option value="ativo">Ativos</option>
+              <option value="inativo">Inativos</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Tabela de Usuários Desktop -->
-        <div class="hidden md:block overflow-x-auto">
+        <div class="hidden md:block overflow-x-auto rounded-lg border border-gray-200">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Senha</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horário</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <button @click="ordenarPor('name')" class="flex items-center space-x-1">
+                    <span>Nome</span>
+                    <span v-if="ordenacao.campo === 'name'">{{ ordenacao.direcao === 'asc' ? '↑' : '↓' }}</span>
+                  </button>
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Senha</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horário</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <button @click="ordenarPor('ativo')" class="flex items-center space-x-1">
+                    <span>Status</span>
+                    <span v-if="ordenacao.campo === 'ativo'">{{ ordenacao.direcao === 'asc' ? '↑' : '↓' }}</span>
+                  </button>
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="usuario in usuarios" :key="usuario.id">
-                <td class="px-4 py-3">{{ usuario.name }}</td>
+              <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
+                <td class="px-4 py-3">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
+                      <span class="text-primary-600 font-semibold">{{ getIniciais(usuario.name) }}</span>
+                    </div>
+                    <div class="ml-4">
+                      <div class="font-medium text-gray-900">{{ usuario.name }}</div>
+                      <div class="text-sm text-gray-500">{{ formatarData(usuario.created_at) }}</div>
+                    </div>
+                  </div>
+                </td>
                 <td class="px-4 py-3 text-sm">{{ usuario.email }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center space-x-2">
                     <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
-                      {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || 'Não disponível') : '••••••••' }}
+                      {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || '••••••••') : '••••••••' }}
                     </code>
-                    <button 
-                      @click="toggleSenhaVisivel(usuario.id)" 
-                      class="text-gray-600 hover:text-gray-800 p-1"
-                      :title="senhasVisiveis[usuario.id] ? 'Ocultar senha' : 'Mostrar senha'"
-                    >
-                      {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
-                    </button>
-                    <button 
-                      v-if="usuario.senha_temp"
-                      @click="copiarSenha(usuario.senha_temp)" 
-                      class="text-blue-600 hover:text-blue-800 p-1"
-                      title="Copiar senha"
-                    >
-                      📋
-                    </button>
+                    <div class="flex space-x-1">
+                      <button 
+                        @click="toggleSenhaVisivel(usuario.id)" 
+                        class="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100"
+                        :title="senhasVisiveis[usuario.id] ? 'Ocultar senha' : 'Mostrar senha'"
+                      >
+                        <span v-if="senhasVisiveis[usuario.id]">🙈</span>
+                        <span v-else>👁️</span>
+                      </button>
+                      <button 
+                        v-if="usuario.senha_temp"
+                        @click="copiarSenha(usuario.senha_temp)" 
+                        class="text-gray-500 hover:text-blue-600 p-1 rounded hover:bg-blue-50"
+                        title="Copiar senha"
+                      >
+                        📋
+                      </button>
+                    </div>
                   </div>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" :class="getBadgeClass(usuario.tipo_usuario)">
                     {{ getTipoLabel(usuario.tipo_usuario) }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <span v-if="usuario.horario_restrito" class="text-xs">
-                    🕐 {{ usuario.horario_inicio }} - {{ usuario.horario_fim }}
-                  </span>
+                  <div v-if="usuario.horario_restrito" class="text-xs">
+                    <div class="font-medium">🕐 {{ usuario.horario_inicio }} - {{ usuario.horario_fim }}</div>
+                    <div class="text-gray-500 mt-1">Acesso restrito</div>
+                  </div>
                   <span v-else class="text-xs text-gray-500">Sem restrição</span>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="badge" :class="usuario.ativo ? 'badge-success' : 'badge-danger'">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" :class="usuario.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                    <span class="w-2 h-2 rounded-full mr-1.5" :class="usuario.ativo ? 'bg-green-500' : 'bg-red-500'"></span>
                     {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <div class="flex space-x-2">
-                    <button @click="gerenciarPermissoes(usuario)" class="text-green-600 hover:text-green-800" title="Gerenciar Permissões">
+                  <div class="flex space-x-1">
+                    <button 
+                      @click="gerenciarPermissoes(usuario)" 
+                      class="action-btn bg-green-50 text-green-600 hover:bg-green-100"
+                      title="Gerenciar Permissões"
+                    >
                       🔐
                     </button>
-                    <button @click="editarUsuario(usuario)" class="text-blue-600 hover:text-blue-800" title="Editar">
+                    <button 
+                      @click="editarUsuario(usuario)" 
+                      class="action-btn bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      title="Editar"
+                    >
                       ✏️
                     </button>
-                    <button @click="resetarSenha(usuario)" class="text-orange-600 hover:text-orange-800" title="Alterar senha">
+                    <button 
+                      @click="resetarSenha(usuario)" 
+                      class="action-btn bg-orange-50 text-orange-600 hover:bg-orange-100"
+                      title="Alterar senha"
+                    >
                       🔑
                     </button>
                     <button 
                       @click="toggleStatusUsuario(usuario)" 
-                      class="text-yellow-600 hover:text-yellow-800"
+                      class="action-btn"
+                      :class="usuario.ativo ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' : 'bg-green-50 text-green-600 hover:bg-green-100'"
                       :title="usuario.ativo ? 'Desativar' : 'Ativar'"
                     >
                       {{ usuario.ativo ? '🔒' : '🔓' }}
                     </button>
                     <button 
                       @click="excluirUsuario(usuario)" 
-                      class="text-red-600 hover:text-red-800"
+                      class="action-btn bg-red-50 text-red-600 hover:bg-red-100"
                       title="Excluir"
                       v-if="usuario.id !== authStore.user?.id"
                     >
                       🗑️
-                    </button>
-                    <button 
-                      @click="debugUsuario(usuario)" 
-                      class="text-gray-600 hover:text-gray-800"
-                      title="Debug"
-                    >
-                      🐛
                     </button>
                   </div>
                 </td>
@@ -110,83 +174,100 @@
 
         <!-- Cards Mobile -->
         <div class="md:hidden space-y-4">
-          <div v-for="usuario in usuarios" :key="usuario.id" class="bg-white border rounded-lg p-4 shadow-sm">
+          <div v-for="usuario in usuariosFiltrados" :key="usuario.id" class="bg-white border border-gray-200 rounded-lg p-4">
             <div class="flex justify-between items-start mb-3">
-              <div class="flex-1">
-                <h4 class="font-bold text-gray-900">{{ usuario.name }}</h4>
-                <p class="text-sm text-gray-600">{{ usuario.email }}</p>
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                  <span class="text-primary-600 font-semibold">{{ getIniciais(usuario.name) }}</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-gray-900">{{ usuario.name }}</h4>
+                  <p class="text-sm text-gray-600">{{ usuario.email }}</p>
+                  <p class="text-xs text-gray-500 mt-1">{{ formatarData(usuario.created_at) }}</p>
+                </div>
               </div>
-              <span class="badge" :class="usuario.ativo ? 'badge-success' : 'badge-danger'">
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" :class="usuario.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
                 {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
               </span>
             </div>
 
-            <div class="mb-3">
-              <p class="text-xs text-gray-500 mb-1">Tipo:</p>
-              <span class="badge" :class="getBadgeClass(usuario.tipo_usuario)">
-                {{ getTipoLabel(usuario.tipo_usuario) }}
-              </span>
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Tipo:</p>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" :class="getBadgeClass(usuario.tipo_usuario)">
+                  {{ getTipoLabel(usuario.tipo_usuario) }}
+                </span>
+              </div>
+              
+              <div>
+                <p class="text-xs text-gray-500 mb-1">Senha:</p>
+                <div class="flex items-center space-x-2">
+                  <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono flex-1">
+                    {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || '••••••••') : '••••••••' }}
+                  </code>
+                  <button 
+                    @click="toggleSenhaVisivel(usuario.id)" 
+                    class="text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div v-if="usuario.horario_restrito" class="mb-3">
+            <div v-if="usuario.horario_restrito" class="mb-3 p-2 bg-gray-50 rounded">
               <p class="text-xs text-gray-500 mb-1">Horário de Trabalho:</p>
               <p class="text-sm font-semibold">🕐 {{ usuario.horario_inicio }} - {{ usuario.horario_fim }}</p>
             </div>
 
-            <div class="mb-3">
-              <p class="text-xs text-gray-500 mb-1">Senha:</p>
-              <div class="flex items-center space-x-2">
-                <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono flex-1">
-                  {{ senhasVisiveis[usuario.id] ? (usuario.senha_temp || 'Não disponível') : '••••••••' }}
-                </code>
-                <button 
-                  @click="toggleSenhaVisivel(usuario.id)" 
-                  class="text-gray-600 hover:text-gray-800 p-2"
-                >
-                  {{ senhasVisiveis[usuario.id] ? '🙈' : '👁️' }}
-                </button>
-                <button 
-                  v-if="usuario.senha_temp"
-                  @click="copiarSenha(usuario.senha_temp)" 
-                  class="text-blue-600 hover:text-blue-800 p-2"
-                >
-                  📋
-                </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t">
-              <button @click="gerenciarPermissoes(usuario)" class="bg-green-50 text-green-600 py-2 rounded-lg text-sm font-medium">
-                🔐 Permissões
+            <div class="grid grid-cols-3 gap-2 pt-3 border-t">
+              <button @click="gerenciarPermissoes(usuario)" class="action-btn-mobile bg-green-50 text-green-600">
+                🔐
               </button>
-              <button @click="editarUsuario(usuario)" class="bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium">
-                ✏️ Editar
+              <button @click="editarUsuario(usuario)" class="action-btn-mobile bg-blue-50 text-blue-600">
+                ✏️
               </button>
-              <button @click="resetarSenha(usuario)" class="bg-orange-50 text-orange-600 py-2 rounded-lg text-sm font-medium">
-                🔑 Senha
+              <button @click="resetarSenha(usuario)" class="action-btn-mobile bg-orange-50 text-orange-600">
+                🔑
               </button>
               <button 
                 @click="toggleStatusUsuario(usuario)" 
-                class="py-2 rounded-lg text-sm font-medium"
+                class="action-btn-mobile"
                 :class="usuario.ativo ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'"
               >
-                {{ usuario.ativo ? '🔒 Desativar' : '🔓 Ativar' }}
+                {{ usuario.ativo ? '🔒' : '🔓' }}
               </button>
               <button 
                 v-if="usuario.id !== authStore.user?.id"
                 @click="excluirUsuario(usuario)" 
-                class="bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium col-span-2"
+                class="action-btn-mobile bg-red-50 text-red-600 col-span-2"
               >
-                🗑️ Excluir Usuário
+                🗑️ Excluir
               </button>
             </div>
           </div>
         </div>
 
-        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p class="text-sm text-blue-800">
-            <strong>ℹ️ Informação:</strong> Clique em "🔐 Permissões" para controlar quais páginas cada usuário pode acessar.
-          </p>
+        <!-- Paginação -->
+        <div v-if="usuariosFiltrados.length === 0" class="text-center py-8">
+          <div class="text-gray-400 text-4xl mb-2">👤</div>
+          <p class="text-gray-500">Nenhum usuário encontrado</p>
+        </div>
+
+        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mt-0.5">
+              <span class="text-blue-500">ℹ️</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-800">
+                <strong>Informação:</strong> Clique em "🔐 Permissões" para controlar quais páginas cada usuário pode acessar.
+              </p>
+              <p class="text-xs text-blue-700 mt-1">
+                • Administradores têm acesso total • Usuários inativos não conseguem fazer login
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -250,17 +331,21 @@
             </p>
           </div>
           <div class="flex space-x-2">
-            <button @click="debugPermissoes" class="text-gray-500 hover:text-gray-700 p-2" title="Debug">
-              🐛
-            </button>
             <button @click="closeModalPermissoes" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
           </div>
         </div>
 
         <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p class="text-sm text-yellow-800">
-            <strong>💡 Dica:</strong> Marque as páginas que este usuário poderá acessar. As alterações são salvas automaticamente.
-          </p>
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mt-0.5">
+              <span class="text-yellow-500">💡</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-800">
+                <strong>Dica:</strong> Marque as páginas que este usuário poderá acessar. As alterações são salvas automaticamente.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div v-if="loadingPermissoes" class="text-center py-8">
@@ -268,24 +353,28 @@
           <p class="mt-2 text-gray-600">Carregando permissões...</p>
         </div>
 
-        <div v-else class="space-y-4 max-h-96 overflow-y-auto">
+        <div v-else class="space-y-4 max-h-96 overflow-y-auto pr-2">
           <div 
             v-for="pagina in paginasDisponiveis" 
             :key="pagina.id"
-            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
           >
-            <div class="flex items-center space-x-3 flex-1">
-              <span class="text-3xl">{{ pagina.icone }}</span>
-              <div>
-                <p class="font-semibold text-gray-900">{{ pagina.nome }}</p>
-                <p class="text-sm text-gray-600">{{ pagina.descricao }}</p>
-                <p class="text-xs text-gray-500 mt-1">
-                  <strong>Rota:</strong> {{ pagina.rota }}
-                  <span v-if="pagina.requer_admin" class="ml-2 text-orange-600">👑 Requer Admin</span>
-                </p>
+            <div class="flex items-center space-x-4 flex-1 min-w-0">
+              <span class="text-2xl flex-shrink-0">{{ pagina.icone || '📄' }}</span>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-900 truncate">{{ pagina.nome }}</p>
+                <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{ pagina.descricao }}</p>
+                <div class="flex items-center mt-2 space-x-3">
+                  <span class="text-xs text-gray-500">
+                    <strong>Rota:</strong> {{ pagina.rota }}
+                  </span>
+                  <span v-if="pagina.requer_admin" class="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">
+                    👑 Requer Admin
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
               <label class="relative inline-flex items-center cursor-pointer">
                 <input 
                   type="checkbox" 
@@ -294,10 +383,9 @@
                   :disabled="pagina.requer_admin && usuarioPermissoes?.tipo_usuario !== 'administrador'"
                   class="sr-only peer"
                 />
-                <!-- CORREÇÃO: Removido .toggle-switch e usando classes inline -->
                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
-              <span class="text-sm font-medium" :class="temPermissao(pagina.id) ? 'text-green-600' : 'text-gray-400'">
+              <span class="text-sm font-medium w-24 text-right" :class="temPermissao(pagina.id) ? 'text-green-600' : 'text-gray-400'">
                 {{ temPermissao(pagina.id) ? '✅ Permitido' : '❌ Bloqueado' }}
               </span>
             </div>
@@ -305,12 +393,19 @@
         </div>
 
         <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p class="text-sm text-blue-800 mb-2"><strong>ℹ️ Observações:</strong></p>
-          <ul class="text-sm text-blue-700 space-y-1 ml-4 list-disc">
-            <li>Páginas marcadas com 👑 só podem ser acessadas por administradores</li>
-            <li>As alterações são salvas automaticamente ao marcar/desmarcar</li>
-            <li>O usuário precisa fazer logout e login novamente para ver as mudanças</li>
-          </ul>
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mt-0.5">
+              <span class="text-blue-500">ℹ️</span>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-800 mb-2"><strong>Observações:</strong></p>
+              <ul class="text-sm text-blue-700 space-y-1 ml-4 list-disc">
+                <li>Páginas marcadas com 👑 só podem ser acessadas por administradores</li>
+                <li>As alterações são salvas automaticamente ao marcar/desmarcar</li>
+                <li>O usuário precisa fazer logout e login novamente para ver as mudanças</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end mt-6">
@@ -373,7 +468,7 @@
 
           <div>
             <label class="label">Tipo de Usuário *</label>
-            <select v-model="formUsuario.tipo_usuario" class="input-field" required>
+            <select v-model="formUsuario.tipo_usuario" class="input-field" required @change="handleTipoChange">
               <option value="administrador">👑 Administrador - Acesso Total</option>
               <option value="escritorio">📋 Escritório - Gestão Completa</option>
               <option value="vendedor">🚚 Vendedor - Apenas Entregas</option>
@@ -424,7 +519,7 @@
               v-model="formUsuario.ativo" 
               type="checkbox" 
               id="usuario-ativo"
-              class="w-4 h-4 text-primary-600"
+              class="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
             />
             <label for="usuario-ativo" class="text-sm font-medium text-gray-700">
               Usuário Ativo (pode fazer login)
@@ -443,7 +538,7 @@
             </p>
           </div>
 
-          <div class="flex space-x-2">
+          <div class="flex space-x-2 pt-2">
             <button type="submit" class="btn-primary flex-1" :disabled="loadingSave">
               {{ loadingSave ? 'Salvando...' : (editandoUsuario ? 'Salvar Alterações' : 'Criar Usuário') }}
             </button>
@@ -486,9 +581,16 @@
           </div>
 
           <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p class="text-sm text-yellow-800">
-              <strong>⚠️ Atenção:</strong> A senha de login será alterada. O usuário precisará usar esta nova senha.
-            </p>
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mt-0.5">
+                <span class="text-yellow-500">⚠️</span>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-800">
+                  <strong>Atenção:</strong> A senha de login será alterada. O usuário precisará usar esta nova senha.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div class="flex space-x-2">
@@ -504,13 +606,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
 
 const authStore = useAuthStore()
 
+// Estado
 const profile = ref({ name: '', email: '', telefone: '' })
 const newPassword = ref('')
 const confirmPassword = ref('')
@@ -529,6 +632,15 @@ const loadingSave = ref(false)
 const paginasDisponiveis = ref([])
 const permissoesUsuario = ref([])
 
+// Filtros e ordenação
+const filtroBusca = ref('')
+const filtroTipo = ref('')
+const filtroStatus = ref('')
+const ordenacao = reactive({
+  campo: 'name',
+  direcao: 'asc'
+})
+
 const formUsuario = ref({
   name: '',
   email: '',
@@ -541,16 +653,72 @@ const formUsuario = ref({
   horario_fim: '18:00'
 })
 
-// Funções de Debug
-const debugPermissoes = () => {
-  console.log('🔍 DEBUG Permissões:')
-  console.log('Usuário:', usuarioPermissoes.value)
-  console.log('Páginas disponíveis:', paginasDisponiveis.value)
-  console.log('Permissões atuais:', permissoesUsuario.value)
+// Computed
+const usuariosFiltrados = computed(() => {
+  let filtered = [...usuarios.value]
+
+  // Aplicar filtro de busca
+  if (filtroBusca.value) {
+    const busca = filtroBusca.value.toLowerCase()
+    filtered = filtered.filter(usuario => 
+      usuario.name.toLowerCase().includes(busca) ||
+      usuario.email.toLowerCase().includes(busca)
+    )
+  }
+
+  // Aplicar filtro de tipo
+  if (filtroTipo.value) {
+    filtered = filtered.filter(usuario => usuario.tipo_usuario === filtroTipo.value)
+  }
+
+  // Aplicar filtro de status
+  if (filtroStatus.value) {
+    const isAtivo = filtroStatus.value === 'ativo'
+    filtered = filtered.filter(usuario => usuario.ativo === isAtivo)
+  }
+
+  // Aplicar ordenação
+  filtered.sort((a, b) => {
+    let aVal = a[ordenacao.campo]
+    let bVal = b[ordenacao.campo]
+
+    if (ordenacao.campo === 'name') {
+      aVal = aVal.toLowerCase()
+      bVal = bVal.toLowerCase()
+    }
+
+    if (aVal < bVal) return ordenacao.direcao === 'asc' ? -1 : 1
+    if (aVal > bVal) return ordenacao.direcao === 'asc' ? 1 : -1
+    return 0
+  })
+
+  return filtered
+})
+
+// Métodos
+const ordenarPor = (campo) => {
+  if (ordenacao.campo === campo) {
+    ordenacao.direcao = ordenacao.direcao === 'asc' ? 'desc' : 'asc'
+  } else {
+    ordenacao.campo = campo
+    ordenacao.direcao = 'asc'
+  }
 }
 
-const debugUsuario = (usuario) => {
-  console.log('🔍 DEBUG Usuário:', usuario)
+const getIniciais = (nome) => {
+  if (!nome) return '??'
+  return nome
+    .split(' ')
+    .map(palavra => palavra[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+const formatarData = (data) => {
+  if (!data) return ''
+  const date = new Date(data)
+  return date.toLocaleDateString('pt-BR')
 }
 
 const loadProfile = () => {
@@ -574,21 +742,21 @@ const updateProfile = async () => {
     if (error) throw error
     
     await authStore.fetchUserProfile()
-    alert('✅ Perfil atualizado!')
+    showToast('success', 'Perfil atualizado!')
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao atualizar perfil')
+    showToast('error', 'Erro ao atualizar perfil')
   }
 }
 
 const changePassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
-    alert('❌ As senhas não coincidem')
+    showToast('error', 'As senhas não coincidem')
     return
   }
   
   if (newPassword.value.length < 6) {
-    alert('❌ A senha deve ter no mínimo 6 caracteres')
+    showToast('error', 'A senha deve ter no mínimo 6 caracteres')
     return
   }
   
@@ -602,12 +770,12 @@ const changePassword = async () => {
       .update({ senha_temp: newPassword.value })
       .eq('id', authStore.user.id)
     
-    alert('✅ Senha alterada!')
+    showToast('success', 'Senha alterada!')
     newPassword.value = ''
     confirmPassword.value = ''
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao alterar senha')
+    showToast('error', 'Erro ao alterar senha')
   }
 }
 
@@ -626,7 +794,7 @@ const carregarUsuarios = async () => {
     usuarios.value = data || []
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao carregar usuários')
+    showToast('error', 'Erro ao carregar usuários')
   }
 }
 
@@ -639,7 +807,6 @@ const carregarPermissoesUsuario = async (usuarioId) => {
     
     if (error) throw error
     
-    console.log('✅ Permissões carregadas:', permissoes)
     return permissoes || []
   } catch (error) {
     console.error('❌ Erro ao carregar permissões:', error)
@@ -667,7 +834,7 @@ const gerenciarPermissoes = async (usuario) => {
     
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao carregar permissões')
+    showToast('error', 'Erro ao carregar permissões')
   } finally {
     loadingPermissoes.value = false
   }
@@ -683,17 +850,10 @@ const togglePermissao = async (pagina) => {
     const permissaoAtual = temPermissao(pagina.id)
     const novaPermissao = !permissaoAtual
     
-    // Verifica se é uma página que requer admin
     if (pagina.requer_admin && usuarioPermissoes.value?.tipo_usuario !== 'administrador') {
-      alert('❌ Esta página só pode ser acessada por administradores')
+      showToast('error', 'Esta página só pode ser acessada por administradores')
       return
     }
-    
-    console.log('🔵 Alterando permissão:', {
-      usuario: usuarioPermissoes.value?.name,
-      pagina: pagina.nome,
-      novaPermissao
-    })
     
     if (permissaoAtual) {
       // Remove permissão
@@ -705,13 +865,12 @@ const togglePermissao = async (pagina) => {
       
       if (error) throw error
       
-      // Remove da lista local
       const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
       if (index >= 0) {
         permissoesUsuario.value.splice(index, 1)
       }
     } else {
-      // Adiciona permissão usando upsert para evitar duplicatas
+      // Adiciona permissão
       const { error } = await supabase
         .from('user_page_permissions')
         .upsert({
@@ -726,7 +885,6 @@ const togglePermissao = async (pagina) => {
       
       if (error) throw error
       
-      // Adiciona na lista local
       permissoesUsuario.value.push({
         user_id: usuarioPermissoes.value.id,
         page_id: pagina.id,
@@ -736,11 +894,11 @@ const togglePermissao = async (pagina) => {
       })
     }
     
-    console.log('✅ Permissão atualizada com sucesso')
+    showToast('success', 'Permissão atualizada')
     
   } catch (error) {
     console.error('❌ Erro ao alterar permissão:', error)
-    alert('❌ Erro ao alterar permissão: ' + error.message)
+    showToast('error', 'Erro ao alterar permissão')
   }
 }
 
@@ -758,10 +916,10 @@ const toggleSenhaVisivel = (usuarioId) => {
 const copiarSenha = async (senha) => {
   try {
     await navigator.clipboard.writeText(senha)
-    alert('✅ Senha copiada!')
+    showToast('success', 'Senha copiada!')
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao copiar')
+    showToast('error', 'Erro ao copiar')
   }
 }
 
@@ -797,9 +955,8 @@ const confirmarResetSenha = async () => {
     })
 
     if (error) throw error
-    if (!data.success) throw new Error(data.error)
+    if (!data?.success) throw new Error(data?.error || 'Erro desconhecido')
 
-    // Atualiza senha_temp no profile
     await supabase
       .from('profiles')
       .update({ 
@@ -810,14 +967,14 @@ const confirmarResetSenha = async () => {
     
     await navigator.clipboard.writeText(novaSenhaReset.value)
     
-    alert(`✅ SENHA ALTERADA!\n\nNova senha: ${novaSenhaReset.value}\n\n📋 Copiada!`)
+    showToast('success', `Senha alterada para: ${novaSenhaReset.value}\n(Copiada para a área de transferência)`)
     
     closeModalResetSenha()
     await carregarUsuarios()
     
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro: ' + error.message)
+    showToast('error', error.message)
   } finally {
     loadingReset.value = false
   }
@@ -862,13 +1019,18 @@ const editarUsuario = (usuario) => {
   showModalUsuario.value = true
 }
 
+const handleTipoChange = () => {
+  if (formUsuario.value.tipo_usuario === 'administrador') {
+    formUsuario.value.horario_restrito = false
+  }
+}
+
 const salvarUsuario = async () => {
   loadingSave.value = true
   try {
     if (editandoUsuario.value) {
       console.log('🔵 Editando usuário:', formUsuario.value)
 
-      // Atualiza o perfil
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -886,12 +1048,10 @@ const salvarUsuario = async () => {
       
       if (profileError) throw profileError
 
-      // Verifica se o email foi alterado
       const usuarioOriginal = usuarios.value.find(u => u.id === formUsuario.value.id)
       if (usuarioOriginal && usuarioOriginal.email !== formUsuario.value.email) {
         console.log('🔵 Atualizando email via função edge...')
         
-        // Usando função edge para atualizar email
         const { data, error } = await supabase.functions.invoke('update-user-email', {
           body: {
             userId: formUsuario.value.id,
@@ -901,12 +1061,11 @@ const salvarUsuario = async () => {
         
         if (error) {
           console.error('⚠️ Email não foi atualizado no Auth:', error)
-          // Não interrompe o processo, apenas alerta
-          alert('✅ Usuário atualizado, mas o email não foi alterado no sistema de autenticação')
+          showToast('warning', 'Usuário atualizado, mas o email não foi alterado no sistema de autenticação')
         }
       }
       
-      alert('✅ Usuário atualizado com sucesso!')
+      showToast('success', 'Usuário atualizado com sucesso!')
       
     } else {
       console.log('🔵 Criando novo usuário...')
@@ -925,7 +1084,6 @@ const salvarUsuario = async () => {
         throw new Error(result.error || 'Erro ao criar usuário')
       }
 
-      // Atualiza informações adicionais
       await supabase
         .from('profiles')
         .update({
@@ -939,18 +1097,17 @@ const salvarUsuario = async () => {
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado com sucesso!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada para a área de transferência!`)
+      showToast('success', `Usuário criado!\nSenha: ${formUsuario.value.password}\n(Copiada para a área de transferência)`)
     }
     
     closeModalUsuario()
     
-    // Recarrega lista de usuários
     await new Promise(resolve => setTimeout(resolve, 1000))
     await carregarUsuarios()
     
   } catch (error) {
     console.error('❌ Erro completo:', error)
-    alert('❌ Erro: ' + error.message)
+    showToast('error', error.message)
   } finally {
     loadingSave.value = false
   }
@@ -973,17 +1130,17 @@ const toggleStatusUsuario = async (usuario) => {
     
     if (error) throw error
     
-    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
+    showToast('success', `Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
     await carregarUsuarios()
   } catch (error) {
     console.error('Erro:', error)
-    alert('❌ Erro ao alterar status')
+    showToast('error', 'Erro ao alterar status')
   }
 }
 
 const excluirUsuario = async (usuario) => {
   if (usuario.id === authStore.user?.id) {
-    alert('❌ Você não pode excluir seu próprio usuário!')
+    showToast('error', 'Você não pode excluir seu próprio usuário!')
     return
   }
   
@@ -1008,22 +1165,25 @@ const excluirUsuario = async (usuario) => {
     
     if (profileError) throw profileError
     
-    // 3. Remover usuário do Auth (via função edge)
-    const { data, error: authError } = await supabase.functions.invoke('delete-user', {
-      body: { userId: usuario.id }
-    })
-    
-    if (authError) {
-      console.warn('⚠️ Usuário removido do banco, mas pode permanecer no Auth:', authError)
-      // Continua mesmo com erro no Auth
+    // 3. Tentar remover do Auth (opcional)
+    try {
+      const { data, error: authError } = await supabase.functions.invoke('delete-user', {
+        body: { userId: usuario.id }
+      })
+      
+      if (authError) {
+        console.warn('⚠️ Usuário removido do banco, mas permanece no Auth:', authError)
+      }
+    } catch (edgeError) {
+      console.warn('⚠️ Função edge não disponível, removendo apenas do banco:', edgeError)
     }
     
-    alert('✅ Usuário excluído com sucesso!')
+    showToast('success', 'Usuário excluído com sucesso!')
     await carregarUsuarios()
     
   } catch (error) {
     console.error('❌ Erro ao excluir usuário:', error)
-    alert('❌ Erro ao excluir usuário: ' + error.message)
+    showToast('error', error.message)
   }
 }
 
@@ -1061,6 +1221,31 @@ const getBadgeClass = (tipo) => {
   return classes[tipo] || 'bg-gray-100 text-gray-800'
 }
 
+const showToast = (type, message) => {
+  // Implementação básica - você pode substituir por seu sistema de notificações
+  const emoji = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  }[type] || '💡'
+  
+  alert(`${emoji} ${message}`)
+}
+
+// Watchers
+watch(filtroBusca, () => {
+  // Filtro automático já implementado no computed
+})
+
+watch(filtroTipo, () => {
+  // Filtro automático já implementado no computed
+})
+
+watch(filtroStatus, () => {
+  // Filtro automático já implementado no computed
+})
+
 onMounted(() => {
   loadProfile()
   if (authStore.isAdmin) {
@@ -1070,12 +1255,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* CORREÇÃO: Removido @apply com classes peer */
 .card {
   background: white;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  padding: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
 }
 
 @media (min-width: 768px) {
@@ -1094,28 +1278,32 @@ onMounted(() => {
 
 .input-field {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
+  font-size: 0.875rem;
   transition: all 0.2s;
 }
 
 .input-field:focus {
   outline: none;
-  ring-width: 2px;
-  ring-color: #3b82f6;
-  border-color: transparent;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .btn-primary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.625rem 1.25rem;
   background-color: #3b82f6;
   color: white;
   border-radius: 0.5rem;
   font-weight: 500;
+  font-size: 0.875rem;
   transition: background-color 0.2s;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1128,37 +1316,46 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  padding: 0.75rem 1.5rem;
-  background-color: #e5e7eb;
+  padding: 0.625rem 1.25rem;
+  background-color: #f3f4f6;
   color: #374151;
   border-radius: 0.5rem;
   font-weight: 500;
+  font-size: 0.875rem;
   transition: background-color 0.2s;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-secondary:hover {
-  background-color: #d1d5db;
+  background-color: #e5e7eb;
 }
 
-.badge {
+.action-btn {
+  padding: 0.375rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  justify-content: center;
 }
 
-.badge-success {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.badge-danger {
-  background-color: #fee2e2;
-  color: #991b1b;
+.action-btn-mobile {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-overlay {
@@ -1170,15 +1367,40 @@ onMounted(() => {
   justify-content: center;
   padding: 1rem;
   z-index: 50;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modal-content {
   background: white;
   border-radius: 0.75rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   padding: 1.5rem;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
