@@ -1,70 +1,347 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 
-export const useAuthStore = defineStore('auth', () => {
-  // Estado
-  const user = ref(null)
-  const userProfile = ref(null)
-  const userType = ref('')
-  const isAdmin = computed(() => userType.value === 'administrador')
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    user: null,
+    userProfile: null,
+    userPermissions: [],
+    loading: false,
+    sessionError: false
+  }),
   
-  // Métodos
-  const signUp = async (email, password, name, tipo_usuario, telefone = '') => {
-    try {
-      console.log('🔵 Iniciando signUp via Edge Function...', { email, name, tipo_usuario })
+  getters: {
+    isAuthenticated: (state) => !!state.user && !state.sessionError,
+    
+    // Getters para tipos de usuário
+    isAdmin: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    isEscritorio: (state) => state.userProfile?.tipo_usuario === 'escritorio',
+    isVendedor: (state) => state.userProfile?.tipo_usuario === 'vendedor',
+    isGestor: (state) => state.userProfile?.tipo_usuario === 'gestor',
+    
+    // Permissões de acesso
+    canViewFinanceiro: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canViewEstoque: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canViewVendas: (state) => ['administrador', 'escritorio', 'vendedor', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canViewClientes: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canGenerateReceipt: (state) => ['administrador', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canEditOrders: (state) => ['administrador', 'escritorio', 'gestor'].includes(state.userProfile?.tipo_usuario),
+    canDeleteOrders: (state) => ['administrador'].includes(state.userProfile?.tipo_usuario),
+    canManageUsers: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canManageProducts: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    canZeroStock: (state) => state.userProfile?.tipo_usuario === 'administrador',
+    
+    userName: (state) => state.userProfile?.name || state.user?.email,
+    userType: (state) => {
+      const tipos = {
+        'administrador': 'Administrador',
+        'escritorio': 'Escritório',
+        'vendedor': 'Vendedor',
+        'gestor': 'Gestor'
+      }
+      return tipos[state.userProfile?.tipo_usuario] || 'Usuário'
+    },
+    
+    // Verifica se usuário tem acesso a uma rota específica
+    canAccessRoute: (state) => (rota) => {
+      // Admin sempre tem acesso
+      if (state.userProfile?.tipo_usuario === 'administrador') return true
       
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email, password, name, tipo_usuario, telefone }
-      })
-
-      if (error) {
-        console.error('❌ Erro na Edge Function:', error)
-        return { success: false, error: error.message }
-      }
-
-      if (!data.success) {
-        return { success: false, error: data.error || 'Erro desconhecido' }
-      }
-
-      console.log('✅ Usuário criado via Edge Function:', data.userId)
-      
-      return {
-        success: true,
-        userId: data.userId,
-        message: 'Usuário criado com sucesso'
-      }
-
-    } catch (error) {
-      console.error('❌ Erro completo no signUp:', error)
-      return {
-        success: false,
-        error: error.message || 'Erro interno ao criar usuário'
-      }
+      // Verifica nas permissões do usuário
+      const permission = state.userPermissions.find(p => p.rota === rota)
+      return permission?.pode_acessar || false
+    },
+    
+    // Retorna páginas permitidas para o menu
+    allowedPages: (state) => {
+      return state.userPermissions.filter(p => p.pode_acessar)
     }
-  }
+  },
+  
+  actions: {
+    // Verifica se está dentro do horário permitido
+    checkHorarioAcesso() {
+      // Se não tem restrição de horário, permite acesso
+      if (!this.userProfile?.horario_restrito) return true
+      
+      const agora = new Date()
+      const horaAtual = agora.getHours() * 60 + agora.getMinutes() // minutos desde meia-noite
+      
+      const [horaInicio, minInicio] = this.userProfile.horario_inicio.split(':')
+      const [horaFim, minFim] = this.userProfile.horario_fim.split(':')
+      
+      const minutosInicio = parseInt(horaInicio) * 60 + parseInt(minInicio)
+      const minutosFim = parseInt(horaFim) * 60 + parseInt(minFim)
+      
+      return horaAtual >= minutosInicio && horaAtual <= minutosFim
+    },
 
-  const signIn = async (email, password) => {
-    // Sua lógica de login...
-  }
-
-  const signOut = async () => {
-    // Sua lógica de logout...
-  }
-
-  const fetchUserProfile = async () => {
-    // Sua lógica para buscar perfil...
-  }
-
-  // Retornar tudo
-  return {
-    user,
-    userProfile,
-    userType,
-    isAdmin,
-    signUp,
-    signIn,
-    signOut,
-    fetchUserProfile
+    async signIn(email, password) {
+      this.loading = true
+      this.sessionError = false
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        
+        if (error) throw error
+        
+        this.user = data.user
+        await this.fetchUserProfile()
+        await this.fetchUserPermissions()
+        
+        // Verificar se usuário está ativo
+        if (!this.userProfile?.ativo) {
+          await this.signOut()
+          return { success: false, error: 'Usuário inativo. Contate o administrador.' }
+        }
+        
+        // Verificar horário de acesso
+        if (!this.checkHorarioAcesso()) {
+          await this.signOut()
+          return { 
+            success: false, 
+            error: `Acesso permitido apenas entre ${this.userProfile.horario_inicio} e ${this.userProfile.horario_fim}` 
+          }
+        }
+        
+        return { success: true }
+      } catch (error) {
+        console.error('Erro no login:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async signUp(email, password, name, tipo_usuario = 'escritorio', telefone = '') {
+      this.loading = true
+      try {
+        console.log('🔵 Iniciando signUp:', { email, name, tipo_usuario })
+        
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: name
+            },
+            emailRedirectTo: null
+          }
+        })
+        
+        if (error) throw error
+        
+        console.log('🔵 Auth user criado:', data.user.id)
+        
+        // Aguardar um pouco
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // USAR UPSERT COM ID INCLUÍDO
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({ 
+            id: data.user.id,
+            name, 
+            email,
+            tipo_usuario,
+            telefone: telefone || null,
+            ativo: true,
+            senha_temp: password,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          })
+        
+        if (profileError) {
+          console.error('❌ Erro ao criar profile:', profileError)
+          throw profileError
+        }
+        
+        console.log('✅ Profile criado com sucesso!')
+        console.log('✅ Trigger vai criar permissões automaticamente!')
+        
+        return { success: true, userId: data.user.id }
+      } catch (error) {
+        console.error('❌ Erro no cadastro:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async signOut() {
+      try {
+        await supabase.auth.signOut()
+        this.user = null
+        this.userProfile = null
+        this.userPermissions = []
+        this.sessionError = false
+        localStorage.clear()
+        sessionStorage.clear()
+      } catch (error) {
+        console.error('Erro ao fazer logout:', error)
+        this.user = null
+        this.userProfile = null
+        this.userPermissions = []
+        this.sessionError = false
+        localStorage.clear()
+        sessionStorage.clear()
+      }
+    },
+    
+    async fetchUserProfile() {
+      if (!this.user) return
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', this.user.id)
+          .single()
+        
+        if (error) {
+          if (error.message.includes('JWT') || error.message.includes('token')) {
+            this.sessionError = true
+            await this.signOut()
+            return
+          }
+          throw error
+        }
+        
+        this.userProfile = data
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error)
+        this.sessionError = true
+      }
+    },
+    
+    async fetchUserPermissions() {
+      if (!this.user) {
+        console.log('⚠️ Sem usuário logado, não carrega permissões')
+        return
+      }
+      
+      try {
+        console.log('🔵 Buscando permissões para:', this.user.id)
+        
+        const { data, error } = await supabase
+          .rpc('get_user_permissions', { user_uuid: this.user.id })
+        
+        if (error) {
+          console.error('❌ Erro ao buscar permissões:', error)
+          // Se der erro, tenta buscar permissões manualmente
+          return await this.fetchUserPermissionsManual()
+        }
+        
+        console.log('✅ Permissões carregadas:', data?.length)
+        this.userPermissions = data || []
+      } catch (error) {
+        console.error('❌ Erro ao buscar permissões:', error)
+        // Fallback: buscar manualmente
+        await this.fetchUserPermissionsManual()
+      }
+    },
+    
+    // Método alternativo caso a função RPC falhe
+    async fetchUserPermissionsManual() {
+      if (!this.user) return
+      
+      try {
+        console.log('🔵 Buscando permissões manualmente...')
+        
+        // Se for admin, retorna todas as páginas
+        if (this.userProfile?.tipo_usuario === 'administrador') {
+          const { data: pages, error } = await supabase
+            .from('system_pages')
+            .select('*')
+            .eq('ativo', true)
+            .order('ordem')
+          
+          if (error) throw error
+          
+          this.userPermissions = pages.map(p => ({ ...p, pode_acessar: true }))
+          console.log('✅ Admin: todas as páginas permitidas')
+          return
+        }
+        
+        // Para outros usuários, busca permissões específicas
+        const { data: pages, error: pagesError } = await supabase
+          .from('system_pages')
+          .select('*')
+          .eq('ativo', true)
+          .order('ordem')
+        
+        if (pagesError) throw pagesError
+        
+        const { data: permissions, error: permError } = await supabase
+          .from('user_page_permissions')
+          .select('*')
+          .eq('user_id', this.user.id)
+        
+        if (permError) throw permError
+        
+        // Combinar páginas com permissões
+        this.userPermissions = pages.map(page => {
+          const perm = permissions.find(p => p.page_id === page.id)
+          return {
+            ...page,
+            pode_acessar: perm?.pode_acessar || false
+          }
+        })
+        
+        console.log('✅ Permissões carregadas manualmente:', this.userPermissions.length)
+      } catch (error) {
+        console.error('❌ Erro ao buscar permissões manualmente:', error)
+        this.userPermissions = []
+      }
+    },
+    
+    async checkAuth() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Erro ao verificar sessão:', error)
+          this.sessionError = true
+          this.user = null
+          this.userProfile = null
+          this.userPermissions = []
+          return
+        }
+        
+        if (session) {
+          this.user = session.user
+          await this.fetchUserProfile()
+          await this.fetchUserPermissions()
+        } else {
+          this.user = null
+          this.userProfile = null
+          this.userPermissions = []
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        this.sessionError = true
+        this.user = null
+        this.userProfile = null
+        this.userPermissions = []
+      }
+    },
+    
+    forceLogout() {
+      this.user = null
+      this.userProfile = null
+      this.userPermissions = []
+      this.sessionError = false
+      localStorage.clear()
+      sessionStorage.clear()
+    },
+    
+    async reloadPermissions() {
+      console.log('🔄 Recarregando permissões...')
+      await this.fetchUserPermissions()
+    }
   }
 })
