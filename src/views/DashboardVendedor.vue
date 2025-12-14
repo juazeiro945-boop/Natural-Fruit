@@ -1119,7 +1119,7 @@ const loadVendedores = async () => {
   vendedores.value = data || []
 }
 
-cconst confirmarEntrega = async (pedido) => {
+const confirmarEntrega = async (pedido) => {
   if (!confirm('Confirmar entrega do pedido?')) return
 
   try {
