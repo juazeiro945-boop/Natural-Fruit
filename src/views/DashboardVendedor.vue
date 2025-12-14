@@ -1004,8 +1004,9 @@ const abrirModalAlterarStatus = (pedido) => {
 const confirmarAlteracaoStatus = async () => {
   try {
     const updateData = {
-      status_entrega: novoStatus.value
-    }
+  status_entrega: novoStatus.value,
+  order_status: novoStatus.value  // ← ADICIONADO
+}
 
     if (novoStatus.value === 'entregue') {
       updateData.data_entrega = new Date().toISOString()
@@ -1118,7 +1119,7 @@ const loadVendedores = async () => {
   vendedores.value = data || []
 }
 
-const confirmarEntrega = async (pedido) => {
+cconst confirmarEntrega = async (pedido) => {
   if (!confirm('Confirmar entrega do pedido?')) return
 
   try {
@@ -1126,8 +1127,8 @@ const confirmarEntrega = async (pedido) => {
       .from('sales')
       .update({
         status_entrega: 'entregue',
+        order_status: 'entregue',  // ← ADICIONADO
         data_entrega: new Date().toISOString()
-        // Não marca como pago automaticamente
       })
       .eq('id', pedido.id)
 
@@ -1152,11 +1153,12 @@ const abrirModalCancelamento = (pedido) => {
 
 const confirmarCancelamento = async () => {
   try {
-    const { error } = await supabase
-      .from('sales')
-      .update({
-        status_entrega: 'cancelado',
-        data_entrega: new Date().toISOString(),
+    cconst { error } = await supabase
+  .from('sales')
+  .update({
+    status_entrega: 'cancelado',
+    order_status: 'cancelado',  // ← ADICIONADO
+    data_entrega: new Date().toISOString(),
         motivo_cancelamento: formCancelamento.value.motivo,
         observacao_entrega: formCancelamento.value.observacao
       })
