@@ -87,6 +87,14 @@
                       {{ usuario.ativo ? '🔒' : '🔓' }}
                     </button>
                     <button 
+                      @click="excluirUsuario(usuario)" 
+                      class="text-red-600 hover:text-red-800"
+                      title="Excluir"
+                      v-if="usuario.id !== authStore.user?.id"
+                    >
+                      🗑️
+                    </button>
+                    <button 
                       @click="debugUsuario(usuario)" 
                       class="text-gray-600 hover:text-gray-800"
                       title="Debug"
@@ -163,6 +171,13 @@
                 :class="usuario.ativo ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'"
               >
                 {{ usuario.ativo ? '🔒 Desativar' : '🔓 Ativar' }}
+              </button>
+              <button 
+                v-if="usuario.id !== authStore.user?.id"
+                @click="excluirUsuario(usuario)" 
+                class="bg-red-50 text-red-600 py-2 rounded-lg text-sm font-medium col-span-2"
+              >
+                🗑️ Excluir Usuário
               </button>
             </div>
           </div>
@@ -279,7 +294,7 @@
                   :disabled="pagina.requer_admin && usuarioPermissoes?.tipo_usuario !== 'administrador'"
                   class="sr-only peer"
                 />
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div class="toggle-switch"></div>
               </label>
               <span class="text-sm font-medium" :class="temPermissao(pagina.id) ? 'text-green-600' : 'text-gray-400'">
                 {{ temPermissao(pagina.id) ? '✅ Permitido' : '❌ Bloqueado' }}
@@ -676,59 +691,54 @@ const togglePermissao = async (pagina) => {
     console.log('🔵 Alterando permissão:', {
       usuario: usuarioPermissoes.value?.name,
       pagina: pagina.nome,
-      novaPermissao: novaPermissao
+      novaPermissao
     })
     
-    // Remove primeiro qualquer permissão existente
-    const { error: deleteError } = await supabase
-      .from('user_page_permissions')
-      .delete()
-      .eq('user_id', usuarioPermissoes.value.id)
-      .eq('page_id', pagina.id)
-    
-    if (deleteError) {
-      console.error('❌ Erro ao remover permissão:', deleteError)
-      throw deleteError
-    }
-    
-    // Se a nova permissão for true, insere
-    if (novaPermissao) {
-      const { error: insertError } = await supabase
+    if (permissaoAtual) {
+      // Remove permissão
+      const { error } = await supabase
         .from('user_page_permissions')
-        .insert({
+        .delete()
+        .eq('user_id', usuarioPermissoes.value.id)
+        .eq('page_id', pagina.id)
+      
+      if (error) throw error
+      
+      // Remove da lista local
+      const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
+      if (index >= 0) {
+        permissoesUsuario.value.splice(index, 1)
+      }
+    } else {
+      // Adiciona permissão usando upsert para evitar duplicatas
+      const { error } = await supabase
+        .from('user_page_permissions')
+        .upsert({
           user_id: usuarioPermissoes.value.id,
           page_id: pagina.id,
           pode_acessar: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,page_id'
         })
       
-      if (insertError) {
-        console.error('❌ Erro ao inserir permissão:', insertError)
-        throw insertError
-      }
-    }
-    
-    // Atualiza a lista local de permissões
-    const index = permissoesUsuario.value.findIndex(p => p.page_id === pagina.id)
-    if (index >= 0) {
-      if (novaPermissao) {
-        permissoesUsuario.value[index].pode_acessar = true
-      } else {
-        permissoesUsuario.value.splice(index, 1)
-      }
-    } else if (novaPermissao) {
+      if (error) throw error
+      
+      // Adiciona na lista local
       permissoesUsuario.value.push({
         user_id: usuarioPermissoes.value.id,
         page_id: pagina.id,
-        pode_acessar: true
+        pode_acessar: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
     }
     
     console.log('✅ Permissão atualizada com sucesso')
     
   } catch (error) {
-    console.error('❌ Erro completo ao alterar permissão:', error)
+    console.error('❌ Erro ao alterar permissão:', error)
     alert('❌ Erro ao alterar permissão: ' + error.message)
   }
 }
@@ -777,6 +787,7 @@ const confirmarResetSenha = async () => {
   loadingReset.value = true
   
   try {
+    // Usando função edge para resetar senha
     const { data, error } = await supabase.functions.invoke('reset-user-password', {
       body: {
         userId: usuarioResetSenha.value.id,
@@ -787,9 +798,13 @@ const confirmarResetSenha = async () => {
     if (error) throw error
     if (!data.success) throw new Error(data.error)
 
+    // Atualiza senha_temp no profile
     await supabase
       .from('profiles')
-      .update({ senha_temp: novaSenhaReset.value })
+      .update({ 
+        senha_temp: novaSenhaReset.value,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', usuarioResetSenha.value.id)
     
     await navigator.clipboard.writeText(novaSenhaReset.value)
@@ -852,7 +867,7 @@ const salvarUsuario = async () => {
     if (editandoUsuario.value) {
       console.log('🔵 Editando usuário:', formUsuario.value)
 
-      // Primeiro, atualiza o perfil
+      // Atualiza o perfil
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -873,23 +888,27 @@ const salvarUsuario = async () => {
       // Verifica se o email foi alterado
       const usuarioOriginal = usuarios.value.find(u => u.id === formUsuario.value.id)
       if (usuarioOriginal && usuarioOriginal.email !== formUsuario.value.email) {
-        console.log('🔵 Atualizando email do usuário...')
+        console.log('🔵 Atualizando email via função edge...')
         
-        // Atualiza o email no Auth usando admin API
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          formUsuario.value.id,
-          { email: formUsuario.value.email }
-        )
+        // Usando função edge para atualizar email
+        const { data, error } = await supabase.functions.invoke('update-user-email', {
+          body: {
+            userId: formUsuario.value.id,
+            newEmail: formUsuario.value.email
+          }
+        })
         
-        if (authError) {
-          console.error('❌ Erro ao atualizar email:', authError)
-          throw new Error('Erro ao atualizar email: ' + authError.message)
+        if (error) {
+          console.error('⚠️ Email não foi atualizado no Auth:', error)
+          // Não interrompe o processo, apenas alerta
+          alert('✅ Usuário atualizado, mas o email não foi alterado no sistema de autenticação')
         }
       }
       
-      alert('✅ Usuário atualizado!')
+      alert('✅ Usuário atualizado com sucesso!')
+      
     } else {
-      console.log('🔵 Criando usuário...')
+      console.log('🔵 Criando novo usuário...')
       
       const result = await authStore.signUp(
         formUsuario.value.email,
@@ -899,33 +918,34 @@ const salvarUsuario = async () => {
         formUsuario.value.telefone
       )
       
-      console.log('🔵 Resultado:', result)
+      console.log('🔵 Resultado signUp:', result)
       
-      if (!result.success) throw new Error(result.error)
+      if (!result.success) {
+        throw new Error(result.error || 'Erro ao criar usuário')
+      }
 
+      // Atualiza informações adicionais
       await supabase
         .from('profiles')
         .update({
           horario_restrito: formUsuario.value.horario_restrito,
           horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
           horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null,
-          senha_temp: formUsuario.value.password
+          senha_temp: formUsuario.value.password,
+          updated_at: new Date().toISOString()
         })
         .eq('id', result.userId)
       
       await navigator.clipboard.writeText(formUsuario.value.password)
       
-      alert(`✅ Usuário criado!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada!`)
+      alert(`✅ Usuário criado com sucesso!\n\nSenha: ${formUsuario.value.password}\n\n📋 Copiada para a área de transferência!`)
     }
     
     closeModalUsuario()
     
-    // Aguarda um pouco e recarrega
-    console.log('🔵 Aguardando para recarregar...')
-    setTimeout(async () => {
-      console.log('🔵 Recarregando usuários...')
-      await carregarUsuarios()
-    }, 1000)
+    // Recarrega lista de usuários
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await carregarUsuarios()
     
   } catch (error) {
     console.error('❌ Erro completo:', error)
@@ -952,7 +972,7 @@ const toggleStatusUsuario = async (usuario) => {
     
     if (error) throw error
     
-    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'}!`)
+    alert(`✅ Usuário ${novoStatus ? 'ativado' : 'desativado'} com sucesso!`)
     await carregarUsuarios()
   } catch (error) {
     console.error('Erro:', error)
@@ -960,9 +980,66 @@ const toggleStatusUsuario = async (usuario) => {
   }
 }
 
+const excluirUsuario = async (usuario) => {
+  if (usuario.id === authStore.user?.id) {
+    alert('❌ Você não pode excluir seu próprio usuário!')
+    return
+  }
+  
+  if (!confirm(`⚠️ ATENÇÃO!\n\nDeseja excluir permanentemente o usuário "${usuario.name}"?\n\nEsta ação não pode ser desfeita!`)) {
+    return
+  }
+  
+  try {
+    // 1. Remover permissões
+    const { error: permissaoError } = await supabase
+      .from('user_page_permissions')
+      .delete()
+      .eq('user_id', usuario.id)
+    
+    if (permissaoError) throw permissaoError
+    
+    // 2. Remover perfil
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', usuario.id)
+    
+    if (profileError) throw profileError
+    
+    // 3. Remover usuário do Auth (via função edge)
+    const { data, error: authError } = await supabase.functions.invoke('delete-user', {
+      body: { userId: usuario.id }
+    })
+    
+    if (authError) {
+      console.warn('⚠️ Usuário removido do banco, mas pode permanecer no Auth:', authError)
+      // Continua mesmo com erro no Auth
+    }
+    
+    alert('✅ Usuário excluído com sucesso!')
+    await carregarUsuarios()
+    
+  } catch (error) {
+    console.error('❌ Erro ao excluir usuário:', error)
+    alert('❌ Erro ao excluir usuário: ' + error.message)
+  }
+}
+
 const closeModalUsuario = () => {
   showModalUsuario.value = false
   editandoUsuario.value = false
+  formUsuario.value = {
+    name: '',
+    email: '',
+    telefone: '',
+    password: '',
+    tipo_usuario: 'escritorio',
+    ativo: true,
+    horario_restrito: false,
+    horario_inicio: '08:00',
+    horario_fim: '18:00'
+  }
 }
 
 const getTipoLabel = (tipo) => {
@@ -1005,7 +1082,7 @@ onMounted(() => {
 }
 
 .btn-primary {
-  @apply px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium;
+  @apply px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-secondary {
@@ -1029,6 +1106,10 @@ onMounted(() => {
 }
 
 .modal-content {
-  @apply bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+  @apply bg-white rounded-xl shadow-2xl p-6 w-full max-h-[90vh] overflow-y-auto;
+}
+
+.toggle-switch {
+  @apply w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600;
 }
 </style>
