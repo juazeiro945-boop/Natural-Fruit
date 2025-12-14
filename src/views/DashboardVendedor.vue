@@ -1153,7 +1153,7 @@ const abrirModalCancelamento = (pedido) => {
 
 const confirmarCancelamento = async () => {
   try {
-    cconst { error } = await supabase
+    const { error } = await supabase
   .from('sales')
   .update({
     status_entrega: 'cancelado',
