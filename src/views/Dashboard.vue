@@ -1,6 +1,7 @@
 <template>
-  <Layout>
-    <div class="space-y-6 pb-20 md:pb-6">
+  <!-- Layout sem padding-bottom para dar espaço aos menus fixos -->
+  <Layout :no-padding-bottom="true">
+    <div class="space-y-6">
       <!-- Header com Filtros - MELHORADO -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div class="flex items-center space-x-3 md:space-x-4">
@@ -431,7 +432,7 @@
       </div>
 
       <!-- Notificação de Erro - MELHORADO -->
-      <div v-if="error" class="fixed bottom-4 right-4 left-4 md:left-auto bg-red-500 text-white p-3 md:p-4 rounded-lg shadow-lg max-w-sm animate-fade-in z-50">
+      <div v-if="error" class="fixed bottom-20 md:bottom-24 right-4 left-4 md:left-auto bg-red-500 text-white p-3 md:p-4 rounded-lg shadow-lg max-w-sm animate-fade-in z-50">
         <div class="flex items-center space-x-2 md:space-x-3">
           <svg class="w-4 h-4 md:w-5 md:h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -820,6 +821,17 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Estilos para garantir espaço para os menus fixos */
+:deep(.layout-content) {
+  padding-bottom: 80px !important; /* Espaço para os menus mobile */
+}
+
+@media (min-width: 768px) {
+  :deep(.layout-content) {
+    padding-bottom: 40px !important; /* Menor espaço em desktop */
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -845,6 +857,13 @@ onUnmounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* Ajuste para notificação não cobrir os menus */
+@media (max-width: 767px) {
+  .fixed {
+    bottom: 80px !important; /* Acima dos menus mobile */
   }
 }
 </style>
