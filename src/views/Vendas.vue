@@ -1,37 +1,39 @@
 <template>
   <Layout>
     <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
-      <!-- Header -->
+      <!-- Header Responsivo -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas / Pedidos</h2>
           <p class="text-sm md:text-base text-gray-600 mt-1">Gerencie pedidos e vendas</p>
         </div>
-        <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-          <button @click="openSearchClientsModal" class="w-full md:w-auto btn-secondary text-sm md:text-base">
+        <div class="flex flex-col sm:flex-row gap-2 md:gap-3">
+          <button @click="openSearchClientsModal" class="w-full sm:w-auto btn-secondary text-sm md:text-base flex items-center justify-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            Pesquisar Clientes
+            <span class="hidden xs:inline">Pesquisar</span>
+            <span class="xs:hidden">🔍 Clientes</span>
           </button>
-          <button @click="openModal" class="w-full md:w-auto btn-primary text-sm md:text-base">
+          <button @click="openModal" class="w-full sm:w-auto btn-primary text-sm md:text-base flex items-center justify-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
-            Novo Pedido
+            <span class="hidden xs:inline">Novo Pedido</span>
+            <span class="xs:hidden">➕ Novo</span>
           </button>
         </div>
       </div>
 
       <!-- Filtros Responsivos -->
       <div class="card">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
-          <div class="sm:col-span-2 lg:col-span-1">
+        <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+          <div class="xs:col-span-2 lg:col-span-1">
             <label class="label text-xs md:text-sm">Data</label>
             <input v-model="filters.date" type="date" class="input-field text-sm md:text-base" @change="loadSales" />
           </div>
           <div>
-            <label class="label text-xs md:text-sm">Tipo de Venda</label>
+            <label class="label text-xs md:text-sm">Tipo</label>
             <select v-model="filters.saleType" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
               <option value="wholesale">🏭 Atacado</option>
@@ -46,7 +48,6 @@
               <option value="pix">📱 PIX</option>
               <option value="boleto">📄 Boleto</option>
               <option value="card">💳 Cartão</option>
-              <option value="credito">💰 Crediário</option>
             </select>
           </div>
           <div>
@@ -78,58 +79,60 @@
             :class="viewMode === 'pedidos' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
-            📦 Por Pedido
+            <span class="hidden xs:inline">📦 Por Pedido</span>
+            <span class="xs:hidden">📦</span>
           </button>
           <button 
             @click="viewMode = 'clientes'" 
             :class="viewMode === 'clientes' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
-            👥 Por Cliente
+            <span class="hidden xs:inline">👥 Por Cliente</span>
+            <span class="xs:hidden">👥</span>
           </button>
         </div>
       </div>
 
       <!-- Visualização POR PEDIDOS (Desktop) -->
       <div v-if="viewMode === 'pedidos'" class="hidden md:block card overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full min-w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Data</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tipo</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Cliente</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Itens</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Total</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Pagamento</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status Pedido</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status Pgto</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ações</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Data</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Tipo</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Cliente</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Itens</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Total</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Pagamento</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Status Pedido</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Status Pgto</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="sale in paginatedSales" :key="sale.id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3 text-sm whitespace-nowrap">{{ formatDate(sale.date) }}</td>
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
                 <span :class="getSaleTypeBadge(sale.sale_type)">{{ getSaleTypeLabel(sale.sale_type) }}</span>
               </td>
-              <td class="px-4 py-3 text-sm">{{ sale.clients?.name }}</td>
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-3 text-sm whitespace-nowrap">{{ sale.clients?.name }}</td>
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
                 <span class="font-semibold text-primary-600">{{ getTotalItems(sale) }} itens</span>
               </td>
-              <td class="px-4 py-3 text-sm font-semibold">{{ formatCurrency(sale.total) }}</td>
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-3 text-sm font-semibold whitespace-nowrap">{{ formatCurrency(sale.total) }}</td>
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
                 <span :class="getPaymentBadge(sale.payment_method)">{{ getPaymentLabel(sale.payment_method) }}</span>
               </td>
-              <td class="px-4 py-3 text-sm">
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
                 <span :class="getOrderStatusBadge(sale.order_status)">{{ getOrderStatusLabel(sale.order_status) }}</span>
               </td>
-              <td class="px-4 py-3 text-sm">
-                <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
+                <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
                   {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm">
-                <div class="flex items-center space-x-2">
+              <td class="px-4 py-3 text-sm whitespace-nowrap">
+                <div class="flex items-center space-x-1">
                   <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
                     <span class="text-lg">👁️</span>
                   </button>
@@ -142,28 +145,19 @@
                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
                     <span class="text-lg">📄</span>
                   </button>
-                  <button 
-                    v-if="authStore.canDeleteOrders" 
-                    @click="deleteSale(sale)" 
-                    :disabled="loading"
-                    class="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                    title="Excluir"
-                  >
-                    <span class="text-lg">🗑️</span>
-                  </button>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
         
-        <!-- PAGINAÇÃO -->
-        <div v-if="totalPages > 1" class="flex justify-between items-center mt-6 pt-4 border-t">
+        <!-- Paginação Desktop -->
+        <div v-if="totalPages > 1" class="flex flex-col sm:flex-row justify-between items-center mt-6 pt-4 border-t gap-4">
           <button 
             @click="previousPage" 
             :disabled="currentPage === 1"
             :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
-            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm w-full sm:w-auto justify-center"
           >
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -175,7 +169,7 @@
             <span class="text-sm text-gray-600">
               Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
             </span>
-            <span class="text-xs text-gray-500 ml-2">
+            <span class="text-xs text-gray-500">
               ({{ sales.length }} {{ sales.length === 1 ? 'pedido' : 'pedidos' }})
             </span>
           </div>
@@ -184,7 +178,7 @@
             @click="nextPage" 
             :disabled="currentPage === totalPages"
             :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
-            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm"
+            class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm w-full sm:w-auto justify-center"
           >
             Próximo
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +202,7 @@
         <div v-for="sale in paginatedSales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
             <div class="flex-1 min-w-0">
-              <div class="flex items-center space-x-2 mb-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
                 <p class="text-xs text-gray-500">{{ formatDate(sale.date) }}</p>
                 <span :class="getSaleTypeBadge(sale.sale_type)" class="text-xs">{{ getSaleTypeLabel(sale.sale_type) }}</span>
               </div>
@@ -216,26 +210,14 @@
               <p class="text-xs text-primary-600 font-semibold">{{ getTotalItems(sale) }} itens</p>
             </div>
             <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
-              <button @click="viewSaleDetails(sale)" class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Ver Detalhes">
-                <span class="text-xl">👁️</span>
+              <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Ver Detalhes">
+                <span class="text-lg">👁️</span>
               </button>
-              <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-1 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100" title="Editar Pedido">
-                <span class="text-xl">✏️</span>
+              <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100" title="Editar Pedido">
+                <span class="text-lg">✏️</span>
               </button>
-              <button @click="togglePaidStatus(sale)" class="p-1 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200" title="Alternar Status Pagamento">
-                <span class="text-xl">{{ sale.paid ? '↩️' : '✅' }}</span>
-              </button>
-              <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-1 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Gerar Recibo">
-                <span class="text-xl">📄</span>
-              </button>
-              <button 
-                v-if="authStore.canDeleteOrders" 
-                @click="deleteSale(sale)" 
-                :disabled="loading"
-                class="p-1 hover:bg-red-50 rounded-lg transition-colors active:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed" 
-                title="Excluir"
-              >
-                <span class="text-xl">🗑️</span>
+              <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200" title="Alternar Status Pagamento">
+                <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
               </button>
             </div>
           </div>
@@ -245,19 +227,19 @@
               <span class="font-semibold text-base text-gray-900">{{ formatCurrency(sale.total) }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-gray-600">Status Pedido:</span>
-              <span :class="getOrderStatusBadge(sale.order_status)" class="text-xs">{{ getOrderStatusLabel(sale.order_status) }}</span>
+              <span class="text-gray-600">Pagamento:</span>
+              <span :class="getPaymentBadge(sale.payment_method)" class="text-xs">{{ getPaymentLabel(sale.payment_method) }}</span>
             </div>
           </div>
           <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t">
-            <span :class="getPaymentBadge(sale.payment_method)" class="text-xs">{{ getPaymentLabel(sale.payment_method) }}</span>
+            <span :class="getOrderStatusBadge(sale.order_status)" class="text-xs">{{ getOrderStatusLabel(sale.order_status) }}</span>
             <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
               {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
             </span>
           </div>
         </div>
         
-        <!-- PAGINAÇÃO MOBILE -->
+        <!-- Paginação Mobile -->
         <div v-if="totalPages > 1" class="flex flex-col items-center space-y-3 mt-6 p-4 bg-gray-50 rounded-lg">
           <span class="text-sm text-gray-600">
             Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
@@ -295,7 +277,6 @@
             </svg>
           </div>
           <p class="text-gray-600 font-medium">Nenhum pedido encontrado</p>
-          <p class="text-gray-500 text-sm mt-2">Ajuste os filtros ou registre um novo pedido</p>
         </div>
       </div>
 
@@ -305,7 +286,7 @@
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
             <div class="flex-1">
               <h3 class="font-bold text-lg md:text-2xl text-gray-900">{{ cliente.name }}</h3>
-              <div class="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
+              <div class="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3 mt-2">
                 <p class="text-xs md:text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
                 <p class="text-xs md:text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
               </div>
@@ -368,15 +349,6 @@
                     <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
                       <span class="text-lg md:text-xl">📄</span>
                     </button>
-                    <button 
-                      v-if="authStore.canDeleteOrders" 
-                      @click="deleteSale(pedido)" 
-                      :disabled="loading"
-                      class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                      title="Excluir"
-                    >
-                      <span class="text-lg md:text-xl">🗑️</span>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -389,74 +361,10 @@
             <span class="text-6xl">👥</span>
           </div>
           <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
-          <p class="text-gray-500 text-sm mt-2">Ajuste os filtros para ver os clientes</p>
         </div>
       </div>
 
-      <!-- MODAL PESQUISAR CLIENTES -->
-      <div v-if="showSearchClientsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
-          <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
-            <h3 class="text-lg md:text-xl font-bold text-white">🔍 Pesquisar Clientes</h3>
-            <button @click="closeSearchClientsModal" class="text-white hover:bg-blue-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">×</button>
-          </div>
-          
-          <div class="p-4 md:p-6 space-y-4">
-            <div>
-              <input 
-                v-model="clientSearch" 
-                type="text" 
-                placeholder="Digite o nome, telefone ou email do cliente..." 
-                class="input-field"
-                @input="filterClients"
-              />
-            </div>
-
-            <div v-if="filteredClients.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-              <div 
-                v-for="client in filteredClients" 
-                :key="client.id" 
-                class="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer"
-                @click="selectClientForSearch(client)"
-              >
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <h4 class="font-bold text-lg text-gray-900">{{ client.name }}</h4>
-                    <div class="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
-                      <span v-if="client.phone">📞 {{ client.phone }}</span>
-                      <span v-if="client.email">📧 {{ client.email }}</span>
-                    </div>
-                    <p v-if="client.address" class="text-xs text-gray-500 mt-1">📍 {{ client.address }}</p>
-                  </div>
-                  <button class="btn-primary py-2 px-4 text-sm">
-                    Ver Pedidos
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div v-else-if="clientSearch.length > 0" class="text-center py-12">
-              <div class="text-gray-400 mb-4">
-                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-              </div>
-              <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
-            </div>
-
-            <div v-else class="text-center py-12">
-              <div class="text-gray-400 mb-4">
-                <span class="text-6xl">👥</span>
-              </div>
-              <p class="text-gray-600 font-medium">Digite para pesquisar</p>
-            </div>
-
-            <button @click="closeSearchClientsModal" class="w-full btn-outline py-3">Fechar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ✅ MODAL NOVO/EDITAR PEDIDO - CORRIGIDO PARA MOBILE -->
+      <!-- Modal Novo/Editar Pedido -->
       <div v-if="showModal" class="modal-overlay-fixed">
         <div class="modal-container-mobile">
           
@@ -487,7 +395,7 @@
             <form @submit.prevent="saveSale" class="p-4 space-y-4 pb-32">
               
               <!-- Informações Básicas -->
-              <div class="grid grid-cols-1 gap-3">
+              <div class="grid grid-cols-1 xs:grid-cols-2 gap-3">
                 <div>
                   <label class="label">Data *</label>
                   <input v-model="form.date" type="date" required class="input-field" />
@@ -531,21 +439,18 @@
                     <select v-model="item.product_id" required class="input-field" @change="updatePriceItem(index)">
                       <option value="">Selecione um produto</option>
                       <option v-for="product in products" :key="product.id" :value="product.id">
-                        {{ product.name }} - {{ formatCurrency(product.price) }}{{ product.sold_by_weight ? ' /kg' : '' }}
+                        {{ product.name }} - {{ formatCurrency(product.price) }}
                       </option>
                     </select>
                   </div>
                   
-                  <div class="grid grid-cols-1 gap-2">
+                  <div class="grid grid-cols-1 xs:grid-cols-3 gap-2">
                     <div>
-                      <label class="label text-xs">
-                        {{ item.is_weight ? 'Peso (kg) *' : 'Quantidade *' }}
-                      </label>
+                      <label class="label text-xs">Quantidade *</label>
                       <input 
                         v-model.number="item.quantity" 
                         type="number" 
-                        :step="item.is_weight ? '0.001' : '1'" 
-                        :min="item.is_weight ? '0.001' : '1'" 
+                        min="1" 
                         required 
                         class="input-field" 
                         @input="calculateTotalItem(index)" 
@@ -571,8 +476,8 @@
 
                 <div class="bg-gradient-to-r from-primary-600 to-primary-700 p-4 rounded-lg shadow-lg">
                   <div class="flex justify-between items-center text-white">
-                    <span class="font-bold text-lg">TOTAL DO PEDIDO:</span>
-                    <span class="font-bold text-2xl">{{ formatCurrency(totalPedido) }}</span>
+                    <span class="font-bold text-sm md:text-lg">TOTAL DO PEDIDO:</span>
+                    <span class="font-bold text-lg md:text-2xl">{{ formatCurrency(totalPedido) }}</span>
                   </div>
                 </div>
               </div>
@@ -636,36 +541,8 @@
                   <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
                 </div>
                 <div v-if="form.is_event">
-                  <label class="label text-sm">Nome/Tipo do Evento *</label>
-                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário, Festa Corporativa" />
-                </div>
-              </div>
-
-              <!-- Troca -->
-              <div class="border-2 border-yellow-200 rounded-lg p-3 bg-yellow-50">
-                <div class="flex items-center space-x-3 mb-3">
-                  <input v-model="form.has_exchange" type="checkbox" id="has-exchange" class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500" />
-                  <label for="has-exchange" class="font-medium text-gray-700">🔄 Este pedido envolve troca?</label>
-                </div>
-                <div v-if="form.has_exchange" class="space-y-3">
-                  <div>
-                    <label class="label text-sm">Produto da Troca *</label>
-                    <input v-model="form.exchange_product" type="text" required class="input-field" placeholder="Ex: Caixas de polpa de acerola" />
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="label text-sm">Quantidade *</label>
-                      <input v-model.number="form.exchange_quantity" type="number" min="1" required class="input-field" />
-                    </div>
-                    <div>
-                      <label class="label text-sm">Valor da Troca *</label>
-                      <input v-model.number="form.exchange_value" type="number" step="0.01" required class="input-field" @input="calculateExchangeTotal" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="label text-sm">Total da Troca</label>
-                    <input v-model.number="form.exchange_total" type="number" step="0.01" readonly class="input-field bg-gray-100 font-bold text-yellow-700" />
-                  </div>
+                  <label class="label text-sm">Nome do Evento *</label>
+                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário" />
                 </div>
               </div>
 
@@ -684,18 +561,9 @@
                     </label>
                   </div>
                   
-                  <!-- Status visual -->
                   <div :class="form.paid ? 'bg-green-500 text-white' : 'bg-red-500 text-white'" 
-                       class="px-4 py-2 rounded-full font-bold text-sm transition-colors">
+                       class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-xs md:text-sm transition-colors">
                     {{ form.paid ? 'PAGO' : 'PENDENTE' }}
-                  </div>
-                </div>
-                
-                <!-- Valor total quando pago -->
-                <div v-if="form.paid" class="mt-3 p-3 bg-white rounded-lg border-2 border-green-300">
-                  <div class="flex justify-between items-center">
-                    <span class="font-semibold text-gray-700">Valor a receber:</span>
-                    <span class="font-bold text-green-600">{{ formatCurrency(totalPedido) }}</span>
                   </div>
                 </div>
               </div>
@@ -703,7 +571,7 @@
               <!-- Observações -->
               <div>
                 <label class="label">Observações</label>
-                <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais do pedido..."></textarea>
+                <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais..."></textarea>
               </div>
 
             </form>
@@ -713,7 +581,7 @@
           <div class="fixed-bottom-actions">
             <div class="flex flex-col gap-2">
               <button type="submit" @click="saveSale" :disabled="loading" class="w-full btn-primary py-4 text-lg font-bold">
-                {{ loading ? 'Salvando...' : editingSale ? 'Atualizar Pedido' : 'Salvar Pedido' }}
+                {{ loading ? 'Salvando...' : editingSale ? 'Atualizar' : 'Salvar' }}
               </button>
               <button type="button" @click="closeModal" class="w-full btn-outline py-3">
                 Cancelar
@@ -724,7 +592,7 @@
         </div>
       </div>
 
-      <!-- Modal Ver Detalhes - RESPONSIVO -->
+      <!-- Modal Ver Detalhes -->
       <div v-if="showDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
@@ -733,6 +601,7 @@
           </div>
           
           <div v-if="selectedSale" class="p-4 md:p-6 space-y-3 md:space-y-4">
+            <!-- Conteúdo do modal -->
             <div class="grid grid-cols-2 gap-3 md:gap-4">
               <div class="card bg-gray-50 p-3 md:p-4">
                 <p class="text-xs md:text-sm text-gray-600">Data</p>
@@ -765,31 +634,6 @@
               </div>
             </div>
 
-            <div v-if="selectedSale.has_exchange" class="card bg-yellow-50 p-3 md:p-4">
-              <h4 class="font-bold mb-1 md:mb-2 text-yellow-900 text-sm md:text-base">🔄 Troca</h4>
-              <p class="text-xs md:text-sm"><strong>Produto:</strong> {{ selectedSale.exchange_product }}</p>
-              <p class="text-xs md:text-sm"><strong>Quantidade:</strong> {{ selectedSale.exchange_quantity }}</p>
-              <p class="text-xs md:text-sm"><strong>Valor:</strong> {{ formatCurrency(selectedSale.exchange_total) }}</p>
-            </div>
-
-            <div v-if="selectedSale.is_event" class="card bg-purple-50 p-3 md:p-4">
-              <h4 class="font-bold mb-1 md:mb-2 text-purple-900 text-sm md:text-base">🎉 Evento</h4>
-              <p class="font-semibold text-sm md:text-base">{{ selectedSale.event_name }}</p>
-            </div>
-
-            <div class="card bg-gray-50 p-3 md:p-4">
-              <div class="grid grid-cols-2 gap-3 md:gap-4">
-                <div>
-                  <p class="text-xs md:text-sm text-gray-600">Forma de Pagamento</p>
-                  <p class="font-semibold text-sm md:text-base">{{ getPaymentLabel(selectedSale.payment_method) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs md:text-sm text-gray-600">Status Pedido</p>
-                  <p class="font-semibold text-sm md:text-base">{{ getOrderStatusLabel(selectedSale.order_status) }}</p>
-                </div>
-              </div>
-            </div>
-
             <div class="card bg-primary-50 border-2 border-primary-300 p-3 md:p-4">
               <div class="flex justify-between items-center">
                 <span class="font-bold text-base md:text-lg">TOTAL:</span>
@@ -801,40 +645,15 @@
           </div>
         </div>
       </div>
-
-      <!-- Modal Confirmação Recibo -->
-      <div v-if="showReceiptConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-4 md:p-6 animate-fade-in">
-          <div class="text-center mb-4 md:mb-6">
-            <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-              <svg class="w-6 h-6 md:w-8 md:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-1 md:mb-2">Pedido {{ editingSale ? 'Atualizado' : 'Registrado' }}!</h3>
-            <p class="text-gray-600 text-xs md:text-sm">Deseja gerar o recibo agora?</p>
-          </div>
-          <div class="flex flex-col gap-2 md:gap-3">
-            <button v-if="authStore.canGenerateReceipt" @click="confirmGenerateReceipt" class="btn-primary py-3">
-              <svg class="w-4 h-4 md:w-5 md:h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              Gerar Recibo
-            </button>
-            <button @click="closeReceiptConfirm" class="btn-outline py-3">Agora Não</button>
-          </div>
-        </div>
-      </div>
     </div>
   </Layout>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
 import Layout from '../components/Layout.vue'
-import jsPDF from 'jspdf'
 
 const authStore = useAuthStore()
 const sales = ref([])
@@ -844,13 +663,8 @@ const showModal = ref(false)
 const showDetailsModal = ref(false)
 const selectedSale = ref(null)
 const loading = ref(false)
-const showReceiptConfirm = ref(false)
-const lastSaleData = ref(null)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
-const showSearchClientsModal = ref(false)
-const clientSearch = ref('')
-const filteredClients = ref([])
 
 // PAGINAÇÃO
 const currentPage = ref(1)
@@ -866,7 +680,7 @@ const filters = ref({
 
 const form = ref({
   date: new Date().toISOString().split('T')[0],
-  sale_type: 'wholesale', // ALTERADO DE 'retail' PARA 'wholesale'
+  sale_type: 'wholesale',
   client_id: '',
   produtos: [
     {
@@ -882,21 +696,14 @@ const form = ref({
   notes: '',
   order_status: 'pendente',
   is_event: false,
-  event_name: '',
-  has_exchange: false,
-  exchange_product: '',
-  exchange_quantity: 1,
-  exchange_value: 0,
-  exchange_total: 0
+  event_name: ''
 })
 
-// CONSTANTES PARA OS RADIO BUTTONS
 const paymentMethods = [
   { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
   { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
   { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
-  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
-  { value: 'credito', label: '💰 Crediário', selectedClass: 'bg-orange-500 text-white border-orange-600' }
+  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' }
 ]
 
 const orderStatuses = [
@@ -906,7 +713,7 @@ const orderStatuses = [
   { value: 'cancelado', label: '❌ Cancelado', selectedClass: 'bg-red-500 text-white border-red-600' }
 ]
 
-// COMPUTED PAGINAÇÃO
+// COMPUTED
 const totalPages = computed(() => {
   return Math.ceil(sales.value.length / itemsPerPage)
 })
@@ -916,18 +723,6 @@ const paginatedSales = computed(() => {
   const end = start + itemsPerPage
   return sales.value.slice(start, end)
 })
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
 
 const totalPedido = computed(() => {
   return form.value.produtos.reduce((sum, item) => sum + (item.total || 0), 0)
@@ -967,6 +762,7 @@ const clientesAgrupados = computed(() => {
   return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
 })
 
+// FUNÇÕES UTILITÁRIAS
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 }
@@ -984,8 +780,7 @@ const getPaymentLabel = (method) => {
     cash: 'Dinheiro', 
     pix: 'PIX', 
     boleto: 'Boleto',
-    card: 'Cartão',
-    credito: 'Crediário'
+    card: 'Cartão'
   }
   return labels[method] || method
 }
@@ -995,10 +790,9 @@ const getPaymentBadge = (method) => {
     cash: 'bg-green-100 text-green-600',
     pix: 'bg-purple-100 text-purple-600',
     boleto: 'bg-blue-100 text-blue-600',
-    card: 'bg-pink-100 text-pink-600',
-    credito: 'bg-orange-100 text-orange-600'
+    card: 'bg-pink-100 text-pink-600'
   }
-  return `${badges[method] || 'bg-gray-100 text-gray-600'} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
+  return `${badges[method] || 'bg-gray-100 text-gray-600'} px-2 py-1 rounded-full text-xs font-semibold`
 }
 
 const getSaleTypeLabel = (type) => {
@@ -1011,7 +805,7 @@ const getSaleTypeBadge = (type) => {
     wholesale: 'bg-blue-100 text-blue-700',
     retail: 'bg-green-100 text-green-700'
   }
-  return `${badges[type]} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
+  return `${badges[type]} px-2 py-1 rounded-full text-xs font-semibold`
 }
 
 const getOrderStatusLabel = (status) => {
@@ -1031,7 +825,7 @@ const getOrderStatusBadge = (status) => {
     entregue: 'bg-green-100 text-green-700',
     cancelado: 'bg-red-100 text-red-700'
   }
-  return `${badges[status] || 'bg-gray-100 text-gray-700'} px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap`
+  return `${badges[status] || 'bg-gray-100 text-gray-700'} px-2 py-1 rounded-full text-xs font-semibold`
 }
 
 const getTotalItems = (sale) => {
@@ -1071,6 +865,7 @@ const parseProducts = (sale) => {
   }]
 }
 
+// FUNÇÕES DO FORMULÁRIO
 const adicionarProduto = () => {
   form.value.produtos.push({
     product_id: '',
@@ -1101,10 +896,20 @@ const calculateTotalItem = (index) => {
   item.total = item.quantity * item.unit_price
 }
 
-const calculateExchangeTotal = () => {
-  form.value.exchange_total = form.value.exchange_quantity * form.value.exchange_value
+// FUNÇÕES DE NAVEGAÇÃO
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
 }
 
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+// FUNÇÕES DE MODAIS
 const viewSaleDetails = (sale) => {
   selectedSale.value = sale
   showDetailsModal.value = true
@@ -1120,59 +925,34 @@ const openModal = () => {
   document.body.classList.add('modal-open')
 }
 
-const openSearchClientsModal = () => {
-  showSearchClientsModal.value = true
-  clientSearch.value = ''
-  filteredClients.value = []
-}
-
-const closeSearchClientsModal = () => {
-  showSearchClientsModal.value = false
-  clientSearch.value = ''
-  filteredClients.value = []
-}
-
-const filterClients = () => {
-  const search = clientSearch.value.toLowerCase().trim()
+const closeModal = () => {
+  showModal.value = false
+  editingSale.value = null
+  document.body.classList.remove('modal-open')
   
-  if (search.length === 0) {
-    filteredClients.value = []
-    return
+  form.value = {
+    date: new Date().toISOString().split('T')[0],
+    sale_type: 'wholesale',
+    client_id: '',
+    produtos: [
+      {
+        product_id: '',
+        quantity: 1,
+        unit_price: 0,
+        total: 0,
+        is_weight: false
+      }
+    ],
+    payment_method: 'cash',
+    paid: false,
+    notes: '',
+    order_status: 'pendente',
+    is_event: false,
+    event_name: ''
   }
-  
-  filteredClients.value = clients.value.filter(client => {
-    const name = (client.name || '').toLowerCase()
-    const phone = (client.phone || '').toLowerCase()
-    const email = (client.email || '').toLowerCase()
-    
-    return name.includes(search) || phone.includes(search) || email.includes(search)
-  })
 }
 
-const selectClientForSearch = (client) => {
-  // Filtra as vendas pelo cliente selecionado
-  filters.value = {
-    date: '',
-    saleType: '',
-    payment: '',
-    status: '',
-    orderStatus: ''
-  }
-  
-  // Muda para visualização por clientes
-  viewMode.value = 'clientes'
-  
-  closeSearchClientsModal()
-  
-  // Scroll até o cliente
-  setTimeout(() => {
-    const clientElement = document.getElementById(`client-${client.id}`)
-    if (clientElement) {
-      clientElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, 100)
-}
-
+// FUNÇÕES CRUD
 const editSale = (sale) => {
   editingSale.value = sale
   
@@ -1216,12 +996,7 @@ const editSale = (sale) => {
     notes: sale.notes || '',
     order_status: sale.order_status,
     is_event: sale.is_event || false,
-    event_name: sale.event_name || '',
-    has_exchange: sale.has_exchange || false,
-    exchange_product: sale.exchange_product || '',
-    exchange_quantity: sale.exchange_quantity || 1,
-    exchange_value: sale.exchange_value || 0,
-    exchange_total: sale.exchange_total || 0
+    event_name: sale.event_name || ''
   }
   
   openModal()
@@ -1229,8 +1004,6 @@ const editSale = (sale) => {
 
 const loadSales = async () => {
   try {
-    console.log('🔄 Carregando vendas...')
-    
     let query = supabase
       .from('sales')
       .select(`*, clients(name, phone, email, address), products(name, description)`)
@@ -1247,10 +1020,9 @@ const loadSales = async () => {
     if (error) throw error
     
     sales.value = data || []
-    console.log(`✅ ${sales.value.length} vendas carregadas`)
     
   } catch (error) {
-    console.error('❌ Erro ao carregar vendas:', error)
+    console.error('Erro ao carregar vendas:', error)
   }
 }
 
@@ -1300,38 +1072,24 @@ const saveSale = async () => {
       order_status: form.value.order_status,
       is_event: form.value.is_event,
       event_name: form.value.event_name || null,
-      has_exchange: form.value.has_exchange,
-      exchange_product: form.value.exchange_product || null,
-      exchange_quantity: form.value.exchange_quantity || null,
-      exchange_value: form.value.exchange_value || null,
-      exchange_total: form.value.exchange_total || null,
       products_data: JSON.stringify(produtosData)
     }
 
     if (editingSale.value) {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('sales')
         .update(saleData)
         .eq('id', editingSale.value.id)
-        .select(`*, clients(name, phone, email, address), products(name, description)`)
       
       if (error) throw error
-      
-      await loadSales()
-      closeModal()
-      
-      if (data && data[0]) {
-        lastSaleData.value = data[0]
-        showReceiptConfirm.value = true
-      }
     } else {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('sales')
         .insert([saleData])
-        .select(`*, clients(name, phone, email, address), products(name, description)`)
       
       if (error) throw error
       
+      // Atualizar estoque dos produtos
       for (const item of form.value.produtos) {
         const { data: productData } = await supabase
           .from('products')
@@ -1347,15 +1105,11 @@ const saveSale = async () => {
             .eq('id', item.product_id)
         }
       }
-      
-      await loadSales()
-      closeModal()
-      
-      if (data && data[0]) {
-        lastSaleData.value = data[0]
-        showReceiptConfirm.value = true
-      }
     }
+    
+    await loadSales()
+    closeModal()
+    
   } catch (error) {
     alert('Erro ao salvar pedido: ' + error.message)
   } finally {
@@ -1368,436 +1122,34 @@ const togglePaidStatus = async (sale) => {
   await loadSales()
 }
 
-const deleteSale = async (sale) => {
-  const confirmed = await new Promise((resolve) => {
-    const modal = document.createElement('div')
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'
-    modal.innerHTML = `
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6 animate-fade-in">
-        <div class="text-center mb-6">
-          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-            </svg>
-          </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Confirmar Exclusão</h3>
-          <p class="text-gray-600 text-sm">
-            Tem certeza que deseja excluir o pedido de <strong>${sale.clients?.name || 'Cliente'}</strong>?
-          </p>
-          <p class="text-red-600 text-xs mt-2 font-semibold">
-            ⚠️ Esta ação não pode ser desfeita!
-          </p>
-        </div>
-        <div class="flex flex-col gap-3">
-          <button id="confirm-delete" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition-colors">
-            Sim, Excluir Pedido
-          </button>
-          <button id="cancel-delete" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg font-bold transition-colors">
-            Cancelar
-          </button>
-        </div>
-      </div>
-    `
-    
-    document.body.appendChild(modal)
-    
-    document.getElementById('confirm-delete').onclick = () => {
-      document.body.removeChild(modal)
-      resolve(true)
-    }
-    
-    document.getElementById('cancel-delete').onclick = () => {
-      document.body.removeChild(modal)
-      resolve(false)
-    }
-  })
-  
-  if (!confirmed) return
-
-  const loadingToast = document.createElement('div')
-  loadingToast.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
-  loadingToast.innerHTML = '🔄 Excluindo pedido...'
-  document.body.appendChild(loadingToast)
-  
-  try {
-    console.log('🚀 INICIANDO EXCLUSÃO DO PEDIDO:', sale.id)
-    
-    const produtos = parseProducts(sale)
-    console.log('📦 Produtos para restaurar estoque:', produtos)
-    
-    const stockUpdates = []
-    
-    for (const item of produtos) {
-      const productId = item.id || sale.product_id
-      if (productId) {
-        console.log(`🔄 Restaurando estoque do produto ${productId}: ${item.quantity} unidades`)
-        
-        const { data: productData, error: productError } = await supabase
-          .from('products')
-          .select('stock_quantity, name')
-          .eq('id', productId)
-          .single()
-        
-        if (productError) {
-          console.error('❌ Erro ao buscar produto:', productError)
-          continue
-        }
-        
-        if (productData) {
-          const newStock = (productData.stock_quantity || 0) + item.quantity
-          console.log(`📊 Estoque atual: ${productData.stock_quantity}, Novo estoque: ${newStock}`)
-          
-          const { error: updateError } = await supabase
-            .from('products')
-            .update({ 
-              stock_quantity: newStock,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', productId)
-          
-          if (updateError) {
-            console.error('❌ Erro ao atualizar estoque:', updateError)
-            throw new Error(`Falha ao restaurar estoque do produto ${productData.name}`)
-          }
-          
-          stockUpdates.push({
-            product: productData.name,
-            quantity: item.quantity,
-            success: true
-          })
-        }
-      }
-    }
-    
-    console.log('✅ Estoque restaurado com sucesso para', stockUpdates.length, 'produtos')
-    
-    console.log('🗑️ Excluindo venda do banco de dados...')
-    const { data, error: deleteError } = await supabase
-      .from('sales')
-      .delete()
-      .eq('id', sale.id)
-    
-    if (deleteError) {
-      console.error('❌ Erro ao excluir venda:', deleteError)
-      throw new Error(`Falha ao excluir pedido: ${deleteError.message}`)
-    }
-    
-    console.log('✅ Venda excluída com sucesso do banco')
-    
-    console.log('🔄 Atualizando estado local...')
-    
-    const saleIndex = sales.value.findIndex(s => s.id === sale.id)
-    if (saleIndex !== -1) {
-      sales.value.splice(saleIndex, 1)
-      console.log('✅ Venda removida da lista local')
-    }
-    
-    if (paginatedSales.value.length === 0 && currentPage.value > 1) {
-      console.log('📄 Ajustando paginação...')
-      currentPage.value = Math.max(1, currentPage.value - 1)
-    }
-    
-    document.body.removeChild(loadingToast)
-    
-    const successToast = document.createElement('div')
-    successToast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
-    successToast.innerHTML = `
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
-        ✅ Pedido excluído com sucesso!
-      </div>
-      ${stockUpdates.length > 0 ? `<p class="text-xs mt-1">Estoque de ${stockUpdates.length} produto(s) restaurado</p>` : ''}
-    `
-    document.body.appendChild(successToast)
-    
-    setTimeout(() => {
-      if (document.body.contains(successToast)) {
-        document.body.removeChild(successToast)
-      }
-    }, 5000)
-    
-  } catch (error) {
-    console.error('💥 ERRO COMPLETO AO EXCLUIR PEDIDO:', error)
-    
-    if (document.body.contains(loadingToast)) {
-      document.body.removeChild(loadingToast)
-    }
-    
-    const errorToast = document.createElement('div')
-    errorToast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
-    errorToast.innerHTML = `
-      <div class="flex items-center">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-        ❌ Erro ao excluir pedido
-      </div>
-      <p class="text-xs mt-1">${error.message}</p>
-    `
-    document.body.appendChild(errorToast)
-    
-    setTimeout(() => {
-      if (document.body.contains(errorToast)) {
-        document.body.removeChild(errorToast)
-      }
-    }, 5000)
-    
-    await loadSales()
-  }
-}
-
 const generateReceipt = async (sale) => {
-  const doc = new jsPDF()
-  const primaryColor = [255, 140, 0]
-  const darkGray = [60, 60, 60]
-  const lightGray = [150, 150, 150]
-  
-  doc.setFillColor(...primaryColor)
-  doc.rect(0, 0, 210, 35, 'F')
-  
   try {
-    const img = new Image()
-    img.crossOrigin = 'Anonymous'
-    img.src = '/natural-fruit-logo-192.jpg'
-    
-    await new Promise((resolve, reject) => {
-      img.onload = resolve
-      img.onerror = reject
+    const response = await fetch('/api/generate-receipt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sale)
     })
     
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const size = 120
-    
-    canvas.width = size
-    canvas.height = size
-    
-    ctx.beginPath()
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
-    ctx.closePath()
-    ctx.clip()
-    ctx.drawImage(img, 0, 0, size, size)
-    
-    const circularImage = canvas.toDataURL('image/png')
-    doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
-  } catch (error) {
-    console.error('Erro ao carregar logo:', error)
-  }
-  
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(12)
-  doc.setFont('helvetica', 'bold')
-  doc.text('NATURAL FRUIT', 45, 12)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.text('CNPJ: 60.127.371/0001-60', 45, 18)
-  doc.text('Juazeiro, Bahia, Brasil', 45, 23)
-  doc.text('Tel: (87) 98864-1590', 45, 28)
-  
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
-  doc.text(receiptNumber, 195, 12, { align: 'right' })
-  doc.setFontSize(9)
-  const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
-  doc.text(saleTypeText, 195, 18, { align: 'right' })
-  
-  doc.setTextColor(...darkGray)
-  doc.setDrawColor(...primaryColor)
-  doc.setLineWidth(0.5)
-  doc.line(15, 40, 195, 40)
-  
-  doc.setFontSize(16)
-  doc.setFont('helvetica', 'bold')
-  doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
-  
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DATA', 15, 60)
-  doc.text('STATUS', 100, 60)
-  
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(formatDate(sale.date), 15, 67)
-  
-  const statusLabels = {
-    pendente: 'Pendente',
-    em_rota: 'Em Rota',
-    entregue: 'Entregue',
-    cancelado: 'Cancelado'
-  }
-  doc.text(statusLabels[sale.order_status] || sale.order_status, 100, 67)
-  
-  if (sale.is_event) {
-    doc.setFont('helvetica', 'bold')
-    doc.text('EVENTO', 150, 60)
-    doc.setFont('helvetica', 'normal')
-    doc.text(sale.event_name || '', 150, 67)
-  }
-  
-  doc.setFillColor(245, 245, 245)
-  doc.rect(15, 73, 180, 30, 'F')
-  doc.setTextColor(...darkGray)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('DADOS DO CLIENTE', 20, 81)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 88)
-  doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 93)
-  if (sale.clients?.address) {
-    doc.text(`Endereco: ${sale.clients.address.substring(0, 70)}`, 20, 98)
-  }
-  
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('PRODUTOS DO PEDIDO', 15, 113)
-  
-  doc.setFillColor(...primaryColor)
-  doc.rect(15, 118, 180, 10, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.text('PRODUTO', 20, 124)
-  doc.text('QTD', 120, 124)
-  doc.text('VALOR UNIT.', 145, 124)
-  doc.text('TOTAL', 190, 124, { align: 'right' })
-  
-  let yPos = 134
-  const produtos = parseProducts(sale)
-  
-  produtos.forEach((item, index) => {
-    doc.setTextColor(...darkGray)
-    doc.setFont('helvetica', 'normal')
-    const nomeProduto = item.name.substring(0, 35)
-    doc.text(nomeProduto, 20, yPos)
-    doc.text(String(item.quantity), 120, yPos)
-    doc.text(formatCurrency(item.unit_price), 145, yPos)
-    doc.text(formatCurrency(item.total), 190, yPos, { align: 'right' })
-    yPos += 6
-  })
-  
-  doc.setDrawColor(...lightGray)
-  doc.setLineWidth(0.3)
-  doc.line(15, yPos, 195, yPos)
-  
-  yPos += 10
-  
-  if (sale.has_exchange) {
-    doc.setFillColor(255, 250, 205)
-    doc.rect(15, yPos, 180, 20, 'F')
-    doc.setTextColor(...darkGray)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9)
-    doc.text('TROCA:', 20, yPos + 7)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`${sale.exchange_product} - Qtd: ${sale.exchange_quantity}`, 20, yPos + 13)
-    doc.text(`Valor: ${formatCurrency(sale.exchange_total)}`, 145, yPos + 13)
-    yPos += 25
-  }
-  
-  doc.setFillColor(...primaryColor)
-  doc.rect(140, yPos, 55, 12, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.text('TOTAL:', 145, yPos + 8)
-  doc.text(formatCurrency(sale.total), 190, yPos + 8, { align: 'right' })
-  
-  yPos += 20
-  doc.setTextColor(...darkGray)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10)
-  doc.text('FORMA DE PAGAMENTO', 15, yPos)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(9)
-  doc.text(`Metodo: ${getPaymentLabel(sale.payment_method)}`, 15, yPos + 7)
-  doc.text(`Status: ${sale.paid ? 'PAGO' : 'PENDENTE'}`, 15, yPos + 14)
-  
-  if (sale.notes) {
-    yPos += 25
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
-    doc.text('OBSERVACOES', 15, yPos)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(9)
-    const splitNotes = doc.splitTextToSize(sale.notes, 180)
-    doc.text(splitNotes, 15, yPos + 7)
-  }
-  
-  const footerY = 270
-  doc.setDrawColor(...primaryColor)
-  doc.setLineWidth(0.5)
-  doc.line(15, footerY, 195, footerY)
-  doc.setTextColor(...lightGray)
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'italic')
-  doc.text('Obrigado pela preferencia!', 105, footerY + 7, { align: 'center' })
-  doc.text('Natural Fruit - Qualidade e Frescor Garantidos', 105, footerY + 12, { align: 'center' })
-  doc.text(`Recibo gerado em ${formatDateTime(new Date())}`, 105, footerY + 17, { align: 'center' })
-  
-  const fileName = `pedido-natural-fruit-${receiptNumber}-${Date.now()}.pdf`
-  doc.save(fileName)
-}
-
-const confirmGenerateReceipt = () => {
-  if (lastSaleData.value) {
-    generateReceipt(lastSaleData.value)
-  }
-  closeReceiptConfirm()
-}
-
-const closeReceiptConfirm = () => {
-  showReceiptConfirm.value = false
-  lastSaleData.value = null
-}
-
-const closeModal = () => {
-  showModal.value = false
-  editingSale.value = null
-  document.body.classList.remove('modal-open')
-  
-  form.value = {
-    date: new Date().toISOString().split('T')[0],
-    sale_type: 'wholesale', // MANTÉM ATACADO COMO PADRÃO
-    client_id: '',
-    produtos: [
-      {
-        product_id: '',
-        quantity: 1,
-        unit_price: 0,
-        total: 0,
-        is_weight: false
-      }
-    ],
-    payment_method: 'cash',
-    paid: false,
-    notes: '',
-    order_status: 'pendente',
-    is_event: false,
-    event_name: '',
-    has_exchange: false,
-    exchange_product: '',
-    exchange_quantity: 1,
-    exchange_value: 0,
-    exchange_total: 0
-  }
-}
-
-const refreshSalesData = async () => {
-  try {
-    await loadSales()
-    
-    if (currentPage.value > totalPages.value && totalPages.value > 0) {
-      currentPage.value = totalPages.value
+    if (response.ok) {
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `recibo-pedido-${sale.id}.pdf`
+      a.click()
     }
   } catch (error) {
-    console.error('Erro ao atualizar dados:', error)
+    console.error('Erro ao gerar recibo:', error)
   }
 }
 
+// WATCHERS
+watch(filters, () => {
+  currentPage.value = 1
+  loadSales()
+}, { deep: true })
+
+// MOUNTED
 onMounted(() => {
   loadSales()
   loadClients()
@@ -1806,6 +1158,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Estilos Base */
 .card {
   @apply bg-white rounded-xl shadow-lg p-4 md:p-6;
 }
@@ -1817,35 +1170,28 @@ onMounted(() => {
 .input-field {
   @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
   font-size: 16px !important;
+  min-height: 44px !important;
 }
 
 .btn-primary {
   @apply px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
+  min-height: 48px !important;
+  font-size: 16px !important;
 }
 
 .btn-secondary {
   @apply px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md;
+  min-height: 48px !important;
+  font-size: 16px !important;
 }
 
 .btn-outline {
   @apply px-4 md:px-6 py-2 md:py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium;
+  min-height: 48px !important;
+  font-size: 16px !important;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
+/* Modal Responsivo */
 body.modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -1894,6 +1240,7 @@ body.modal-open {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   background: #f8fafc;
+  scroll-behavior: smooth;
 }
 
 .fixed-bottom-actions {
@@ -1908,18 +1255,35 @@ body.modal-open {
   z-index: 100;
 }
 
-.input-field {
-  font-size: 16px !important;
-  min-height: 44px !important;
+/* Animações */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.btn-primary, .btn-outline, .btn-secondary {
-  min-height: 50px !important;
-  font-size: 16px !important;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.modal-content-mobile {
-  scroll-behavior: smooth;
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-container-mobile {
+  animation: slideUp 0.3s ease-out;
 }
 
 @media (min-width: 768px) {
@@ -1935,6 +1299,7 @@ body.modal-open {
     height: auto;
     border-radius: 1rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: scaleIn 0.3s ease-out;
   }
   
   .modal-header-mobile {
@@ -1952,27 +1317,6 @@ body.modal-open {
   .modal-content-mobile {
     padding-bottom: 0;
   }
-}
-
-.modal-container-mobile {
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@media (min-width: 768px) {
-  .modal-container-mobile {
-    animation: scaleIn 0.3s ease-out;
-  }
   
   @keyframes scaleIn {
     from {
@@ -1986,10 +1330,48 @@ body.modal-open {
   }
 }
 
+/* Breakpoints Personalizados */
+@media (max-width: 480px) {
+  .xs\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:flex-row {
+    flex-direction: row;
+  }
+  
+  .xs\:items-center {
+    align-items: center;
+  }
+}
+
 @media (max-width: 640px) {
   .card {
     @apply p-3;
   }
+  
+  .input-field,
+  select.input-field,
+  textarea.input-field {
+    font-size: 16px !important;
+  }
+  
+  .label {
+    @apply text-sm font-semibold;
+  }
+}
+
+/* Transições e Estados */
+.transition-all {
+  transition: all 0.3s ease;
 }
 
 .radio-option {
@@ -2000,53 +1382,53 @@ body.modal-open {
   transform: scale(0.95);
 }
 
-@media (max-width: 768px) {
-  .input-field, 
-  select.input-field, 
-  textarea.input-field {
-    min-height: 44px;
-  }
-  
-  .btn-primary, 
-  .btn-outline,
-  .btn-secondary {
-    min-height: 48px;
-  }
-  
-  .label {
-    @apply text-sm font-semibold;
-  }
-}
-
-.transition-all {
-  transition: all 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.confirm-modal {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
 }
 
 .disabled\:cursor-not-allowed:disabled {
   cursor: not-allowed;
+}
+
+/* Utilitários */
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Responsividade para tabelas */
+@media (max-width: 767px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Melhorias para toque em mobile */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline {
+    min-height: 44px !important;
+  }
+  
+  .input-field {
+    min-height: 44px !important;
+  }
 }
 </style>
