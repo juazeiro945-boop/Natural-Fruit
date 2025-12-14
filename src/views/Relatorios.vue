@@ -26,7 +26,6 @@
           </div>
         </div>
 
-        <!-- Filtros Adicionais para Vendas e Pagamento -->
         <div v-if="filters.type === 'sales' || filters.type === 'payment'" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
           <div>
             <label class="label">Tipo de Venda</label>
@@ -63,14 +62,68 @@
         </div>
       </div>
 
+      <div v-if="reportData.length > 0" class="card bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200">
+        <h4 class="font-bold text-orange-900 mb-4 text-lg flex items-center gap-2">
+          <span>📊</span> Resumo Completo do Período
+        </h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total de Registros</p>
+            <p class="font-bold text-xl text-gray-900">{{ reportData.length }}</p>
+          </div>
+          <div v-if="filters.type === 'sales' || filters.type === 'payment'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total em Vendas</p>
+            <p class="font-bold text-xl text-green-600">{{ formatCurrency(summary.totalSales) }}</p>
+          </div>
+          <div v-if="filters.type === 'sales'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Ticket Médio</p>
+            <p class="font-bold text-xl text-blue-600">{{ formatCurrency(summary.avgTicket) }}</p>
+          </div>
+          <div v-if="(filters.type === 'sales' || filters.type === 'payment') && summary.totalPaid > 0" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Pago</p>
+            <p class="font-bold text-xl text-green-600">{{ formatCurrency(summary.totalPaid) }}</p>
+          </div>
+          <div v-if="(filters.type === 'sales' || filters.type === 'payment') && summary.totalPending > 0" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Pendente</p>
+            <p class="font-bold text-xl text-red-600">{{ formatCurrency(summary.totalPending) }}</p>
+          </div>
+          <div v-if="filters.type === 'sales' && summary.wholesaleTotal > 0" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Atacado</p>
+            <p class="font-bold text-xl text-blue-600">{{ formatCurrency(summary.wholesaleTotal) }}</p>
+          </div>
+          <div v-if="filters.type === 'sales' && summary.retailTotal > 0" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Varejo</p>
+            <p class="font-bold text-xl text-green-600">{{ formatCurrency(summary.retailTotal) }}</p>
+          </div>
+          <div v-if="filters.type === 'production'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Produzido</p>
+            <p class="font-bold text-xl text-blue-600">{{ summary.totalProduced }} un.</p>
+          </div>
+          <div v-if="filters.type === 'production'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Perdas Totais</p>
+            <p class="font-bold text-xl text-red-600">{{ summary.totalLoss }} un.</p>
+          </div>
+          <div v-if="filters.type === 'losses'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total de Perdas</p>
+            <p class="font-bold text-xl text-red-600">{{ summary.totalLoss }} un.</p>
+          </div>
+          <div v-if="filters.type === 'losses'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total de Trocas</p>
+            <p class="font-bold text-xl text-amber-600">{{ summary.totalExchange }} un.</p>
+          </div>
+          <div v-if="filters.type === 'payment'" class="bg-white p-3 rounded-lg shadow-sm">
+            <p class="text-gray-600 text-xs mb-1">Total Recebido</p>
+            <p class="font-bold text-xl text-green-600">{{ formatCurrency(summary.totalReceived) }}</p>
+          </div>
+        </div>
+      </div>
+
       <div v-if="reportData.length > 0" class="card">
         <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
           <div>
-            <h3 class="text-lg font-bold">Resultado - {{ reportData.length }} registro(s)</h3>
+            <h3 class="text-lg font-bold">Mostrando {{ paginatedData.length }} de {{ reportData.length }} registro(s)</h3>
             <p class="text-sm text-gray-600 mt-1">
-              <span v-if="filters.saleType !== 'all'">
-                Tipo: {{ getSaleTypeName(filters.saleType) }}
-              </span>
+              <span v-if="filters.saleType !== 'all'">Tipo: {{ getSaleTypeName(filters.saleType) }}</span>
               <span v-if="filters.paymentMethod !== 'all'" :class="filters.saleType !== 'all' ? 'ml-2' : ''">
                 {{ filters.saleType !== 'all' ? '|' : '' }} Pagamento: {{ getPaymentMethodName(filters.paymentMethod) }}
               </span>
@@ -85,107 +138,41 @@
           </div>
         </div>
 
-        <!-- Tabela Desktop -->
         <div class="hidden md:block overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
-                <th v-for="col in columns" :key="col" class="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                  {{ col }}
-                </th>
+                <th v-for="col in columns" :key="col" class="px-4 py-3 text-left text-sm font-semibold text-gray-600">{{ col }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in reportData" :key="index" class="border-t hover:bg-gray-50">
+              <tr v-for="(row, index) in paginatedData" :key="index" class="border-t hover:bg-gray-50">
                 <td v-for="col in columns" :key="col" class="px-4 py-3 text-sm">
-                  <span v-if="col === 'Status'" :class="getStatusClass(row[col])">
-                    {{ formatValue(row[col], col) }}
-                  </span>
-                  <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])">
-                    {{ formatValue(row[col], col) }}
-                  </span>
-                  <span v-else>
-                    {{ formatValue(row[col], col) }}
-                  </span>
+                  <span v-if="col === 'Status'" :class="getStatusClass(row[col])">{{ formatValue(row[col], col) }}</span>
+                  <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])">{{ formatValue(row[col], col) }}</span>
+                  <span v-else>{{ formatValue(row[col], col) }}</span>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Cards Mobile -->
         <div class="md:hidden space-y-3">
-          <div v-for="(row, index) in reportData" :key="index" class="card p-4 border-2">
+          <div v-for="(row, index) in paginatedData" :key="index" class="p-4 border-2 border-gray-200 rounded-lg">
             <div v-for="col in columns" :key="col" class="mb-2 last:mb-0">
               <span class="text-xs text-gray-500">{{ col }}:</span>
-              <span v-if="col === 'Status'" :class="getStatusClass(row[col])" class="ml-2">
-                {{ formatValue(row[col], col) }}
-              </span>
-              <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])" class="ml-2">
-                {{ formatValue(row[col], col) }}
-              </span>
-              <span v-else class="ml-2 font-semibold">
-                {{ formatValue(row[col], col) }}
-              </span>
+              <span v-if="col === 'Status'" :class="getStatusClass(row[col])" class="ml-2">{{ formatValue(row[col], col) }}</span>
+              <span v-else-if="col === 'Tipo'" :class="getSaleTypeBadgeClass(row[col])" class="ml-2">{{ formatValue(row[col], col) }}</span>
+              <span v-else class="ml-2 font-semibold">{{ formatValue(row[col], col) }}</span>
             </div>
           </div>
         </div>
 
-        <div class="mt-4 p-4 bg-primary-50 rounded-lg">
-          <h4 class="font-bold text-primary-900 mb-2">Resumo do Período</h4>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p class="text-gray-600">Total de Registros</p>
-              <p class="font-bold text-lg">{{ reportData.length }}</p>
-            </div>
-            <div v-if="filters.type === 'sales' || filters.type === 'payment'">
-              <p class="text-gray-600">Total em Vendas</p>
-              <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.totalSales) }}</p>
-            </div>
-            <div v-if="filters.type === 'sales'">
-              <p class="text-gray-600">Ticket Médio</p>
-              <p class="font-bold text-lg">{{ formatCurrency(summary.avgTicket) }}</p>
-            </div>
-            <div v-if="(filters.type === 'sales' || filters.type === 'payment') && summary.totalPaid > 0">
-              <p class="text-gray-600">Total Pago</p>
-              <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.totalPaid) }}</p>
-            </div>
-            <div v-if="(filters.type === 'sales' || filters.type === 'payment') && summary.totalPending > 0">
-              <p class="text-gray-600">Total Pendente</p>
-              <p class="font-bold text-lg text-red-600">{{ formatCurrency(summary.totalPending) }}</p>
-            </div>
-            <div v-if="filters.type === 'sales' && summary.wholesaleTotal > 0">
-              <p class="text-gray-600">Total Atacado</p>
-              <p class="font-bold text-lg text-blue-600">{{ formatCurrency(summary.wholesaleTotal) }}</p>
-            </div>
-            <div v-if="filters.type === 'sales' && summary.retailTotal > 0">
-              <p class="text-gray-600">Total Varejo</p>
-              <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.retailTotal) }}</p>
-            </div>
-            <div v-if="filters.type === 'production'">
-              <p class="text-gray-600">Total Produzido</p>
-              <p class="font-bold text-lg text-blue-600">{{ summary.totalProduced }} un.</p>
-            </div>
-            <div v-if="filters.type === 'production'">
-              <p class="text-gray-600">Perdas Totais</p>
-              <p class="font-bold text-lg text-red-600">{{ summary.totalLoss }} un.</p>
-            </div>
-            <div v-if="filters.type === 'losses'">
-              <p class="text-gray-600">Total de Perdas</p>
-              <p class="font-bold text-lg text-red-600">{{ summary.totalLoss }} un.</p>
-            </div>
-            <div v-if="filters.type === 'losses'">
-              <p class="text-gray-600">Total de Trocas</p>
-              <p class="font-bold text-lg text-amber-600">{{ summary.totalExchange }} un.</p>
-            </div>
-            <div v-if="filters.type === 'payment'">
-              <p class="text-gray-600">Total Recebido</p>
-              <p class="font-bold text-lg text-green-600">{{ formatCurrency(summary.totalReceived) }}</p>
-            </div>
-            <div v-if="filters.type === 'payment'">
-              <p class="text-gray-600">Total Pendente</p>
-              <p class="font-bold text-lg text-red-600">{{ formatCurrency(summary.totalPending) }}</p>
-            </div>
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 pt-4 border-t">
+          <div class="text-sm text-gray-600">Página {{ currentPage }} de {{ totalPages }}</div>
+          <div class="flex gap-2">
+            <button @click="previousPage" :disabled="currentPage === 1" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">← Anterior</button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium">Próximo →</button>
           </div>
         </div>
       </div>
@@ -196,15 +183,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <p class="text-gray-600 font-medium">Nenhum registro encontrado para os filtros selecionados</p>
+        <p class="text-gray-600 font-medium">Nenhum registro encontrado</p>
         <p class="text-gray-500 text-sm mt-2">Tente ajustar os filtros ou período</p>
       </div>
     </div>
   </Layout>
 </template>
-
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout.vue'
 import jsPDF from 'jspdf'
@@ -225,6 +211,18 @@ const columns = ref([])
 const summary = ref({})
 const loading = ref(false)
 const hasGenerated = ref(false)
+const currentPage = ref(1)
+const itemsPerPage = 5
+
+const totalPages = computed(() => Math.ceil(reportData.value.length / itemsPerPage))
+
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return reportData.value.slice(start, start + itemsPerPage)
+})
+
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const previousPage = () => { if (currentPage.value > 1) currentPage.value-- }
 
 const resetFilters = () => {
   filters.value.saleType = 'all'
@@ -241,20 +239,17 @@ const formatCurrency = (value) => {
 
 const formatValue = (value, columnName) => {
   if (value === null || value === undefined) return '-'
-  
   if (columnName && (columnName.includes('Total') || columnName.includes('Valor') || columnName.includes('R$'))) {
     return formatCurrency(value)
   }
-  
   if (typeof value === 'number' && value > 100) {
     return formatCurrency(value)
   }
-  
   return value
 }
 
 const getStatusClass = (status) => {
-  if (status && status.includes('Pago')) {
+  if (status && (status.includes('Pago') || status.includes('Recebido'))) {
     return 'px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold'
   }
   if (status && status.includes('Pendente')) {
@@ -302,6 +297,7 @@ const generateReport = async () => {
   loading.value = true
   hasGenerated.value = true
   reportData.value = []
+  currentPage.value = 1
   
   try {
     if (filters.value.type === 'sales') {
