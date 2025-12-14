@@ -7,12 +7,20 @@
           <h2 class="text-2xl md:text-3xl font-bold text-gray-900">Vendas / Pedidos</h2>
           <p class="text-sm md:text-base text-gray-600 mt-1">Gerencie pedidos e vendas</p>
         </div>
-        <button @click="openModal" class="w-full md:w-auto btn-primary text-sm md:text-base">
-          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          Novo Pedido
-        </button>
+        <div class="flex flex-col md:flex-row gap-2 md:gap-3">
+          <button @click="openSearchClientsModal" class="w-full md:w-auto btn-secondary text-sm md:text-base">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Pesquisar Clientes
+          </button>
+          <button @click="openModal" class="w-full md:w-auto btn-primary text-sm md:text-base">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Novo Pedido
+          </button>
+        </div>
       </div>
 
       <!-- Filtros Responsivos -->
@@ -382,6 +390,69 @@
           </div>
           <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
           <p class="text-gray-500 text-sm mt-2">Ajuste os filtros para ver os clientes</p>
+        </div>
+      </div>
+
+      <!-- MODAL PESQUISAR CLIENTES -->
+      <div v-if="showSearchClientsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
+          <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-blue-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
+            <h3 class="text-lg md:text-xl font-bold text-white">🔍 Pesquisar Clientes</h3>
+            <button @click="closeSearchClientsModal" class="text-white hover:bg-blue-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">×</button>
+          </div>
+          
+          <div class="p-4 md:p-6 space-y-4">
+            <div>
+              <input 
+                v-model="clientSearch" 
+                type="text" 
+                placeholder="Digite o nome, telefone ou email do cliente..." 
+                class="input-field"
+                @input="filterClients"
+              />
+            </div>
+
+            <div v-if="filteredClients.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+              <div 
+                v-for="client in filteredClients" 
+                :key="client.id" 
+                class="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all cursor-pointer"
+                @click="selectClientForSearch(client)"
+              >
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <h4 class="font-bold text-lg text-gray-900">{{ client.name }}</h4>
+                    <div class="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
+                      <span v-if="client.phone">📞 {{ client.phone }}</span>
+                      <span v-if="client.email">📧 {{ client.email }}</span>
+                    </div>
+                    <p v-if="client.address" class="text-xs text-gray-500 mt-1">📍 {{ client.address }}</p>
+                  </div>
+                  <button class="btn-primary py-2 px-4 text-sm">
+                    Ver Pedidos
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="clientSearch.length > 0" class="text-center py-12">
+              <div class="text-gray-400 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+              <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
+            </div>
+
+            <div v-else class="text-center py-12">
+              <div class="text-gray-400 mb-4">
+                <span class="text-6xl">👥</span>
+              </div>
+              <p class="text-gray-600 font-medium">Digite para pesquisar</p>
+            </div>
+
+            <button @click="closeSearchClientsModal" class="w-full btn-outline py-3">Fechar</button>
+          </div>
         </div>
       </div>
 
@@ -777,6 +848,9 @@ const showReceiptConfirm = ref(false)
 const lastSaleData = ref(null)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
+const showSearchClientsModal = ref(false)
+const clientSearch = ref('')
+const filteredClients = ref([])
 
 // PAGINAÇÃO
 const currentPage = ref(1)
@@ -792,7 +866,7 @@ const filters = ref({
 
 const form = ref({
   date: new Date().toISOString().split('T')[0],
-  sale_type: 'retail',
+  sale_type: 'wholesale', // ALTERADO DE 'retail' PARA 'wholesale'
   client_id: '',
   produtos: [
     {
@@ -1046,6 +1120,59 @@ const openModal = () => {
   document.body.classList.add('modal-open')
 }
 
+const openSearchClientsModal = () => {
+  showSearchClientsModal.value = true
+  clientSearch.value = ''
+  filteredClients.value = []
+}
+
+const closeSearchClientsModal = () => {
+  showSearchClientsModal.value = false
+  clientSearch.value = ''
+  filteredClients.value = []
+}
+
+const filterClients = () => {
+  const search = clientSearch.value.toLowerCase().trim()
+  
+  if (search.length === 0) {
+    filteredClients.value = []
+    return
+  }
+  
+  filteredClients.value = clients.value.filter(client => {
+    const name = (client.name || '').toLowerCase()
+    const phone = (client.phone || '').toLowerCase()
+    const email = (client.email || '').toLowerCase()
+    
+    return name.includes(search) || phone.includes(search) || email.includes(search)
+  })
+}
+
+const selectClientForSearch = (client) => {
+  // Filtra as vendas pelo cliente selecionado
+  filters.value = {
+    date: '',
+    saleType: '',
+    payment: '',
+    status: '',
+    orderStatus: ''
+  }
+  
+  // Muda para visualização por clientes
+  viewMode.value = 'clientes'
+  
+  closeSearchClientsModal()
+  
+  // Scroll até o cliente
+  setTimeout(() => {
+    const clientElement = document.getElementById(`client-${client.id}`)
+    if (clientElement) {
+      clientElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 100)
+}
+
 const editSale = (sale) => {
   editingSale.value = sale
   
@@ -1242,7 +1369,6 @@ const togglePaidStatus = async (sale) => {
 }
 
 const deleteSale = async (sale) => {
-  // Confirmação robusta
   const confirmed = await new Promise((resolve) => {
     const modal = document.createElement('div')
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'
@@ -1288,7 +1414,6 @@ const deleteSale = async (sale) => {
   
   if (!confirmed) return
 
-  // Loading state
   const loadingToast = document.createElement('div')
   loadingToast.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
   loadingToast.innerHTML = '🔄 Excluindo pedido...'
@@ -1297,7 +1422,6 @@ const deleteSale = async (sale) => {
   try {
     console.log('🚀 INICIANDO EXCLUSÃO DO PEDIDO:', sale.id)
     
-    // 1. RESTAURAR ESTOQUE DOS PRODUTOS
     const produtos = parseProducts(sale)
     console.log('📦 Produtos para restaurar estoque:', produtos)
     
@@ -1308,7 +1432,6 @@ const deleteSale = async (sale) => {
       if (productId) {
         console.log(`🔄 Restaurando estoque do produto ${productId}: ${item.quantity} unidades`)
         
-        // Buscar estoque atual
         const { data: productData, error: productError } = await supabase
           .from('products')
           .select('stock_quantity, name')
@@ -1348,7 +1471,6 @@ const deleteSale = async (sale) => {
     
     console.log('✅ Estoque restaurado com sucesso para', stockUpdates.length, 'produtos')
     
-    // 2. EXCLUIR A VENDA
     console.log('🗑️ Excluindo venda do banco de dados...')
     const { data, error: deleteError } = await supabase
       .from('sales')
@@ -1362,23 +1484,19 @@ const deleteSale = async (sale) => {
     
     console.log('✅ Venda excluída com sucesso do banco')
     
-    // 3. ATUALIZAÇÃO DE ESTADO OTIMIZADA - CORREÇÃO PRINCIPAL
     console.log('🔄 Atualizando estado local...')
     
-    // Remover da lista local de forma SÍNCRONA
     const saleIndex = sales.value.findIndex(s => s.id === sale.id)
     if (saleIndex !== -1) {
       sales.value.splice(saleIndex, 1)
       console.log('✅ Venda removida da lista local')
     }
     
-    // 4. CORREÇÃO DA PAGINAÇÃO - Resetar para página 1 se necessário
     if (paginatedSales.value.length === 0 && currentPage.value > 1) {
       console.log('📄 Ajustando paginação...')
       currentPage.value = Math.max(1, currentPage.value - 1)
     }
     
-    // 5. Feedback de sucesso
     document.body.removeChild(loadingToast)
     
     const successToast = document.createElement('div')
@@ -1394,7 +1512,6 @@ const deleteSale = async (sale) => {
     `
     document.body.appendChild(successToast)
     
-    // Auto-remover toast após 5 segundos
     setTimeout(() => {
       if (document.body.contains(successToast)) {
         document.body.removeChild(successToast)
@@ -1404,12 +1521,10 @@ const deleteSale = async (sale) => {
   } catch (error) {
     console.error('💥 ERRO COMPLETO AO EXCLUIR PEDIDO:', error)
     
-    // Remover loading toast
     if (document.body.contains(loadingToast)) {
       document.body.removeChild(loadingToast)
     }
     
-    // Toast de erro
     const errorToast = document.createElement('div')
     errorToast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in'
     errorToast.innerHTML = `
@@ -1423,14 +1538,12 @@ const deleteSale = async (sale) => {
     `
     document.body.appendChild(errorToast)
     
-    // Auto-remover toast de erro após 5 segundos
     setTimeout(() => {
       if (document.body.contains(errorToast)) {
         document.body.removeChild(errorToast)
       }
     }, 5000)
     
-    // Recarregar dados em caso de erro para garantir consistência
     await loadSales()
   }
 }
@@ -1648,7 +1761,7 @@ const closeModal = () => {
   
   form.value = {
     date: new Date().toISOString().split('T')[0],
-    sale_type: 'retail',
+    sale_type: 'wholesale', // MANTÉM ATACADO COMO PADRÃO
     client_id: '',
     produtos: [
       {
@@ -1677,7 +1790,6 @@ const refreshSalesData = async () => {
   try {
     await loadSales()
     
-    // Correção adicional para garantir que a página atual seja válida
     if (currentPage.value > totalPages.value && totalPages.value > 0) {
       currentPage.value = totalPages.value
     }
@@ -1704,11 +1816,15 @@ onMounted(() => {
 
 .input-field {
   @apply w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
-  font-size: 16px !important; /* Previne zoom no iOS */
+  font-size: 16px !important;
 }
 
 .btn-primary {
   @apply px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-md;
+}
+
+.btn-secondary {
+  @apply px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md;
 }
 
 .btn-outline {
@@ -1730,9 +1846,6 @@ onMounted(() => {
   }
 }
 
-/* 🔥 ESTILOS CRÍTICOS PARA O MODAL NO MOBILE */
-
-/* Previne scroll do body quando modal aberto */
 body.modal-open {
   overflow: hidden !important;
   position: fixed !important;
@@ -1740,7 +1853,6 @@ body.modal-open {
   height: 100% !important;
 }
 
-/* Overlay que cobre a tela toda */
 .modal-overlay-fixed {
   position: fixed !important;
   top: 0 !important;
@@ -1753,7 +1865,6 @@ body.modal-open {
   flex-direction: column !important;
 }
 
-/* Container principal do modal */
 .modal-container-mobile {
   background: white;
   width: 100%;
@@ -1764,7 +1875,6 @@ body.modal-open {
   overflow: hidden;
 }
 
-/* Header fixo no topo */
 .modal-header-mobile {
   background: linear-gradient(135deg, #f97316, #ea580c);
   padding: 1rem;
@@ -1778,7 +1888,6 @@ body.modal-open {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Área de conteúdo scrollable */
 .modal-content-mobile {
   flex: 1;
   overflow-y: auto;
@@ -1787,7 +1896,6 @@ body.modal-open {
   background: #f8fafc;
 }
 
-/* Footer fixo na parte inferior */
 .fixed-bottom-actions {
   position: fixed;
   bottom: 0;
@@ -1800,24 +1908,20 @@ body.modal-open {
   z-index: 100;
 }
 
-/* Garante que os inputs não tenham zoom no iOS */
 .input-field {
   font-size: 16px !important;
   min-height: 44px !important;
 }
 
-/* Botões grandes para toque */
-.btn-primary, .btn-outline {
+.btn-primary, .btn-outline, .btn-secondary {
   min-height: 50px !important;
   font-size: 16px !important;
 }
 
-/* Scroll suave */
 .modal-content-mobile {
   scroll-behavior: smooth;
 }
 
-/* Media query para desktop */
 @media (min-width: 768px) {
   .modal-overlay-fixed {
     padding: 2rem;
@@ -1850,7 +1954,6 @@ body.modal-open {
   }
 }
 
-/* Animações */
 .modal-container-mobile {
   animation: slideUp 0.3s ease-out;
 }
@@ -1883,14 +1986,12 @@ body.modal-open {
   }
 }
 
-/* Melhorias de responsividade */
 @media (max-width: 640px) {
   .card {
     @apply p-3;
   }
 }
 
-/* Melhorias para os radio buttons customizados */
 .radio-option {
   transition: all 0.2s ease-in-out;
 }
@@ -1899,7 +2000,6 @@ body.modal-open {
   transform: scale(0.95);
 }
 
-/* Melhorias de toque para mobile */
 @media (max-width: 768px) {
   .input-field, 
   select.input-field, 
@@ -1908,7 +2008,8 @@ body.modal-open {
   }
   
   .btn-primary, 
-  .btn-outline {
+  .btn-outline,
+  .btn-secondary {
     min-height: 48px;
   }
   
@@ -1917,12 +2018,10 @@ body.modal-open {
   }
 }
 
-/* Animações suaves */
 .transition-all {
   transition: all 0.3s ease;
 }
 
-/* Animações para os toasts */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -1938,13 +2037,11 @@ body.modal-open {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Estilos para os modais de confirmação */
 .confirm-modal {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
 }
 
-/* Classes para desabilitar elementos */
 .disabled\:opacity-50:disabled {
   opacity: 0.5;
 }
