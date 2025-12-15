@@ -1113,49 +1113,54 @@ const excluirUsuario = async (usuario) => {
   }
   
   try {
-    // 1. Remover permissões
-    const { error: permissaoError } = await supabase
-      .from('user_page_permissions')
-      .delete()
-      .eq('user_id', usuario.id)
+    console.log('🔵 Iniciando exclusão do usuário:', usuario.id)
     
-    if (permissaoError) throw permissaoError
+    // ✅ PASSO 1: Chamar Edge Function para deletar do Auth primeiro
+    const { data, error: edgeError } = await supabase.functions.invoke('delete-user', {
+      body: { userId: usuario.id }
+    })
     
-    // 2. Remover perfil
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', usuario.id)
+    console.log('🔵 Resposta da Edge Function:', { data, edgeError })
     
-    if (profileError) throw profileError
-    
-    // 3. Tentar remover do Auth (CORRIGIDO)
-    try {
-      const { data, error: authError } = await supabase.functions.invoke('delete-user', {
-        body: { userId: usuario.id }
-      })
-      
-      if (authError) {
-        console.warn('⚠️ Usuário removido do banco, mas erro no Auth:', authError)
-        showToast('warning', 'Usuário removido do sistema, mas pode permanecer no login. Contate o administrador.')
-      } else if (data?.warning) {
-        // Se tiver warning (ex: 403 Forbidden)
-        showToast('warning', `${data.warning}. O usuário foi removido do banco.`)
-      } else {
-        showToast('success', '✅ Usuário excluído completamente do sistema!')
-      }
-      
-    } catch (edgeError) {
-      console.warn('⚠️ Edge Function não disponível:', edgeError)
-      showToast('warning', 'Usuário removido do banco. Função de exclusão indisponível.')
+    // ✅ Verificar se houve erro na Edge Function
+    if (edgeError) {
+      console.error('❌ Erro na Edge Function:', edgeError)
+      throw new Error(`Erro ao deletar usuário: ${edgeError.message}`)
     }
     
-    // 4. Recarregar lista
+    // ✅ Verificar resposta da função
+    if (data && !data.success) {
+      console.error('❌ Edge Function retornou erro:', data.error)
+      throw new Error(data.error || 'Erro desconhecido ao deletar usuário')
+    }
+    
+    // ✅ Verificar se há warning (sucesso parcial)
+    if (data && data.warning) {
+      console.warn('⚠️ Aviso da Edge Function:', data.warning)
+      showToast('warning', `${data.warning}\nMas o usuário foi removido do banco de dados.`)
+    } else {
+      console.log('✅ Usuário deletado completamente!')
+      showToast('success', '✅ Usuário excluído completamente do sistema!')
+    }
+    
+    // ✅ PASSO 2: Recarregar lista de usuários
     await carregarUsuarios()
     
   } catch (error) {
     console.error('❌ Erro ao excluir usuário:', error)
-    showToast('error', `Erro: ${error.message}`)
+    
+    // ✅ Mensagem de erro mais clara
+    let mensagemErro = 'Erro ao excluir usuário'
+    
+    if (error.message.includes('CORS')) {
+      mensagemErro = 'Erro de comunicação com o servidor. Verifique as configurações da Edge Function.'
+    } else if (error.message.includes('fetch')) {
+      mensagemErro = 'Não foi possível conectar com o servidor. Verifique sua conexão.'
+    } else {
+      mensagemErro = error.message
+    }
+    
+    showToast('error', `❌ ${mensagemErro}`)
   }
 }
 const closeModalUsuario = () => {
