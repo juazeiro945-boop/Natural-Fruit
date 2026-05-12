@@ -1299,7 +1299,7 @@ const generateReceipt = async (sale) => {
     doc.setFillColor(...primaryColor)
     doc.rect(0, 0, 210, 35, 'F')
     
-    // Logo circular
+    // Logo circular - carregar de forma síncrona
     try {
       const img = new Image()
       img.crossOrigin = 'Anonymous'
@@ -1322,10 +1322,217 @@ const generateReceipt = async (sale) => {
       ctx.drawImage(img, 0, 0, size, size)
       const circularImage = canvas.toDataURL('image/png')
       doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
-      
     } catch (error) {
       console.error('Erro ao carregar logo:', error)
     }
+    
+    // Texto do cabeçalho - definir fonte ANTES de usar
+    doc.setFont('helvetica')
+    doc.setFontSize(12)
+    doc.setTextColor(255, 255, 255)
+    doc.text('NATURAL FRUIT', 45, 12)
+    
+    doc.setFontSize(8)
+    doc.text('CNPJ: 60.127.371/0001-60', 45, 18)
+    doc.text('Juazeiro, Bahia, Brasil', 45, 23)
+    doc.text('Tel: (87) 98864-1590', 45, 28)
+    
+    // Número do pedido e tipo
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
+    doc.text(receiptNumber, 195, 12, { align: 'right' })
+    doc.setFontSize(9)
+    const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
+    doc.text(saleTypeText, 195, 18, { align: 'right' })
+    
+    // Linha separadora
+    doc.setTextColor(...darkGray)
+    doc.setDrawColor(...primaryColor)
+    doc.setLineWidth(0.5)
+    doc.line(15, 40, 195, 40)
+    
+    // Título do Recibo
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
+    
+    // Dados do pedido
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DATA DO PEDIDO', 15, 60)
+    doc.text('STATUS', 100, 60)
+    doc.text('PAGAMENTO', 170, 60)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(formatDate(sale.date), 15, 67)
+    
+    // Status sem emoji
+    const statusLabels = {
+      pendente: 'Pendente',
+      em_rota: 'Em Rota',
+      entregue: 'Entregue',
+      cancelado: 'Cancelado'
+    }
+    doc.text(statusLabels[sale.order_status] || sale.order_status, 100, 67)
+    doc.text(sale.paid ? 'PAGO' : 'PENDENTE', 170, 67)
+    
+    // Dados do cliente
+    doc.setFillColor(245, 245, 245)
+    doc.rect(15, 73, 180, 30, 'F')
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DADOS DO CLIENTE', 20, 81)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 88)
+    doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 93)
+    if (sale.clients?.address) {
+      const endereco = sale.clients.address.substring(0, 60)
+      doc.text(`Endereco: ${endereco}`, 20, 98)
+    }
+    
+    // Tabela de produtos
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DETALHES DO PEDIDO', 15, 113)
+    
+    doc.setFillColor(...primaryColor)
+    doc.rect(15, 118, 180, 10, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.text('PRODUTO', 20, 124)
+    doc.text('QTD', 120, 124)
+    doc.text('VALOR UNIT.', 145, 124)
+    doc.text('TOTAL', 190, 124, { align: 'right' })
+    
+    // Lista de produtos
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    
+    let yProduto = 133
+    const produtos = parseProducts(sale)
+    let totalRealPedido = 0
+    
+    if (produtos && produtos.length > 0) {
+      for (const prod of produtos) {
+        const nomeProduto = (prod.name || 'Produto').substring(0, 35)
+        
+        if (yProduto > 250) {
+          doc.addPage()
+          yProduto = 20
+          
+          doc.setFillColor(...primaryColor)
+          doc.rect(15, yProduto - 10, 180, 10, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('PRODUTO', 20, yProduto - 4)
+          doc.text('QTD', 120, yProduto - 4)
+          doc.text('VALOR UNIT.', 145, yProduto - 4)
+          doc.text('TOTAL', 190, yProduto - 4, { align: 'right' })
+          
+          doc.setTextColor(...darkGray)
+          doc.setFont('helvetica', 'normal')
+          yProduto += 10
+        }
+        
+        doc.text(nomeProduto, 20, yProduto)
+        doc.text(String(prod.quantity), 120, yProduto)
+        doc.text(formatCurrency(prod.unit_price), 145, yProduto)
+        doc.text(formatCurrency(prod.total), 190, yProduto, { align: 'right' })
+        
+        totalRealPedido += prod.total
+        yProduto += 6
+      }
+    } else {
+      const nomeProduto = (sale.products?.name || 'Produto').substring(0, 35)
+      doc.text(nomeProduto, 20, yProduto)
+      doc.text(String(sale.quantity || 1), 120, yProduto)
+      const unitPrice = sale.unit_price || (sale.total / (sale.quantity || 1))
+      doc.text(formatCurrency(unitPrice), 145, yProduto)
+      doc.text(formatCurrency(sale.total), 190, yProduto, { align: 'right' })
+      totalRealPedido = sale.total
+      yProduto += 6
+    }
+    
+    // Linha total
+    doc.setDrawColor(...lightGray)
+    doc.setLineWidth(0.3)
+    doc.line(15, yProduto + 2, 195, yProduto + 2)
+    
+    const yTotal = yProduto + 10
+    const totalFinal = totalRealPedido > 0 ? totalRealPedido : sale.total
+    
+    // Box do total
+    doc.setFillColor(...primaryColor)
+    doc.rect(140, yTotal, 55, 12, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('TOTAL:', 145, yTotal + 8)
+    doc.text(formatCurrency(totalFinal), 190, yTotal + 8, { align: 'right' })
+    
+    // Forma de pagamento
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('FORMA DE PAGAMENTO', 15, yTotal + 20)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    const paymentLabels = {
+      cash: 'Dinheiro',
+      pix: 'PIX',
+      boleto: 'Boleto',
+      card: 'Cartao',
+      crediario: 'Crediario',
+      pending: 'Pendente'
+    }
+    doc.text(`Metodo: ${paymentLabels[sale.payment_method] || sale.payment_method}`, 15, yTotal + 27)
+    
+    // Observações
+    let yPos = yTotal + 35
+    if (sale.notes) {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.text('OBSERVACOES', 15, yPos)
+      yPos += 7
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      const lines = doc.splitTextToSize(sale.notes, 180)
+      doc.text(lines, 15, yPos)
+      yPos += (lines.length * 5)
+    }
+    
+    // Evento
+    if (sale.is_event && sale.event_name) {
+      yPos += 5
+      doc.setFillColor(128, 0, 128)
+      doc.rect(15, yPos, 180, 8, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.text(`EVENTO: ${sale.event_name}`, 20, yPos + 5)
+    }
+    
+    // Rodapé
+    const yFooter = yPos > yTotal + 35 ? yPos + 15 : yTotal + 40
+    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(8)
+    doc.text('Natural Fruit - Sistema de Gestao', 105, yFooter, { align: 'center' })
+    doc.text(`Emitido em: ${new Date().toLocaleString('pt-BR')}`, 105, yFooter + 5, { align: 'center' })
+    
+    // Salvar PDF
+    doc.save(`recibo-pedido-${sale.id}.pdf`)
+    
+  } catch (error) {
+    console.error('Erro ao gerar recibo:', error)
+    alert('Erro ao gerar recibo')
+  }
+}
     
     // Texto do cabeçalho
     doc.setTextColor(255, 255, 255)
