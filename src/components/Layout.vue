@@ -107,13 +107,13 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 p-4 md:p-6 pb-20 md:pb-6">
+      <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6">
         <slot />
       </main>
     </div>
 
     <!-- Bottom Navigation Mobile -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t z-30">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t z-50">
       <div class="flex justify-around">
         <router-link
           v-for="item in allowedBottomMenuItems"
@@ -131,11 +131,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const showMenu = ref(false)
 
@@ -143,27 +144,35 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value
 }
 
-// NOVO: Menu dinâmico baseado nas permissões do banco de dados
+// Limpa o body sempre que mudar de rota (resolve o bug do menu sumindo)
+const cleanBody = () => {
+  document.body.classList.remove('modal-open')
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.width = ''
+  document.body.style.height = ''
+}
+
+watch(() => route.path, () => {
+  cleanBody()
+  showMenu.value = false
+})
+
 const allowedMenuItems = computed(() => {
-  // Pega as permissões que o usuário tem acesso
   return authStore.allowedPages || []
 })
 
-// Menu inferior mobile - pega as principais páginas permitidas
 const allowedBottomMenuItems = computed(() => {
   const pages = authStore.allowedPages || []
   
-  // Define nomes curtos para o menu inferior
   const pagesWithShortNames = pages.map(page => ({
     ...page,
     nome_curto: getShortName(page.nome)
   }))
   
-  // Prioriza certas páginas para o menu inferior baseado na rota
   const priority = ['/', '/vendedor', '/vendas', '/trocas', '/configuracoes']
   const priorityPages = pagesWithShortNames.filter(p => priority.includes(p.rota))
   
-  // Se não tiver 5 páginas prioritárias, completa com outras
   if (priorityPages.length < 5) {
     const otherPages = pagesWithShortNames.filter(p => !priority.includes(p.rota))
     return [...priorityPages, ...otherPages].slice(0, 5)
@@ -172,7 +181,6 @@ const allowedBottomMenuItems = computed(() => {
   return priorityPages.slice(0, 5)
 })
 
-// Função auxiliar para nomes curtos no menu inferior
 const getShortName = (nome) => {
   const shortNames = {
     'Dashboard Admin': 'Início',
@@ -186,13 +194,14 @@ const getShortName = (nome) => {
 
 const handleLogout = async () => {
   if (confirm('Deseja realmente sair do sistema?')) {
+    cleanBody()
     await authStore.signOut()
     router.push('/login')
   }
 }
 
-// Recarregar permissões ao montar o componente
 onMounted(async () => {
+  cleanBody()
   if (authStore.isAuthenticated && authStore.userPermissions.length === 0) {
     await authStore.reloadPermissions()
   }
@@ -207,7 +216,6 @@ onMounted(async () => {
   letter-spacing: 1px;
 }
 
-/* Animação do menu mobile */
 .slide-fade-enter-active {
   transition: all 0.3s ease-out;
 }
