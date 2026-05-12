@@ -240,6 +240,14 @@
               {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
             </span>
           </div>
+          <div class="flex gap-2 pt-2 border-t">
+            <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="flex-1 flex items-center justify-center gap-1 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors active:bg-blue-200">
+              <span>📄</span> Gerar Recibo
+            </button>
+            <button v-if="authStore.canDeleteOrders" @click="confirmDelete(sale)" class="flex-1 flex items-center justify-center gap-1 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-semibold transition-colors active:bg-red-200">
+              <span>🗑️</span> Excluir
+            </button>
+          </div>
         </div>
         
         <!-- Paginação Mobile -->
