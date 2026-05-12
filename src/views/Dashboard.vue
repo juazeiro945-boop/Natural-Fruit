@@ -1,8 +1,7 @@
 <template>
-  <!-- Layout sem padding-bottom para dar espaço aos menus fixos -->
-  <Layout :no-padding-bottom="true">
-    <div class="space-y-6">
-      <!-- Header com Filtros - MELHORADO -->
+  <Layout>
+    <div class="space-y-6 pb-24 md:pb-6">
+      <!-- Header com Filtros -->
       <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div class="flex items-center space-x-3 md:space-x-4">
           <img src="/logo-192.jpg" alt="Natural Fruit" class="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-xl md:rounded-2xl shadow-lg border-4 border-primary-200">
@@ -60,7 +59,7 @@
 
       <!-- Conteúdo Principal -->
       <div v-else>
-        <!-- Cards de Resumo - MELHORADO -->
+        <!-- Cards de Resumo -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <!-- Card Produção -->
           <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
@@ -186,7 +185,7 @@
           </div>
         </div>
 
-        <!-- Vendas por Forma de Pagamento e Top Produtos - MELHORADO -->
+        <!-- Vendas por Forma de Pagamento e Top Produtos -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
           <!-- Vendas por Pagamento -->
           <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
@@ -301,7 +300,7 @@
           </div>
         </div>
 
-        <!-- Vendas Pendentes - MELHORADO -->
+        <!-- Vendas Pendentes -->
         <div v-if="stats.pendingSales.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <div class="bg-gradient-to-r from-red-50 to-orange-50 px-4 md:px-6 py-3 md:py-4 border-b border-red-100">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
@@ -367,7 +366,7 @@
           </div>
         </div>
 
-        <!-- Métricas Avançadas - MELHORADO -->
+        <!-- Métricas Avançadas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-6">
             <div class="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
@@ -431,8 +430,8 @@
         </div>
       </div>
 
-      <!-- Notificação de Erro - MELHORADO -->
-      <div v-if="error" class="fixed bottom-20 md:bottom-24 right-4 left-4 md:left-auto bg-red-500 text-white p-3 md:p-4 rounded-lg shadow-lg max-w-sm animate-fade-in z-50">
+      <!-- Notificação de Erro -->
+      <div v-if="error" class="fixed bottom-24 right-4 left-4 md:left-auto bg-red-500 text-white p-3 md:p-4 rounded-lg shadow-lg max-w-sm animate-fade-in z-40">
         <div class="flex items-center space-x-2 md:space-x-3">
           <svg class="w-4 h-4 md:w-5 md:h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -487,7 +486,6 @@ const stats = ref({
   pendingSales: []
 })
 
-// Computed
 const periodLabel = computed(() => {
   const labels = {
     today: 'Hoje',
@@ -519,7 +517,7 @@ const uniqueClients = computed(() => {
 const paymentMethods = computed(() => {
   const totalPaid = stats.value.salesByPayment.cash + stats.value.salesByPayment.pix + stats.value.salesByPayment.boleto
   
-  const methods = [
+  return [
     {
       type: 'cash',
       name: 'Dinheiro',
@@ -565,29 +563,16 @@ const paymentMethods = computed(() => {
       barClass: 'bg-gradient-to-r from-red-500 to-red-600 animate-pulse'
     }
   ]
-  
-  return methods
 })
 
-// Utilidades
 const updateDateTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleTimeString('pt-BR', { 
-    hour: '2-digit', 
-    minute: '2-digit'
-  })
-  currentDate.value = now.toLocaleDateString('pt-BR', { 
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  currentTime.value = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  currentDate.value = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const formatCurrency = (value) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value || 0)
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 }
 
 const formatDate = (date) => {
@@ -613,51 +598,35 @@ const getPerformanceText = (index) => {
 const getDateRange = () => {
   const now = new Date()
   const today = now.toISOString().split('T')[0]
-  
   switch (period.value) {
     case 'yesterday':
       const yesterday = new Date(now)
       yesterday.setDate(yesterday.getDate() - 1)
       return yesterday.toISOString().split('T')[0]
-    
     case 'week':
       const weekAgo = new Date(now)
       weekAgo.setDate(weekAgo.getDate() - 7)
-      return {
-        start: weekAgo.toISOString().split('T')[0],
-        end: today
-      }
-    
+      return { start: weekAgo.toISOString().split('T')[0], end: today }
     case 'month':
       const monthAgo = new Date(now)
       monthAgo.setMonth(monthAgo.getMonth() - 1)
-      return {
-        start: monthAgo.toISOString().split('T')[0],
-        end: today
-      }
-    
+      return { start: monthAgo.toISOString().split('T')[0], end: today }
     default:
       return today
   }
 }
 
-// Carregar dados do Supabase
 const loadAllData = async () => {
   loading.value = true
   error.value = ''
-  
   try {
     const dateRange = getDateRange()
-    
-    // Buscar tudo em paralelo
     const [productionResult, salesResult] = await Promise.all([
       loadProductionData(dateRange),
       loadSalesData(dateRange)
     ])
-    
     if (!productionResult.success) throw new Error(productionResult.error)
     if (!salesResult.success) throw new Error(salesResult.error)
-    
   } catch (err) {
     console.error('Erro ao carregar dados:', err)
     error.value = err.message || 'Erro ao carregar dados do dashboard'
@@ -669,64 +638,41 @@ const loadAllData = async () => {
 const loadProductionData = async (dateRange) => {
   try {
     let query = supabase.from('production').select('*')
-    
     if (typeof dateRange === 'object') {
       query = query.gte('date', dateRange.start).lte('date', dateRange.end)
     } else {
       query = query.eq('date', dateRange)
     }
-
     const { data, error } = await query
-
     if (error) return { success: false, error: error.message }
-
     if (data) {
-      const totalProduced = data.reduce((sum, p) => sum + (p.quantity || 0), 0)
-      const totalLoss = data.reduce((sum, p) => sum + (p.loss || 0), 0)
-      const totalExchange = data.reduce((sum, p) => sum + (p.exchange || 0), 0)
-      const totalLossValue = data.reduce((sum, p) => sum + (p.loss_value || 0), 0)
-      const totalExchangeValue = data.reduce((sum, p) => sum + (p.exchange_value || 0), 0)
-
-      stats.value.totalProduced = totalProduced
-      stats.value.totalLoss = totalLoss
-      stats.value.totalExchange = totalExchange
-      stats.value.lossValue = totalLossValue
-      stats.value.exchangeValue = totalExchangeValue
-      stats.value.lossPercentage = totalProduced > 0 ? ((totalLoss / totalProduced) * 100).toFixed(1) : 0
-      stats.value.exchangePercentage = totalProduced > 0 ? ((totalExchange / totalProduced) * 100).toFixed(1) : 0
+      stats.value.totalProduced = data.reduce((sum, p) => sum + (p.quantity || 0), 0)
+      stats.value.totalLoss = data.reduce((sum, p) => sum + (p.loss || 0), 0)
+      stats.value.totalExchange = data.reduce((sum, p) => sum + (p.exchange || 0), 0)
+      stats.value.lossValue = data.reduce((sum, p) => sum + (p.loss_value || 0), 0)
+      stats.value.exchangeValue = data.reduce((sum, p) => sum + (p.exchange_value || 0), 0)
+      stats.value.lossPercentage = stats.value.totalProduced > 0 ? ((stats.value.totalLoss / stats.value.totalProduced) * 100).toFixed(1) : 0
+      stats.value.exchangePercentage = stats.value.totalProduced > 0 ? ((stats.value.totalExchange / stats.value.totalProduced) * 100).toFixed(1) : 0
     }
-
     return { success: true }
   } catch (err) {
-    console.error('Erro ao carregar produção:', err)
     return { success: false, error: err.message }
   }
 }
 
 const loadSalesData = async (dateRange) => {
   try {
-    let query = supabase
-      .from('sales')
-      .select(`
-        *,
-        clients (id, name),
-        products (id, name)
-      `)
-    
+    let query = supabase.from('sales').select(`*, clients (id, name), products (id, name)`)
     if (typeof dateRange === 'object') {
       query = query.gte('date', dateRange.start).lte('date', dateRange.end)
     } else {
       query = query.eq('date', dateRange)
     }
-
     const { data, error } = await query
-
     if (error) return { success: false, error: error.message }
-
     if (data) {
       stats.value.totalSales = data.reduce((sum, s) => sum + (s.total || 0), 0)
       stats.value.totalSalesCount = data.length
-      
       const paidSales = data.filter(s => s.paid)
       stats.value.salesByPayment = {
         cash: paidSales.filter(s => s.payment_method === 'cash').reduce((sum, s) => sum + (s.total || 0), 0),
@@ -734,75 +680,37 @@ const loadSalesData = async (dateRange) => {
         boleto: paidSales.filter(s => s.payment_method === 'boleto').reduce((sum, s) => sum + (s.total || 0), 0),
         pending: data.filter(s => !s.paid).reduce((sum, s) => sum + (s.total || 0), 0)
       }
-
-      stats.value.pendingSales = data
-        .filter(s => !s.paid)
-        .map(s => ({
-          ...s,
-          client_id: s.client_id,
-          client_name: s.clients?.name || 'Cliente não identificado',
-          product_name: s.products?.name || 'Produto não especificado'
-        }))
-
-      // Top produtos
+      stats.value.pendingSales = data.filter(s => !s.paid).map(s => ({
+        ...s,
+        client_id: s.client_id,
+        client_name: s.clients?.name || 'Cliente não identificado',
+        product_name: s.products?.name || 'Produto não especificado'
+      }))
       const productMap = {}
       data.forEach(item => {
         const id = item.product_id
         if (!productMap[id]) {
-          productMap[id] = {
-            id,
-            name: item.products?.name || 'Produto',
-            quantity: 0,
-            total: 0
-          }
+          productMap[id] = { id, name: item.products?.name || 'Produto', quantity: 0, total: 0 }
         }
         productMap[id].quantity += item.quantity || 0
         productMap[id].total += item.total || 0
       })
-
-      stats.value.topProducts = Object.values(productMap)
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5)
+      stats.value.topProducts = Object.values(productMap).sort((a, b) => b.total - a.total).slice(0, 5)
     }
-
     return { success: true }
   } catch (err) {
-    console.error('Erro ao carregar vendas:', err)
     return { success: false, error: err.message }
   }
 }
 
-// Setup Real-time
 const setupRealtime = () => {
   realtimeChannel = supabase
     .channel('dashboard-realtime')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'production' },
-      (payload) => {
-        console.log('Produção atualizada:', payload)
-        loadAllData()
-      }
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'sales' },
-      (payload) => {
-        console.log('Venda atualizada:', payload)
-        loadAllData()
-      }
-    )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('✅ Realtime conectado com sucesso!')
-      }
-      if (status === 'CHANNEL_ERROR') {
-        console.error('❌ Erro no canal realtime')
-      }
-    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'production' }, () => loadAllData())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => loadAllData())
+    .subscribe()
 }
 
-// Lifecycle
 onMounted(() => {
   updateDateTime()
   timeInterval = setInterval(updateDateTime, 1000)
@@ -811,59 +719,18 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (timeInterval) {
-    clearInterval(timeInterval)
-  }
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel)
-  }
+  if (timeInterval) clearInterval(timeInterval)
+  if (realtimeChannel) supabase.removeChannel(realtimeChannel)
 })
 </script>
 
 <style scoped>
-/* Estilos para garantir espaço para os menus fixos */
-:deep(.layout-content) {
-  padding-bottom: 80px !important; /* Espaço para os menus mobile */
-}
-
-@media (min-width: 768px) {
-  :deep(.layout-content) {
-    padding-bottom: 40px !important; /* Menor espaço em desktop */
-  }
-}
-
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Melhorias para mobile */
-@media (max-width: 640px) {
-  .min-w-0 {
-    min-width: 0;
-  }
-  
-  .truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-/* Ajuste para notificação não cobrir os menus */
-@media (max-width: 767px) {
-  .fixed {
-    bottom: 80px !important; /* Acima dos menus mobile */
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
