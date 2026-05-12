@@ -1310,7 +1310,7 @@ const generateReceipt = async (sale) => {
       
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      const size = 25
+      const size = 200 // canvas grande para alta resolução
       canvas.width = size
       canvas.height = size
       ctx.beginPath()
@@ -1318,8 +1318,8 @@ const generateReceipt = async (sale) => {
       ctx.closePath()
       ctx.clip()
       ctx.drawImage(img, 0, 0, size, size)
-      const circularImage = canvas.toDataURL('image/png')
-      doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
+      const circularImage = canvas.toDataURL('image/png', 1.0)
+      doc.addImage(circularImage, 'PNG', 15, 5, 25, 25) // exibe 25mm no PDF mas com alta resolução
     } catch (error) {
       console.error('Erro ao carregar logo:', error)
     }
