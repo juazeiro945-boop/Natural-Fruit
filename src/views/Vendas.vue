@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <Layout>
     <div class="space-y-4 md:space-y-6 pb-20 md:pb-6">
       <!-- Header Responsivo -->
@@ -13,14 +13,14 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <span class="hidden xs:inline">Pesquisar</span>
-            <span class="xs:hidden">ðŸ” Clientes</span>
+            <span class="xs:hidden">🔍 Clientes</span>
           </button>
           <button @click="openModal" class="w-full sm:w-auto btn-primary text-sm md:text-base flex items-center justify-center">
             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
             <span class="hidden xs:inline">Novo Pedido</span>
-            <span class="xs:hidden">âž• Novo</span>
+            <span class="xs:hidden">➕ Novo</span>
           </button>
         </div>
       </div>
@@ -36,42 +36,42 @@
             <label class="label text-xs md:text-sm">Tipo</label>
             <select v-model="filters.saleType" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="wholesale">ðŸ­ Atacado</option>
-              <option value="retail">ðŸ›’ Varejo</option>
+              <option value="wholesale">🏭 Atacado</option>
+              <option value="retail">🛒 Varejo</option>
             </select>
           </div>
           <div>
             <label class="label text-xs md:text-sm">Pagamento</label>
             <select v-model="filters.payment" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todas</option>
-              <option value="cash">ðŸ’µ Dinheiro</option>
-              <option value="pix">ðŸ“± PIX</option>
-              <option value="boleto">ðŸ“„ Boleto</option>
-              <option value="card">ðŸ’³ CartÃ£o</option>
+              <option value="cash">💵 Dinheiro</option>
+              <option value="pix">📱 PIX</option>
+              <option value="boleto">📄 Boleto</option>
+              <option value="card">💳 Cartão</option>
             </select>
           </div>
           <div>
             <label class="label text-xs md:text-sm">Status Pgto</label>
             <select v-model="filters.status" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="paid">âœ… Pago</option>
-              <option value="pending">â³ Pendente</option>
+              <option value="paid">✅ Pago</option>
+              <option value="pending">⏳ Pendente</option>
             </select>
           </div>
           <div>
             <label class="label text-xs md:text-sm">Status Pedido</label>
             <select v-model="filters.orderStatus" class="input-field text-sm md:text-base" @change="loadSales">
               <option value="">Todos</option>
-              <option value="pendente">ðŸ• Pendente</option>
-              <option value="em_rota">ðŸšš Em Rota</option>
-              <option value="entregue">âœ… Entregue</option>
-              <option value="cancelado">âŒ Cancelado</option>
+              <option value="pendente">🕐 Pendente</option>
+              <option value="em_rota">🚚 Em Rota</option>
+              <option value="entregue">✅ Entregue</option>
+              <option value="cancelado">❌ Cancelado</option>
             </select>
           </div>
         </div>
       </div>
 
-      <!-- BotÃ£o Alternar VisualizaÃ§Ã£o -->
+      <!-- Botão Alternar Visualização -->
       <div class="flex justify-center">
         <div class="inline-flex rounded-lg border-2 border-primary-200 bg-white p-1">
           <button 
@@ -79,21 +79,21 @@
             :class="viewMode === 'pedidos' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
-            <span class="hidden xs:inline">ðŸ“¦ Por Pedido</span>
-            <span class="xs:hidden">ðŸ“¦</span>
+            <span class="hidden xs:inline">📦 Por Pedido</span>
+            <span class="xs:hidden">📦</span>
           </button>
           <button 
             @click="viewMode = 'clientes'" 
             :class="viewMode === 'clientes' ? 'bg-primary-500 text-white' : 'text-gray-700 hover:bg-gray-100'"
             class="px-4 py-2 md:px-6 md:py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
           >
-            <span class="hidden xs:inline">ðŸ‘¥ Por Cliente</span>
-            <span class="xs:hidden">ðŸ‘¥</span>
+            <span class="hidden xs:inline">👥 Por Cliente</span>
+            <span class="xs:hidden">👥</span>
           </button>
         </div>
       </div>
 
-      <!-- VisualizaÃ§Ã£o POR PEDIDOS (Desktop) -->
+      <!-- Visualização POR PEDIDOS (Desktop) -->
       <div v-if="viewMode === 'pedidos'" class="hidden md:block card overflow-x-auto">
         <table class="w-full min-w-full">
           <thead class="bg-gray-50">
@@ -106,7 +106,7 @@
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Pagamento</th>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Status Pedido</th>
               <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Status Pgto</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">AÃ§Ãµes</th>
+              <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -128,25 +128,25 @@
               </td>
               <td class="px-4 py-3 text-sm whitespace-nowrap">
                 <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
-                  {{ sale.paid ? 'âœ… Pago' : 'â³ Pendente' }}
+                  {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
                 </span>
               </td>
                <td class="px-4 py-3 text-sm whitespace-nowrap">
                  <div class="flex items-center space-x-1">
                    <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                     <span class="text-lg">ðŸ‘ï¸</span>
+                     <span class="text-lg">👁️</span>
                    </button>
                    <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
-                     <span class="text-lg">âœï¸</span>
+                     <span class="text-lg">✏️</span>
                    </button>
                    <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
-                     <span class="text-lg">{{ sale.paid ? 'â†©ï¸' : 'âœ…' }}</span>
+                     <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
                    </button>
                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
-                     <span class="text-lg">ðŸ“„</span>
+                     <span class="text-lg">📄</span>
                    </button>
                    <button v-if="authStore.canDeleteOrders" @click="confirmDelete(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pedido">
-                     <span class="text-lg">ðŸ—‘ï¸</span>
+                     <span class="text-lg">🗑️</span>
                    </button>
                  </div>
                </td>
@@ -154,7 +154,7 @@
           </tbody>
         </table>
         
-        <!-- PaginaÃ§Ã£o Desktop -->
+        <!-- Paginação Desktop -->
         <div v-if="totalPages > 1" class="flex flex-col sm:flex-row justify-between items-center mt-6 pt-4 border-t gap-4">
           <button 
             @click="previousPage" 
@@ -170,7 +170,7 @@
           
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-600">
-              PÃ¡gina <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
+              Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
             </span>
             <span class="text-xs text-gray-500">
               ({{ sales.length }} {{ sales.length === 1 ? 'pedido' : 'pedidos' }})
@@ -183,7 +183,7 @@
             :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'"
             class="flex items-center px-4 py-2 border border-primary-500 rounded-lg text-primary-600 font-semibold transition-colors text-sm w-full sm:w-auto justify-center"
           >
-            PrÃ³ximo
+            Próximo
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -200,7 +200,7 @@
         </div>
       </div>
 
-      <!-- VisualizaÃ§Ã£o POR PEDIDOS (Mobile) -->
+      <!-- Visualização POR PEDIDOS (Mobile) -->
       <div v-if="viewMode === 'pedidos'" class="md:hidden space-y-3">
         <div v-for="sale in paginatedSales" :key="sale.id" class="card p-4 space-y-3">
           <div class="flex justify-between items-start">
@@ -214,13 +214,13 @@
             </div>
             <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
               <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors active:bg-blue-100" title="Ver Detalhes">
-                <span class="text-lg">ðŸ‘ï¸</span>
+                <span class="text-lg">👁️</span>
               </button>
               <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors active:bg-yellow-100" title="Editar Pedido">
-                <span class="text-lg">âœï¸</span>
+                <span class="text-lg">✏️</span>
               </button>
               <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200" title="Alternar Status Pagamento">
-                <span class="text-lg">{{ sale.paid ? 'â†©ï¸' : 'âœ…' }}</span>
+                <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
               </button>
             </div>
           </div>
@@ -237,15 +237,15 @@
           <div class="flex flex-wrap justify-between items-center gap-2 pt-2 border-t">
             <span :class="getOrderStatusBadge(sale.order_status)" class="text-xs">{{ getOrderStatusLabel(sale.order_status) }}</span>
             <span :class="sale.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="px-2 py-1 rounded-full text-xs font-semibold">
-              {{ sale.paid ? 'âœ… Pago' : 'â³ Pendente' }}
+              {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
             </span>
           </div>
         </div>
         
-        <!-- PaginaÃ§Ã£o Mobile -->
+        <!-- Paginação Mobile -->
         <div v-if="totalPages > 1" class="flex flex-col items-center space-y-3 mt-6 p-4 bg-gray-50 rounded-lg">
           <span class="text-sm text-gray-600">
-            PÃ¡gina <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
+            Página <span class="font-bold text-primary-600">{{ currentPage }}</span> de <span class="font-bold">{{ totalPages }}</span>
           </span>
           <div class="flex space-x-3 w-full">
             <button 
@@ -265,7 +265,7 @@
               :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'"
               class="flex-1 flex items-center justify-center px-4 py-3 bg-primary-500 text-white rounded-lg font-semibold transition-colors text-sm"
             >
-              PrÃ³ximo
+              Próximo
               <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
@@ -283,22 +283,22 @@
         </div>
       </div>
 
-      <!-- VisualizaÃ§Ã£o POR CLIENTES -->
+      <!-- Visualização POR CLIENTES -->
       <div v-if="viewMode === 'clientes'" class="space-y-4">
         <div v-for="cliente in clientesAgrupados" :key="cliente.id" class="card border-l-4 border-primary-500">
           <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
             <div class="flex-1">
               <h3 class="font-bold text-lg md:text-2xl text-gray-900">{{ cliente.name }}</h3>
               <div class="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-3 mt-2">
-                <p class="text-xs md:text-sm text-gray-600">ðŸ“ž {{ cliente.phone || 'Sem telefone' }}</p>
-                <p class="text-xs md:text-sm text-gray-600">ðŸ“§ {{ cliente.email || 'Sem email' }}</p>
+                <p class="text-xs md:text-sm text-gray-600">📞 {{ cliente.phone || 'Sem telefone' }}</p>
+                <p class="text-xs md:text-sm text-gray-600">📧 {{ cliente.email || 'Sem email' }}</p>
               </div>
               <div class="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
                 <span class="text-xs md:text-sm font-semibold text-primary-600">
-                  ðŸ“¦ {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
+                  📦 {{ cliente.totalPedidos }} {{ cliente.totalPedidos === 1 ? 'pedido' : 'pedidos' }}
                 </span>
                 <span class="text-xs md:text-sm font-semibold text-blue-600">
-                  ðŸ“Š {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
+                  📊 {{ cliente.totalItens }} {{ cliente.totalItens === 1 ? 'item' : 'itens' }}
                 </span>
               </div>
             </div>
@@ -307,17 +307,17 @@
               <p class="font-bold text-xl md:text-3xl text-primary-600">{{ formatCurrency(cliente.totalComprado) }}</p>
               <div class="flex flex-wrap gap-1 md:gap-2 mt-2 md:justify-end">
                 <span v-if="cliente.totalPago > 0" class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
-                  âœ… Pago: {{ formatCurrency(cliente.totalPago) }}
+                  ✅ Pago: {{ formatCurrency(cliente.totalPago) }}
                 </span>
                 <span v-if="cliente.totalPendente > 0" class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
-                  â³ Pendente: {{ formatCurrency(cliente.totalPendente) }}
+                  ⏳ Pendente: {{ formatCurrency(cliente.totalPendente) }}
                 </span>
               </div>
             </div>
           </div>
 
           <div class="space-y-2 pt-4 border-t">
-            <h4 class="font-semibold text-gray-700 mb-3 text-sm md:text-base">HistÃ³rico de Pedidos:</h4>
+            <h4 class="font-semibold text-gray-700 mb-3 text-sm md:text-base">Histórico de Pedidos:</h4>
             <div v-for="pedido in cliente.pedidos" :key="pedido.id" class="bg-gray-50 hover:bg-gray-100 p-3 md:p-4 rounded-lg transition-colors">
               <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div class="flex-1">
@@ -327,13 +327,13 @@
                     <span :class="getOrderStatusBadge(pedido.order_status)" class="text-xs">{{ getOrderStatusLabel(pedido.order_status) }}</span>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-2 text-xs md:text-sm">
-                    <p class="text-gray-700">ðŸ“… {{ formatDate(pedido.date) }}</p>
-                    <p class="text-gray-700">ðŸ“¦ {{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
-                    <p class="text-gray-700">ðŸ’³ {{ getPaymentLabel(pedido.payment_method) }}</p>
+                    <p class="text-gray-700">📅 {{ formatDate(pedido.date) }}</p>
+                    <p class="text-gray-700">📦 {{ getTotalItems(pedido) }} {{ getTotalItems(pedido) === 1 ? 'item' : 'itens' }}</p>
+                    <p class="text-gray-700">💳 {{ getPaymentLabel(pedido.payment_method) }}</p>
                   </div>
                   <div v-if="pedido.is_event" class="mt-2">
                     <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-semibold">
-                      ðŸŽ‰ Evento: {{ pedido.event_name }}
+                      🎉 Evento: {{ pedido.event_name }}
                     </span>
                   </div>
                 </div>
@@ -342,20 +342,20 @@
                     <p class="font-bold text-base md:text-xl text-gray-900">{{ formatCurrency(pedido.total) }}</p>
                     <span :class="pedido.paid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" 
                       class="text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap inline-block">
-                      {{ pedido.paid ? 'âœ… Pago' : 'â³ Pendente' }}
+                      {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
                     </span>
                   </div>
-           <div class="flex items-center gap-1">
-             <button @click="viewSaleDetails(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-               <span class="text-lg md:text-xl">ðŸ‘ï¸</span>
-             </button>
-             <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
-               <span class="text-lg md:text-xl">ðŸ“„</span>
-             </button>
-             <button v-if="authStore.canDeleteOrders" @click="confirmDelete(pedido)" class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pedido">
-               <span class="text-lg md:text-xl">ðŸ—‘ï¸</span>
-             </button>
-           </div>
+                  <div class="flex items-center gap-1">
+                    <button @click="viewSaleDetails(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
+                      <span class="text-lg md:text-xl">👁️</span>
+                    </button>
+                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
+                      <span class="text-lg md:text-xl">📄</span>
+                    </button>
+                    <button v-if="authStore.canDeleteOrders" @click="confirmDelete(pedido)" class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pedido">
+                      <span class="text-lg md:text-xl">🗑️</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -364,7 +364,7 @@
 
         <div v-if="clientesAgrupados.length === 0" class="card text-center py-12">
           <div class="text-gray-400 mb-4">
-            <span class="text-6xl">ðŸ‘¥</span>
+            <span class="text-6xl">👥</span>
           </div>
           <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
         </div>
@@ -383,7 +383,7 @@
               </button>
               <h3 class="text-lg md:text-xl font-bold text-white">Pesquisar Clientes</h3>
             </div>
-            <button @click="closeSearchClientsModal" class="text-white hover:bg-primary-700 p-1 rounded-lg transition-colors text-xl">Ã—</button>
+            <button @click="closeSearchClientsModal" class="text-white hover:bg-primary-700 p-1 rounded-lg transition-colors text-xl">×</button>
           </div>
           
           <!-- Campo de Busca -->
@@ -405,7 +405,7 @@
           <!-- Lista de Clientes -->
           <div class="flex-1 overflow-y-auto p-4 space-y-2">
             <div v-if="filteredClients.length === 0" class="text-center py-8">
-              <span class="text-4xl">ðŸ‘¥</span>
+              <span class="text-4xl">👥</span>
               <p class="text-gray-600 mt-2">Nenhum cliente encontrado</p>
             </div>
             <div 
@@ -419,10 +419,10 @@
                   <h4 class="font-bold text-gray-900 truncate">{{ client.name }}</h4>
                   <div class="flex flex-wrap gap-3 mt-1">
                     <p class="text-sm text-gray-600 flex items-center">
-                      <span class="mr-1">ðŸ“ž</span> {{ client.phone || 'Sem telefone' }}
+                      <span class="mr-1">📞</span> {{ client.phone || 'Sem telefone' }}
                     </p>
                     <p class="text-sm text-gray-600 flex items-center">
-                      <span class="mr-1">ðŸ“§</span> {{ client.email || 'Sem email' }}
+                      <span class="mr-1">📧</span> {{ client.email || 'Sem email' }}
                     </p>
                   </div>
                 </div>
@@ -452,20 +452,20 @@
                   {{ editingSale ? 'Editar Pedido' : 'Novo Pedido' }}
                 </h3>
                 <p v-if="form.produtos.length > 0" class="text-xs text-white opacity-90">
-                  ðŸ“¦ {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
+                  📦 {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
                 </p>
               </div>
             </div>
             <button @click="closeModal" class="text-white p-2 rounded-lg flex-shrink-0 text-xl">
-              Ã—
+              ×
             </button>
           </div>
 
-          <!-- FormulÃ¡rio Scrollable -->
+          <!-- Formulário Scrollable -->
           <div class="modal-content-mobile">
             <form @submit.prevent="saveSale" class="p-4 space-y-4 pb-32">
               
-              <!-- InformaÃ§Ãµes BÃ¡sicas -->
+              <!-- Informações Básicas -->
               <div class="grid grid-cols-1 xs:grid-cols-2 gap-3">
                 <div>
                   <label class="label">Data *</label>
@@ -474,8 +474,8 @@
                 <div>
                   <label class="label">Tipo de Venda *</label>
                   <select v-model="form.sale_type" required class="input-field">
-                    <option value="wholesale">ðŸ­ Atacado</option>
-                    <option value="retail">ðŸ›’ Varejo</option>
+                    <option value="wholesale">🏭 Atacado</option>
+                    <option value="retail">🛒 Varejo</option>
                   </select>
                 </div>
               </div>
@@ -491,7 +491,7 @@
               <!-- PRODUTOS -->
               <div class="border-2 border-dashed border-primary-300 rounded-lg p-3 space-y-3 bg-primary-50">
                 <div class="flex justify-between items-center">
-                  <label class="label mb-0 text-primary-700 font-bold">ðŸ“¦ Produtos do Pedido</label>
+                  <label class="label mb-0 text-primary-700 font-bold">📦 Produtos do Pedido</label>
                   <span class="text-xs font-semibold text-primary-600">
                     Total: {{ getTotalItemsForm() }} {{ getTotalItemsForm() === 1 ? 'item' : 'itens' }}
                   </span>
@@ -501,7 +501,7 @@
                   <div class="flex justify-between items-center">
                     <span class="font-semibold text-xs text-gray-700">Produto {{ index + 1 }}</span>
                     <button v-if="form.produtos.length > 1" type="button" @click="removerProduto(index)" class="text-red-600 hover:text-red-700 font-semibold text-xs flex items-center">
-                      <span class="mr-1">ðŸ—‘ï¸</span> Remover
+                      <span class="mr-1">🗑️</span> Remover
                     </button>
                   </div>
                   
@@ -528,7 +528,7 @@
                       />
                     </div>
                     <div>
-                      <label class="label text-xs">PreÃ§o Unit. *</label>
+                      <label class="label text-xs">Preço Unit. *</label>
                       <input v-model.number="item.unit_price" type="number" step="0.01" required class="input-field" @input="calculateTotalItem(index)" />
                     </div>
                     <div>
@@ -555,7 +555,7 @@
 
               <!-- Forma de Pagamento -->
               <div class="border-2 border-primary-200 rounded-lg p-3 bg-primary-50">
-                <label class="label font-bold text-primary-700 mb-3">ðŸ’³ Forma de Pagamento *</label>
+                <label class="label font-bold text-primary-700 mb-3">💳 Forma de Pagamento *</label>
                 
                 <div class="grid grid-cols-2 gap-2">
                   <div class="flex items-center" v-for="method in paymentMethods" :key="method.value">
@@ -581,7 +581,7 @@
 
               <!-- Status do Pedido -->
               <div class="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">
-                <label class="label font-bold text-blue-700 mb-3">ðŸ“‹ Status do Pedido *</label>
+                <label class="label font-bold text-blue-700 mb-3">📋 Status do Pedido *</label>
                 
                 <div class="grid grid-cols-2 gap-2">
                   <div class="flex items-center" v-for="status in orderStatuses" :key="status.value">
@@ -609,11 +609,11 @@
               <div class="border-2 border-purple-200 rounded-lg p-3 bg-purple-50">
                 <div class="flex items-center space-x-3 mb-3">
                   <input v-model="form.is_event" type="checkbox" id="is-event" class="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-                  <label for="is-event" class="font-medium text-gray-700">ðŸŽ‰ Este pedido Ã© para um evento?</label>
+                  <label for="is-event" class="font-medium text-gray-700">🎉 Este pedido é para um evento?</label>
                 </div>
                 <div v-if="form.is_event">
                   <label class="label text-sm">Nome do Evento *</label>
-                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, AniversÃ¡rio" />
+                  <input v-model="form.event_name" type="text" required class="input-field" placeholder="Ex: Casamento, Aniversário" />
                 </div>
               </div>
 
@@ -628,7 +628,7 @@
                       class="w-6 h-6 rounded border-2 border-gray-300 text-green-600 focus:ring-green-500 focus:ring-2"
                     />
                     <label for="paid-checkbox" class="font-bold text-green-700">
-                      âœ… Pagamento realizado
+                      ✅ Pagamento realizado
                     </label>
                   </div>
                   
@@ -639,10 +639,10 @@
                 </div>
               </div>
 
-              <!-- ObservaÃ§Ãµes -->
+              <!-- Observações -->
               <div>
-                <label class="label">ObservaÃ§Ãµes</label>
-                <textarea v-model="form.notes" class="input-field" rows="3" placeholder="InformaÃ§Ãµes adicionais..."></textarea>
+                <label class="label">Observações</label>
+                <textarea v-model="form.notes" class="input-field" rows="3" placeholder="Informações adicionais..."></textarea>
               </div>
 
             </form>
@@ -668,11 +668,10 @@
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto">
           <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-10">
             <h3 class="text-lg md:text-xl font-bold text-white">Detalhes do Pedido</h3>
-            <button @click="closeDetailsModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">Ã—</button>
+            <button @click="closeDetailsModal" class="text-white hover:bg-primary-700 p-1 md:p-2 rounded-lg transition-colors text-xl md:text-2xl">×</button>
           </div>
           
           <div v-if="selectedSale" class="p-4 md:p-6 space-y-3 md:space-y-4">
-            <!-- ConteÃºdo do modal -->
             <div class="grid grid-cols-2 gap-3 md:gap-4">
               <div class="card bg-gray-50 p-3 md:p-4">
                 <p class="text-xs md:text-sm text-gray-600">Data</p>
@@ -685,19 +684,19 @@
             </div>
 
             <div class="card bg-blue-50 p-3 md:p-4">
-              <h4 class="font-bold mb-1 md:mb-2 text-blue-900 text-sm md:text-base">ðŸ‘¤ Cliente</h4>
+              <h4 class="font-bold mb-1 md:mb-2 text-blue-900 text-sm md:text-base">👤 Cliente</h4>
               <p class="font-semibold text-sm md:text-base">{{ selectedSale.clients?.name }}</p>
               <p class="text-xs md:text-sm text-gray-600">{{ selectedSale.clients?.phone }}</p>
             </div>
 
             <div class="card bg-green-50 p-3 md:p-4">
-              <h4 class="font-bold mb-2 md:mb-3 text-green-900 text-sm md:text-base">ðŸ“¦ Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
+              <h4 class="font-bold mb-2 md:mb-3 text-green-900 text-sm md:text-base">📦 Produtos ({{ getTotalItems(selectedSale) }} itens)</h4>
               <div class="space-y-2">
                 <div v-for="(item, index) in parseProducts(selectedSale)" :key="index" class="bg-white p-2 md:p-3 rounded-lg">
                   <div class="flex justify-between items-start">
                     <div class="flex-1">
                       <p class="font-semibold text-sm md:text-base">{{ item.name }}</p>
-                      <p class="text-xs md:text-sm text-gray-600">Qtd: {{ item.quantity }} Ã— {{ formatCurrency(item.unit_price) }}</p>
+                      <p class="text-xs md:text-sm text-gray-600">Qtd: {{ item.quantity }} × {{ formatCurrency(item.unit_price) }}</p>
                     </div>
                     <p class="font-bold text-green-700 text-sm md:text-base">{{ formatCurrency(item.total) }}</p>
                   </div>
@@ -714,33 +713,33 @@
 
             <button @click="closeDetailsModal" class="w-full btn-outline py-3">Fechar</button>
           </div>
-       </div>
-     </div>
-   </div>
-   
-   <!-- Modal Confirmar ExclusÃ£o -->
-   <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-     <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-       <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
-         <span class="text-3xl">ðŸ—‘ï¸</span>
-       </div>
-       <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Confirmar ExclusÃ£o</h3>
-       <p class="text-gray-600 text-center mb-6">
-         Tem certeza que deseja excluir o pedido <strong>{{ saleToDelete?.id?.slice(0, 8) }}</strong> de <strong>{{ saleToDelete?.clients?.name }}</strong>?<br>
-         <span class="text-red-600 font-semibold">Esta aÃ§Ã£o nÃ£o pode ser desfeita.</span>
-       </p>
-       <div class="flex flex-col sm:flex-row gap-3">
-         <button @click="deleteSale" :disabled="loading" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center">
-           <span v-if="loading">â³ Excluindo...</span>
-           <span v-else>ðŸ—‘ï¸ Sim, Excluir</span>
-         </button>
-         <button @click="closeDeleteModal" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition-colors">
-           Cancelar
-         </button>
-       </div>
-     </div>
-   </div>
- </Layout>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Confirmar Exclusão -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+        <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+          <span class="text-3xl">🗑️</span>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Confirmar Exclusão</h3>
+        <p class="text-gray-600 text-center mb-6">
+          Tem certeza que deseja excluir o pedido <strong>{{ saleToDelete?.id?.slice(0, 8) }}</strong> de <strong>{{ saleToDelete?.clients?.name }}</strong>?<br>
+          <span class="text-red-600 font-semibold">Esta ação não pode ser desfeita.</span>
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button @click="deleteSale" :disabled="loading" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center">
+            <span v-if="loading">⏳ Excluindo...</span>
+            <span v-else>🗑️ Sim, Excluir</span>
+          </button>
+          <button @click="closeDeleteModal" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </Layout>
 </template>
 
 <script setup>
@@ -766,7 +765,7 @@ const viewMode = ref('pedidos')
 const editingSale = ref(null)
 const searchClientQuery = ref('')
 
-// PAGINAÃ‡ÃƒO
+// PAGINAÇÃO
 const currentPage = ref(1)
 const itemsPerPage = 15
 
@@ -800,19 +799,19 @@ const form = ref({
 })
 
 const paymentMethods = [
-  { value: 'cash', label: 'ðŸ’µ Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
-  { value: 'pix', label: 'ðŸ“± PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
-  { value: 'card', label: 'ðŸ’³ CartÃ£o', selectedClass: 'bg-pink-500 text-white border-pink-600' },
-  { value: 'boleto', label: 'ðŸ“„ Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
-  { value: 'crediario', label: 'ðŸ¦ CrediÃ¡rio', selectedClass: 'bg-orange-500 text-white border-orange-600' },
-  { value: 'pending', label: 'â³ Pendente', selectedClass: 'bg-gray-500 text-white border-gray-600' }
+  { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
+  { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
+  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'crediario', label: '🏦 Crediário', selectedClass: 'bg-orange-500 text-white border-orange-600' },
+  { value: 'pending', label: '⏳ Pendente', selectedClass: 'bg-gray-500 text-white border-gray-600' }
 ]
 
 const orderStatuses = [
-  { value: 'pendente', label: 'ðŸ• Pendente', selectedClass: 'bg-yellow-500 text-white border-yellow-600' },
-  { value: 'em_rota', label: 'ðŸšš Em Rota', selectedClass: 'bg-blue-500 text-white border-blue-600' },
-  { value: 'entregue', label: 'âœ… Entregue', selectedClass: 'bg-green-500 text-white border-green-600' },
-  { value: 'cancelado', label: 'âŒ Cancelado', selectedClass: 'bg-red-500 text-white border-red-600' }
+  { value: 'pendente', label: '🕐 Pendente', selectedClass: 'bg-yellow-500 text-white border-yellow-600' },
+  { value: 'em_rota', label: '🚚 Em Rota', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'entregue', label: '✅ Entregue', selectedClass: 'bg-green-500 text-white border-green-600' },
+  { value: 'cancelado', label: '❌ Cancelado', selectedClass: 'bg-red-500 text-white border-red-600' }
 ]
 
 // COMPUTED
@@ -861,10 +860,10 @@ const clientesAgrupados = computed(() => {
     }
   })
   
-   return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
+  return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
 })
 
-// FUNÃ‡Ã•ES UTILITÃRIAS
+// FUNÇÕES UTILITÁRIAS
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0)
 }
@@ -882,8 +881,8 @@ const getPaymentLabel = (method) => {
     cash: 'Dinheiro', 
     pix: 'PIX', 
     boleto: 'Boleto',
-    card: 'CartÃ£o',
-    crediario: 'CrediÃ¡rio',
+    card: 'Cartão',
+    crediario: 'Crediário',
     pending: 'Pendente'
   }
   return labels[method] || method
@@ -902,7 +901,7 @@ const getPaymentBadge = (method) => {
 }
 
 const getSaleTypeLabel = (type) => {
-  const labels = { wholesale: 'ðŸ­ Atacado', retail: 'ðŸ›’ Varejo' }
+  const labels = { wholesale: '🏭 Atacado', retail: '🛒 Varejo' }
   return labels[type] || type
 }
 
@@ -916,10 +915,10 @@ const getSaleTypeBadge = (type) => {
 
 const getOrderStatusLabel = (status) => {
   const labels = {
-    pendente: 'ðŸ• Pendente',
-    em_rota: 'ðŸšš Em Rota',
-    entregue: 'âœ… Entregue',
-    cancelado: 'âŒ Cancelado'
+    pendente: '🕐 Pendente',
+    em_rota: '🚚 Em Rota',
+    entregue: '✅ Entregue',
+    cancelado: '❌ Cancelado'
   }
   return labels[status] || status
 }
@@ -971,7 +970,7 @@ const parseProducts = (sale) => {
   }]
 }
 
-// FUNÃ‡Ã•ES DO FORMULÃRIO
+// FUNÇÕES DO FORMULÁRIO
 const adicionarProduto = () => {
   form.value.produtos.push({
     product_id: '',
@@ -1002,7 +1001,7 @@ const calculateTotalItem = (index) => {
   item.total = item.quantity * item.unit_price
 }
 
-// FUNÃ‡Ã•ES DE NAVEGAÃ‡ÃƒO
+// FUNÇÕES DE NAVEGAÇÃO
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
@@ -1015,7 +1014,7 @@ const previousPage = () => {
   }
 }
 
-// FUNÃ‡Ã•ES DE MODAIS
+// FUNÇÕES DE MODAIS
 const viewSaleDetails = (sale) => {
   selectedSale.value = sale
   showDetailsModal.value = true
@@ -1085,7 +1084,7 @@ const closeModal = () => {
   }
 }
 
-// MODAL DE CONFIRMAÃ‡ÃƒO DE EXCLUSÃƒO
+// MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
 const confirmDelete = (sale) => {
   saleToDelete.value = sale
   showDeleteModal.value = true
@@ -1118,7 +1117,7 @@ const deleteSale = async () => {
   }
 }
 
-// FUNÃ‡Ã•ES CRUD
+// FUNÇÕES CRUD
 const editSale = (sale) => {
   editingSale.value = sale
   
@@ -1295,14 +1294,13 @@ const generateReceipt = async (sale) => {
     const darkGray = [60, 60, 60]
     const lightGray = [150, 150, 150]
     
-    // CabeÃ§alho com fundo laranja
+    // Cabeçalho com fundo laranja
     doc.setFillColor(...primaryColor)
     doc.rect(0, 0, 210, 35, 'F')
     
-    // Logo circular - carregar de forma sÃ­ncrona
+    // Logo circular
     try {
       const img = new Image()
-
       img.src = '/natural-fruit-logo-512.jpg'
       
       await new Promise((resolve, reject) => {
@@ -1326,7 +1324,7 @@ const generateReceipt = async (sale) => {
       console.error('Erro ao carregar logo:', error)
     }
     
-    // Texto do cabeÃ§alho - definir fonte ANTES de usar
+    // Texto do cabeçalho
     doc.setFont('helvetica')
     doc.setFontSize(12)
     doc.setTextColor(255, 255, 255)
@@ -1337,7 +1335,7 @@ const generateReceipt = async (sale) => {
     doc.text('Juazeiro, Bahia, Brasil', 45, 23)
     doc.text('Tel: (87) 98864-1590', 45, 28)
     
-    // NÃºmero do pedido e tipo
+    // Número do pedido e tipo
     doc.setFontSize(11)
     doc.setFont('helvetica', 'bold')
     const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
@@ -1352,7 +1350,7 @@ const generateReceipt = async (sale) => {
     doc.setLineWidth(0.5)
     doc.line(15, 40, 195, 40)
     
-    // TÃ­tulo do Recibo
+    // Título do Recibo
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
@@ -1368,7 +1366,6 @@ const generateReceipt = async (sale) => {
     doc.setFontSize(9)
     doc.text(formatDate(sale.date), 15, 67)
     
-    // Status sem emoji
     const statusLabels = {
       pendente: 'Pendente',
       em_rota: 'Em Rota',
@@ -1494,7 +1491,7 @@ const generateReceipt = async (sale) => {
     }
     doc.text(`Metodo: ${paymentLabels[sale.payment_method] || sale.payment_method}`, 15, yTotal + 27)
     
-    // ObservaÃ§Ãµes
+    // Observações
     let yPos = yTotal + 35
     if (sale.notes) {
       doc.setFont('helvetica', 'bold')
@@ -1518,7 +1515,7 @@ const generateReceipt = async (sale) => {
       doc.text(`EVENTO: ${sale.event_name}`, 20, yPos + 5)
     }
     
-    // RodapÃ©
+    // Rodapé
     const yFooter = yPos > yTotal + 35 ? yPos + 15 : yTotal + 40
     doc.setTextColor(100, 100, 100)
     doc.setFontSize(8)
@@ -1534,7 +1531,7 @@ const generateReceipt = async (sale) => {
   }
 }
 
- // WATCHERS
+// WATCHERS
 watch(filters, () => {
   currentPage.value = 1
   loadSales()
@@ -1646,7 +1643,7 @@ body.modal-open {
   z-index: 100;
 }
 
-/* AnimaÃ§Ãµes */
+/* Animações */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -1760,7 +1757,7 @@ body.modal-open {
   }
 }
 
-/* TransiÃ§Ãµes e Estados */
+/* Transições e Estados */
 .transition-all {
   transition: all 0.3s ease;
 }
@@ -1781,7 +1778,7 @@ body.modal-open {
   cursor: not-allowed;
 }
 
-/* UtilitÃ¡rios */
+/* Utilitários */
 .whitespace-nowrap {
   white-space: nowrap;
 }
