@@ -395,7 +395,7 @@
               <input 
                 v-model="searchClientQuery" 
                 type="text" 
-                class="input-field pl-10" 
+                class="input-field pl-12" 
                 placeholder="Buscar por nome, telefone ou email..."
                 autofocus
               />
