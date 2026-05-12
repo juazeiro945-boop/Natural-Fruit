@@ -131,22 +131,25 @@
                   {{ sale.paid ? '✅ Pago' : '⏳ Pendente' }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm whitespace-nowrap">
-                <div class="flex items-center space-x-1">
-                  <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                    <span class="text-lg">👁️</span>
-                  </button>
-                  <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
-                    <span class="text-lg">✏️</span>
-                  </button>
-                  <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
-                    <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
-                  </button>
-                  <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
-                    <span class="text-lg">📄</span>
-                  </button>
-                </div>
-              </td>
+               <td class="px-4 py-3 text-sm whitespace-nowrap">
+                 <div class="flex items-center space-x-1">
+                   <button @click="viewSaleDetails(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
+                     <span class="text-lg">👁️</span>
+                   </button>
+                   <button v-if="authStore.canEditOrders" @click="editSale(sale)" class="p-2 hover:bg-yellow-50 rounded-lg transition-colors" title="Editar Pedido">
+                     <span class="text-lg">✏️</span>
+                   </button>
+                   <button @click="togglePaidStatus(sale)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Alternar Status Pagamento">
+                     <span class="text-lg">{{ sale.paid ? '↩️' : '✅' }}</span>
+                   </button>
+                   <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(sale)" class="p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Gerar Recibo">
+                     <span class="text-lg">📄</span>
+                   </button>
+                   <button v-if="authStore.canDeleteOrders" @click="confirmDelete(sale)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pedido">
+                     <span class="text-lg">🗑️</span>
+                   </button>
+                 </div>
+               </td>
             </tr>
           </tbody>
         </table>
@@ -342,14 +345,17 @@
                       {{ pedido.paid ? '✅ Pago' : '⏳ Pendente' }}
                     </span>
                   </div>
-                  <div class="flex items-center gap-1">
-                    <button @click="viewSaleDetails(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
-                      <span class="text-lg md:text-xl">👁️</span>
-                    </button>
-                    <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
-                      <span class="text-lg md:text-xl">📄</span>
-                    </button>
-                  </div>
+           <div class="flex items-center gap-1">
+             <button @click="viewSaleDetails(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Detalhes">
+               <span class="text-lg md:text-xl">👁️</span>
+             </button>
+             <button v-if="authStore.canGenerateReceipt" @click="generateReceipt(pedido)" class="p-1 md:p-2 hover:bg-blue-50 rounded-lg transition-colors" title="Recibo">
+               <span class="text-lg md:text-xl">📄</span>
+             </button>
+             <button v-if="authStore.canDeleteOrders" @click="confirmDelete(pedido)" class="p-1 md:p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir Pedido">
+               <span class="text-lg md:text-xl">🗑️</span>
+             </button>
+           </div>
                 </div>
               </div>
             </div>
@@ -361,6 +367,71 @@
             <span class="text-6xl">👥</span>
           </div>
           <p class="text-gray-600 font-medium">Nenhum cliente encontrado</p>
+        </div>
+      </div>
+
+      <!-- Modal Pesquisar Clientes -->
+      <div v-if="showSearchClientsModal" @click="closeSearchClientsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div @click.stop class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+          <!-- Header -->
+          <div class="sticky top-0 bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 flex items-center justify-between z-10">
+            <div class="flex items-center space-x-3">
+              <button @click="closeSearchClientsModal" class="text-white hover:bg-primary-700 p-1 rounded-lg transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <h3 class="text-lg md:text-xl font-bold text-white">Pesquisar Clientes</h3>
+            </div>
+            <button @click="closeSearchClientsModal" class="text-white hover:bg-primary-700 p-1 rounded-lg transition-colors text-xl">×</button>
+          </div>
+          
+          <!-- Campo de Busca -->
+          <div class="p-4 border-b bg-gray-50">
+            <div class="relative">
+              <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <input 
+                v-model="searchClientQuery" 
+                type="text" 
+                class="input-field pl-10" 
+                placeholder="Buscar por nome, telefone ou email..."
+                autofocus
+              />
+            </div>
+          </div>
+          
+          <!-- Lista de Clientes -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <div v-if="filteredClients.length === 0" class="text-center py-8">
+              <span class="text-4xl">👥</span>
+              <p class="text-gray-600 mt-2">Nenhum cliente encontrado</p>
+            </div>
+            <div 
+              v-for="client in filteredClients" 
+              :key="client.id" 
+              @click="selectClient(client)"
+              class="p-4 border rounded-lg hover:bg-primary-50 hover:border-primary-300 cursor-pointer transition-all"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-bold text-gray-900 truncate">{{ client.name }}</h4>
+                  <div class="flex flex-wrap gap-3 mt-1">
+                    <p class="text-sm text-gray-600 flex items-center">
+                      <span class="mr-1">📞</span> {{ client.phone || 'Sem telefone' }}
+                    </p>
+                    <p class="text-sm text-gray-600 flex items-center">
+                      <span class="mr-1">📧</span> {{ client.email || 'Sem email' }}
+                    </p>
+                  </div>
+                </div>
+                <button class="ml-2 px-3 py-1 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
+                  Selecionar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -643,10 +714,33 @@
 
             <button @click="closeDetailsModal" class="w-full btn-outline py-3">Fechar</button>
           </div>
-        </div>
-      </div>
-    </div>
-  </Layout>
+       </div>
+     </div>
+   </div>
+   
+   <!-- Modal Confirmar Exclusão -->
+   <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+     <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+       <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+         <span class="text-3xl">🗑️</span>
+       </div>
+       <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Confirmar Exclusão</h3>
+       <p class="text-gray-600 text-center mb-6">
+         Tem certeza que deseja excluir o pedido <strong>{{ saleToDelete?.id?.slice(0, 8) }}</strong> de <strong>{{ saleToDelete?.clients?.name }}</strong>?<br>
+         <span class="text-red-600 font-semibold">Esta ação não pode ser desfeita.</span>
+       </p>
+       <div class="flex flex-col sm:flex-row gap-3">
+         <button @click="deleteSale" :disabled="loading" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center">
+           <span v-if="loading">⏳ Excluindo...</span>
+           <span v-else>🗑️ Sim, Excluir</span>
+         </button>
+         <button @click="closeDeleteModal" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-semibold transition-colors">
+           Cancelar
+         </button>
+       </div>
+     </div>
+   </div>
+ </Layout>
 </template>
 
 <script setup>
@@ -654,6 +748,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../stores/auth'
 import Layout from '../components/Layout.vue'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 const authStore = useAuthStore()
 const sales = ref([])
@@ -661,10 +757,14 @@ const clients = ref([])
 const products = ref([])
 const showModal = ref(false)
 const showDetailsModal = ref(false)
+const showDeleteModal = ref(false)
+const showSearchClientsModal = ref(false)
 const selectedSale = ref(null)
+const saleToDelete = ref(null)
 const loading = ref(false)
 const viewMode = ref('pedidos')
 const editingSale = ref(null)
+const searchClientQuery = ref('')
 
 // PAGINAÇÃO
 const currentPage = ref(1)
@@ -703,7 +803,9 @@ const paymentMethods = [
   { value: 'cash', label: '💵 Dinheiro', selectedClass: 'bg-green-500 text-white border-green-600' },
   { value: 'pix', label: '📱 PIX', selectedClass: 'bg-purple-500 text-white border-purple-600' },
   { value: 'card', label: '💳 Cartão', selectedClass: 'bg-pink-500 text-white border-pink-600' },
-  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' }
+  { value: 'boleto', label: '📄 Boleto', selectedClass: 'bg-blue-500 text-white border-blue-600' },
+  { value: 'crediario', label: '🏦 Crediário', selectedClass: 'bg-orange-500 text-white border-orange-600' },
+  { value: 'pending', label: '⏳ Pendente', selectedClass: 'bg-gray-500 text-white border-gray-600' }
 ]
 
 const orderStatuses = [
@@ -759,7 +861,7 @@ const clientesAgrupados = computed(() => {
     }
   })
   
-  return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
+   return Object.values(clientesMap).sort((a, b) => b.totalComprado - a.totalComprado)
 })
 
 // FUNÇÕES UTILITÁRIAS
@@ -780,7 +882,9 @@ const getPaymentLabel = (method) => {
     cash: 'Dinheiro', 
     pix: 'PIX', 
     boleto: 'Boleto',
-    card: 'Cartão'
+    card: 'Cartão',
+    crediario: 'Crediário',
+    pending: 'Pendente'
   }
   return labels[method] || method
 }
@@ -790,7 +894,9 @@ const getPaymentBadge = (method) => {
     cash: 'bg-green-100 text-green-600',
     pix: 'bg-purple-100 text-purple-600',
     boleto: 'bg-blue-100 text-blue-600',
-    card: 'bg-pink-100 text-pink-600'
+    card: 'bg-pink-100 text-pink-600',
+    crediario: 'bg-orange-100 text-orange-600',
+    pending: 'bg-gray-100 text-gray-600'
   }
   return `${badges[method] || 'bg-gray-100 text-gray-600'} px-2 py-1 rounded-full text-xs font-semibold`
 }
@@ -920,6 +1026,33 @@ const closeDetailsModal = () => {
   selectedSale.value = null
 }
 
+const openSearchClientsModal = () => {
+  showSearchClientsModal.value = true
+  searchClientQuery.value = ''
+  document.body.classList.add('modal-open')
+}
+
+const closeSearchClientsModal = () => {
+  showSearchClientsModal.value = false
+  searchClientQuery.value = ''
+  document.body.classList.remove('modal-open')
+}
+
+const selectClient = (client) => {
+  form.value.client_id = client.id
+  closeSearchClientsModal()
+}
+
+const filteredClients = computed(() => {
+  if (!searchClientQuery.value) return clients.value
+  const query = searchClientQuery.value.toLowerCase()
+  return clients.value.filter(client => 
+    client.name?.toLowerCase().includes(query) ||
+    client.phone?.toLowerCase().includes(query) ||
+    client.email?.toLowerCase().includes(query)
+  )
+})
+
 const openModal = () => {
   showModal.value = true
   document.body.classList.add('modal-open')
@@ -949,6 +1082,39 @@ const closeModal = () => {
     order_status: 'pendente',
     is_event: false,
     event_name: ''
+  }
+}
+
+// MODAL DE CONFIRMAÇÃO DE EXCLUSÃO
+const confirmDelete = (sale) => {
+  saleToDelete.value = sale
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  saleToDelete.value = null
+}
+
+const deleteSale = async () => {
+  if (!saleToDelete.value) return
+  
+  loading.value = true
+  try {
+    const { error } = await supabase
+      .from('sales')
+      .delete()
+      .eq('id', saleToDelete.value.id)
+    
+    if (error) throw error
+    
+    await loadSales()
+    closeDeleteModal()
+    
+  } catch (error) {
+    alert('Erro ao excluir pedido: ' + error.message)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1124,22 +1290,241 @@ const togglePaidStatus = async (sale) => {
 
 const generateReceipt = async (sale) => {
   try {
-    const response = await fetch('/api/generate-receipt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sale)
-    })
+    const doc = new jsPDF()
+    const primaryColor = [255, 140, 0]
+    const darkGray = [60, 60, 60]
+    const lightGray = [150, 150, 150]
     
-    if (response.ok) {
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `recibo-pedido-${sale.id}.pdf`
-      a.click()
+    // Cabeçalho com fundo laranja
+    doc.setFillColor(...primaryColor)
+    doc.rect(0, 0, 210, 35, 'F')
+    
+    // Logo circular
+    try {
+      const img = new Image()
+      img.crossOrigin = 'Anonymous'
+      img.src = '/natural-fruit-logo-192.jpg'
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+      })
+      
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const size = 25
+      canvas.width = size
+      canvas.height = size
+      ctx.beginPath()
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+      ctx.closePath()
+      ctx.clip()
+      ctx.drawImage(img, 0, 0, size, size)
+      const circularImage = canvas.toDataURL('image/png')
+      doc.addImage(circularImage, 'PNG', 15, 5, 25, 25)
+      
+    } catch (error) {
+      console.error('Erro ao carregar logo:', error)
     }
+    
+    // Texto do cabeçalho
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.text('NATURAL FRUIT', 45, 12)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.text('CNPJ: 60.127.371/0001-60', 45, 18)
+    doc.text('Juazeiro, Bahia, Brasil', 45, 23)
+    doc.text('Tel: (87) 98864-1590', 45, 28)
+    
+    // Número do pedido e tipo
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    const receiptNumber = `#${String(sale.id).slice(0, 8).toUpperCase()}`
+    doc.text(receiptNumber, 195, 12, { align: 'right' })
+    doc.setFontSize(9)
+    const saleTypeText = sale.sale_type === 'wholesale' ? 'ATACADO' : 'VAREJO'
+    doc.text(saleTypeText, 195, 18, { align: 'right' })
+    
+    // Linha separadora
+    doc.setTextColor(...darkGray)
+    doc.setDrawColor(...primaryColor)
+    doc.setLineWidth(0.5)
+    doc.line(15, 40, 195, 40)
+    
+    // Título do Recibo
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('RECIBO DE PEDIDO', 105, 50, { align: 'center' })
+    
+    // Dados do pedido
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DATA DO PEDIDO', 15, 60)
+    doc.text('STATUS', 100, 60)
+    doc.text('PAGAMENTO', 170, 60)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(formatDate(sale.date), 15, 67)
+    doc.text(getOrderStatusLabel(sale.order_status), 100, 67)
+    doc.text(sale.paid ? 'PAGO' : 'PENDENTE', 170, 67)
+    
+    // Dados do cliente
+    doc.setFillColor(245, 245, 245)
+    doc.rect(15, 73, 180, 30, 'F')
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DADOS DO CLIENTE', 20, 81)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Nome: ${sale.clients?.name || 'N/A'}`, 20, 88)
+    doc.text(`Telefone: ${sale.clients?.phone || 'N/A'}`, 20, 93)
+    if (sale.clients?.address) {
+      const endereco = sale.clients.address.substring(0, 60)
+      doc.text(`Endereço: ${endereco}`, 20, 98)
+    }
+    
+    // Tabela de produtos
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DETALHES DO PEDIDO', 15, 113)
+    
+    doc.setFillColor(...primaryColor)
+    doc.rect(15, 118, 180, 10, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.text('PRODUTO', 20, 124)
+    doc.text('QTD', 120, 124)
+    doc.text('VALOR UNIT.', 145, 124)
+    doc.text('TOTAL', 190, 124, { align: 'right' })
+    
+    // Lista de produtos
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    
+    let yProduto = 133
+    const produtos = parseProducts(sale)
+    let totalRealPedido = 0
+    
+    if (produtos && produtos.length > 0) {
+      for (const prod of produtos) {
+        const nomeProduto = (prod.name || 'Produto').substring(0, 35)
+        
+        // Quebra de página se necessário
+        if (yProduto > 250) {
+          doc.addPage()
+          yProduto = 20
+          
+          doc.setFillColor(...primaryColor)
+          doc.rect(15, yProduto - 10, 180, 10, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(9)
+          doc.text('PRODUTO', 20, yProduto - 4)
+          doc.text('QTD', 120, yProduto - 4)
+          doc.text('VALOR UNIT.', 145, yProduto - 4)
+          doc.text('TOTAL', 190, yProduto - 4, { align: 'right' })
+          
+          doc.setTextColor(...darkGray)
+          doc.setFont('helvetica', 'normal')
+          yProduto += 10
+        }
+        
+        doc.text(nomeProduto, 20, yProduto)
+        doc.text(String(prod.quantity), 120, yProduto)
+        doc.text(formatCurrency(prod.unit_price), 145, yProduto)
+        doc.text(formatCurrency(prod.total), 190, yProduto, { align: 'right' })
+        
+        totalRealPedido += prod.total
+        yProduto += 6
+      }
+    } else {
+      const nomeProduto = (sale.products?.name || 'Produto').substring(0, 35)
+      doc.text(nomeProduto, 20, yProduto)
+      doc.text(String(sale.quantity || 1), 120, yProduto)
+      const unitPrice = sale.unit_price || (sale.total / (sale.quantity || 1))
+      doc.text(formatCurrency(unitPrice), 145, yProduto)
+      doc.text(formatCurrency(sale.total), 190, yProduto, { align: 'right' })
+      totalRealPedido = sale.total
+      yProduto += 6
+    }
+    
+    // Linha total
+    doc.setDrawColor(...lightGray)
+    doc.setLineWidth(0.3)
+    doc.line(15, yProduto + 2, 195, yProduto + 2)
+    
+    const yTotal = yProduto + 10
+    const totalFinal = totalRealPedido > 0 ? totalRealPedido : sale.total
+    
+    // Box do total
+    doc.setFillColor(...primaryColor)
+    doc.rect(140, yTotal, 55, 12, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('TOTAL:', 145, yTotal + 8)
+    doc.text(formatCurrency(totalFinal), 190, yTotal + 8, { align: 'right' })
+    
+    // Forma de pagamento
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('FORMA DE PAGAMENTO', 15, yTotal + 20)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    const paymentLabel = {
+      cash: 'Dinheiro',
+      pix: 'PIX',
+      boleto: 'Boleto',
+      card: 'Cartão',
+      crediario: 'Crediário',
+      pending: 'Pendente'
+    }
+    doc.text(`Método: ${paymentLabel[sale.payment_method] || sale.payment_method}`, 15, yTotal + 27)
+    
+    // Observações
+    let yPos = yTotal + 35
+    if (sale.notes) {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.text('OBSERVAÇÕES', 15, yPos)
+      yPos += 7
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      const lines = doc.splitTextToSize(sale.notes, 180)
+      doc.text(lines, 15, yPos)
+      yPos += (lines.length * 5)
+    }
+    
+    // Evento
+    if (sale.is_event && sale.event_name) {
+      yPos += 5
+      doc.setFillColor(128, 0, 128)
+      doc.rect(15, yPos, 180, 8, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.text(`🎉 EVENTO: ${sale.event_name}`, 20, yPos + 5)
+    }
+    
+    // Rodapé
+    const yFooter = yPos > yTotal + 35 ? yPos + 15 : yTotal + 40
+    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(8)
+    doc.text('Natural Fruit - Sistema de Gestão', 105, yFooter, { align: 'center' })
+    doc.text(`Emitido em: ${new Date().toLocaleString('pt-BR')}`, 105, yFooter + 5, { align: 'center' })
+    
+    // Salvar PDF
+    doc.save(`recibo-pedido-${sale.id}.pdf`)
+    
   } catch (error) {
     console.error('Erro ao gerar recibo:', error)
+    alert('Erro ao gerar recibo')
   }
 }
 

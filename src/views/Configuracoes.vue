@@ -1029,7 +1029,84 @@ const salvarUsuario = async () => {
   loadingSave.value = true
   try {
     if (editandoUsuario.value) {
-      // ... (código de edição permanece igual) ...
+      // Editar usuário existente
+      console.log('🔵 Editando usuário:', formUsuario.value.id)
+      
+      const updateData = {
+        name: formUsuario.value.name,
+        email: formUsuario.value.email,
+        telefone: formUsuario.value.telefone || null,
+        tipo_usuario: formUsuario.value.tipo_usuario,
+        ativo: formUsuario.value.ativo,
+        horario_restrito: formUsuario.value.horario_restrito,
+        horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
+        horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null,
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', formUsuario.value.id)
+      
+      if (error) throw error
+      
+      showToast('success', 'Usuário atualizado com sucesso!')
+    } else {
+      // Criar novo usuário
+      console.log('🔵 Criando novo usuário via Edge Function...')
+      
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: formUsuario.value.email,
+          password: formUsuario.value.password,
+          name: formUsuario.value.name,
+          tipo_usuario: formUsuario.value.tipo_usuario,
+          telefone: formUsuario.value.telefone
+        }
+      })
+      
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'Erro ao criar usuário')
+      
+      console.log('🔵 Resultado da Edge Function:', data)
+      
+      // Atualizar horário se necessário
+      await supabase
+        .from('profiles')
+        .update({
+          horario_restrito: formUsuario.value.horario_restrito,
+          horario_inicio: formUsuario.value.horario_restrito ? formUsuario.value.horario_inicio : null,
+          horario_fim: formUsuario.value.horario_restrito ? formUsuario.value.horario_fim : null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.userId)
+      
+      await navigator.clipboard.writeText(formUsuario.value.password)
+      
+      showToast('success', `Usuário criado!\nSenha: ${formUsuario.value.password}\n(Copiada para a área de transferência)`)
+    }
+    
+    closeModalUsuario()
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await carregarUsuarios()
+    
+  } catch (error) {
+    console.error('❌ Erro completo:', error)
+    showToast('error', error.message)
+  } finally {
+    loadingSave.value = false
+  }
+}
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', formUsuario.value.id)
+      
+      if (error) throw error
+      
+      showToast('success', 'Usuário atualizado com sucesso!')
     } else {
       console.log('🔵 Criando novo usuário via Edge Function...')
       
